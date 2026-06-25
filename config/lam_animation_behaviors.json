@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 1,
+  "collection": "Motorheads",
+  "globalLifeMotion": {
+    "enabled": true,
+    "idleBounce": {
+      "bodyBobPx": 2.2,
+      "headLagSeconds": 0.18,
+      "partJitterPx": 0.45,
+      "breathingSpeed": 0.72
+    },
+    "pressureAmplifier": {
+      "low": 0.85,
+      "medium": 1,
+      "high": 1.55,
+      "extreme": 2.25
+    },
+    "bondStabilizer": {
+      "newHolder": 1,
+      "bonded": 0.88,
+      "keeper": 0.74,
+      "guardian": 0.66,
+      "deepHolder": 0.58,
+      "permanentKeeper": 0.48
+    },
+    "ageWeight": {
+      "fresh": 1,
+      "oneYear": 0.88,
+      "fiveYears": 0.72,
+      "tenYears": 0.58,
+      "thirtyYears": 0.42
+    }
+  },
+  "chainSignals": {
+    "heartbeat": {
+      "source": "latest block number",
+      "events": ["core pulse", "head tick", "connection ripple", "status panel heartbeat"]
+    },
+    "pressure": {
+      "source": "latest block base fee or configured gas oracle",
+      "levels": [
+        {
+          "id": "low",
+          "label": "Low Gas",
+          "rangeGwei": [0, 20],
+          "visuals": ["calm cyan glow", "slow gears", "stable face", "soft breathing"]
+        },
+        {
+          "id": "medium",
+          "label": "Medium Gas",
+          "rangeGwei": [20, 60],
+          "visuals": ["faster gears", "screen pulse", "tube movement", "brighter core"]
+        },
+        {
+          "id": "high",
+          "label": "High Gas",
+          "rangeGwei": [60, 140],
+          "visuals": ["warning lights", "steam leaks", "screen glitch", "body shake"]
+        },
+        {
+          "id": "extreme",
+          "label": "Extreme Gas",
+          "rangeGwei": [140, 1000000],
+          "visuals": ["red alert", "sparks", "unstable signal", "fast breathing"]
+        }
+      ]
+    },
+    "age": {
+      "source": "mintedAt",
+      "visuals": ["dust", "patina", "scratches", "gold linework", "relic aura"]
+    },
+    "bond": {
+      "source": "ownerSince",
+      "visuals": ["cleaner signal", "stronger core glow", "stable motion", "keeper badge"]
+    },
+    "history": {
+      "source": "transferCount",
+      "visuals": ["archive stamps", "scratches", "travel marks", "repair tags"]
+    },
+    "milestone": {
+      "source": "highestVerifiedSaleWei and unlockFlags",
+      "visuals": ["silver stamp", "gold stamp", "royal seal", "market echo", "mythic aura"]
+    }
+  },
+  "components": {
+    "screen": {
+      "idle": "scanlines drift, face glow breathes",
+      "heartbeat": "single flicker frame",
+      "pressure": "glitch offset, warning scanlines, red/copper flash",
+      "bond": "less jitter and clearer face",
+      "history": "glass scratches and stamped pixels",
+      "connections": ["antennaSignal", "screenSignal", "powerPulse"]
+    },
+    "clockHands": {
+      "idle": "slow tick",
+      "heartbeat": "step hand",
+      "pressure": "speed multiplier and redline rim",
+      "bond": "smoothed tick easing",
+      "history": "cracked glass overlay",
+      "connections": ["gearDrive", "powerPulse"]
+    },
+    "fluid": {
+      "idle": "wave and bubble drift",
+      "heartbeat": "bubble pulse",
+      "pressure": "boil and tube surge",
+      "bond": "smooth wave and clear liquid",
+      "history": "sediment and repair clamps",
+      "connections": ["fluidFlow", "steamPressure"]
+    },
+    "gearDrive": {
+      "idle": "micro rotation",
+      "heartbeat": "tooth step",
+      "pressure": "faster rotation and sparks",
+      "bond": "less wobble",
+      "history": "worn teeth",
+      "connections": ["gearDrive", "powerPulse"]
+    },
+    "soundWave": {
+      "idle": "small ring pulse",
+      "heartbeat": "one expanding ring",
+      "pressure": "distorted wave",
+      "bond": "symmetrical ring",
+      "history": "grille scratches",
+      "connections": ["soundWave", "antennaSignal"]
+    },
+    "steamPressure": {
+      "idle": "soft vent curl",
+      "heartbeat": "small puff",
+      "pressure": "large burst and valve shake",
+      "bond": "controlled release",
+      "history": "soot and rust marks",
+      "connections": ["steamPressure", "fluidFlow"]
+    },
+    "marketEcho": {
+      "idle": "rare slow gold shimmer",
+      "heartbeat": "disabled unless milestone active",
+      "pressure": "market lines shake lightly",
+      "bond": "stable provenance glow",
+      "history": "sale stamps remain visible",
+      "connections": ["marketEcho", "lightCore"]
+    },
+    "archiveStamp": {
+      "idle": "paper/tag sway",
+      "heartbeat": "stamp blink",
+      "pressure": "paper shake",
+      "bond": "aligned archive marks",
+      "history": "new permanent transfer marks",
+      "connections": ["archiveStamp", "bodyBounce"]
+    }
+  },
+  "moodModel": {
+    "calm": "low gas plus strong holder bond",
+    "stressed": "medium or high gas without strong bond",
+    "overheated": "extreme gas or pressure-heavy traits",
+    "aged": "older mint age plus transfer marks",
+    "legendary": "major sale milestone or special unlock flag"
+  }
+}

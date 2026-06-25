@@ -1,0 +1,830 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Reusable background and material color palette kept after removing the rejected 40 special-machine visual pass. Use these colors later when randomizing normal Motorheads traits.",
+  "source": "retained-material-background-colors",
+  "count": 41,
+  "backgrounds": [
+    {
+      "index": 1,
+      "id": "blackMatter",
+      "label": "BLACK MATTER",
+      "surface": "liquid",
+      "background": "#071616",
+      "primary": "#050608",
+      "secondary": "#141018",
+      "accent": "#64f4ff",
+      "edge": "#a76dff",
+      "glow": "rgba(122,83,255,0.52)",
+      "liquidType": "Void Bloom",
+      "liquidTexture": "Smoky",
+      "notes": "Glossy black liquid metal, oily reflections, purple/cyan edge glow, dripping shadow parts.",
+      "randomizerTags": [
+        "liquid",
+        "Smoky",
+        "BLACK MATTER"
+      ]
+    },
+    {
+      "index": 2,
+      "id": "holoGlass",
+      "label": "HOLO GLASS",
+      "surface": "glass",
+      "background": "#dffbf8",
+      "primary": "#c9fff7",
+      "secondary": "#ffb5f5",
+      "accent": "#6df6ff",
+      "edge": "#ffe37d",
+      "glow": "rgba(112,245,255,0.5)",
+      "liquidType": "Cosmic Aurora",
+      "liquidTexture": "Luminous",
+      "notes": "Transparent glass body, rainbow prism edges, cyan/pink highlights, light passing through parts.",
+      "randomizerTags": [
+        "glass",
+        "Luminous",
+        "HOLO GLASS"
+      ]
+    },
+    {
+      "index": 3,
+      "id": "runeStone",
+      "label": "RUNE STONE",
+      "surface": "stone",
+      "background": "#909b8f",
+      "primary": "#656a66",
+      "secondary": "#2f3632",
+      "accent": "#79ffd4",
+      "edge": "#a1c889",
+      "glow": "rgba(92,255,205,0.44)",
+      "liquidType": "Geode Brine",
+      "liquidTexture": "Ancient Sediment",
+      "notes": "Heavy gray carved stone, glowing cracks, ancient symbols, moss/dust on edges.",
+      "randomizerTags": [
+        "stone",
+        "Ancient Sediment",
+        "RUNE STONE"
+      ]
+    },
+    {
+      "index": 4,
+      "id": "mercuryChrome",
+      "label": "MERCURY CHROME",
+      "surface": "chrome",
+      "background": "#c8d7da",
+      "primary": "#edf6fa",
+      "secondary": "#879aa2",
+      "accent": "#ffffff",
+      "edge": "#91f5ff",
+      "glow": "rgba(214,255,255,0.5)",
+      "liquidType": "Silver Mercury",
+      "liquidTexture": "Metallic",
+      "notes": "Mirror-silver liquid metal, smooth reflective surface, floating chrome droplets.",
+      "randomizerTags": [
+        "chrome",
+        "Metallic",
+        "MERCURY CHROME"
+      ]
+    },
+    {
+      "index": 5,
+      "id": "lavaCore",
+      "label": "LAVA CORE",
+      "surface": "volcanic",
+      "background": "#5a2e22",
+      "primary": "#15110f",
+      "secondary": "#4a2014",
+      "accent": "#ff6d24",
+      "edge": "#ffd45e",
+      "glow": "rgba(255,84,35,0.62)",
+      "liquidType": "Deep Core Magma",
+      "liquidTexture": "Molten",
+      "notes": "Black volcanic rock shell, orange/red glowing cracks, molten inner core, smoke edges.",
+      "randomizerTags": [
+        "volcanic",
+        "Molten",
+        "LAVA CORE"
+      ]
+    },
+    {
+      "index": 6,
+      "id": "goldRelic",
+      "label": "GOLD RELIC",
+      "surface": "metal",
+      "background": "#d2a238",
+      "primary": "#d8a43a",
+      "secondary": "#6e4a16",
+      "accent": "#fff09a",
+      "edge": "#1dbb9e",
+      "glow": "rgba(255,212,90,0.5)",
+      "liquidType": "Gold Resin",
+      "liquidTexture": "Metallic",
+      "notes": "Old gold/brass armor, engraved plates, patina, royal trim, warm holy glow.",
+      "randomizerTags": [
+        "metal",
+        "Metallic",
+        "GOLD RELIC"
+      ]
+    },
+    {
+      "index": 7,
+      "id": "bioSlime",
+      "label": "BIO SLIME",
+      "surface": "organic",
+      "background": "#73d864",
+      "primary": "#39d66d",
+      "secondary": "#0b4b32",
+      "accent": "#c8ff72",
+      "edge": "#55ffd0",
+      "glow": "rgba(87,255,116,0.55)",
+      "liquidType": "Green Biofluid",
+      "liquidTexture": "Slimy",
+      "notes": "Green toxic glass/liquid, bubbles, slime drips, organic veins inside machine parts.",
+      "randomizerTags": [
+        "organic",
+        "Slimy",
+        "BIO SLIME"
+      ]
+    },
+    {
+      "index": 8,
+      "id": "paperArchive",
+      "label": "PAPER ARCHIVE",
+      "surface": "paper",
+      "background": "#f1e0b6",
+      "primary": "#ead8a7",
+      "secondary": "#35281c",
+      "accent": "#b6312a",
+      "edge": "#111111",
+      "glow": "rgba(255,230,162,0.24)",
+      "liquidType": "Root Amber",
+      "liquidTexture": "Ancient Sediment",
+      "notes": "Old cream paper, black ink marks, red stamps, receipts, labels, folded paper layers.",
+      "randomizerTags": [
+        "paper",
+        "Ancient Sediment",
+        "PAPER ARCHIVE"
+      ]
+    },
+    {
+      "index": 9,
+      "id": "boneCeramic",
+      "label": "BONE CERAMIC",
+      "surface": "ceramic",
+      "background": "#e7dfc8",
+      "primary": "#eee6cf",
+      "secondary": "#4b4032",
+      "accent": "#9edfff",
+      "edge": "#1f2427",
+      "glow": "rgba(142,217,255,0.34)",
+      "liquidType": "Abyssal Glow",
+      "liquidTexture": "Luminous",
+      "notes": "Ivory white shell, bone-like plates, dark cracks, fossil details, soft blue ghost glow.",
+      "randomizerTags": [
+        "ceramic",
+        "Luminous",
+        "BONE CERAMIC"
+      ]
+    },
+    {
+      "index": 10,
+      "id": "blueCoolant",
+      "label": "BLUE COOLANT",
+      "surface": "coolant",
+      "background": "#cbeef4",
+      "primary": "#eef7f8",
+      "secondary": "#a8c4cc",
+      "accent": "#2fd6ff",
+      "edge": "#b9f7ff",
+      "glow": "rgba(61,215,255,0.5)",
+      "liquidType": "Blue Coolant",
+      "liquidTexture": "Smooth",
+      "notes": "Clean white/silver machine, blue liquid tubes, cold glass, frost marks, cyan glow.",
+      "randomizerTags": [
+        "coolant",
+        "Smooth",
+        "BLUE COOLANT"
+      ]
+    },
+    {
+      "index": 11,
+      "id": "rustedIron",
+      "label": "RUSTED IRON",
+      "surface": "rust",
+      "background": "#7a4a32",
+      "primary": "#4e3024",
+      "secondary": "#1b1714",
+      "accent": "#dd7030",
+      "edge": "#f0a55c",
+      "glow": "rgba(210,88,38,0.28)",
+      "liquidType": "Rust Sludge",
+      "liquidTexture": "Ancient Sediment",
+      "notes": "Dark brown metal, orange rust, scratches, dirty bolts, old industrial machine look.",
+      "randomizerTags": [
+        "rust",
+        "Ancient Sediment",
+        "RUSTED IRON"
+      ]
+    },
+    {
+      "index": 12,
+      "id": "voidEther",
+      "label": "VOID ETHER",
+      "surface": "void",
+      "background": "#1b1234",
+      "primary": "#090613",
+      "secondary": "#21103f",
+      "accent": "#caa6ff",
+      "edge": "#72f6ff",
+      "glow": "rgba(155,104,255,0.58)",
+      "liquidType": "Purple Ether",
+      "liquidTexture": "Starfield",
+      "notes": "Deep black/purple smoke, floating stars, ghost glow, soft fog around the body.",
+      "randomizerTags": [
+        "void",
+        "Starfield",
+        "VOID ETHER"
+      ]
+    },
+    {
+      "index": 13,
+      "id": "crystalCore",
+      "label": "CRYSTAL CORE",
+      "surface": "crystal",
+      "background": "#b6dce9",
+      "primary": "#d7f8ff",
+      "secondary": "#7364da",
+      "accent": "#8ff6ff",
+      "edge": "#e1c5ff",
+      "glow": "rgba(128,181,255,0.56)",
+      "liquidType": "Geode Brine",
+      "liquidTexture": "Crystal",
+      "notes": "Clear crystal parts, sharp facets, blue/purple glow inside, elegant shiny edges.",
+      "randomizerTags": [
+        "crystal",
+        "Crystal",
+        "CRYSTAL CORE"
+      ]
+    },
+    {
+      "index": 14,
+      "id": "cheeseRelic",
+      "label": "CHEESE RELIC",
+      "surface": "soft",
+      "background": "#e6b72e",
+      "primary": "#ffd33c",
+      "secondary": "#b5761d",
+      "accent": "#fff18b",
+      "edge": "#e9872a",
+      "glow": "rgba(255,212,55,0.38)",
+      "liquidType": "Gold Resin",
+      "liquidTexture": "Bubbly",
+      "notes": "Golden-yellow soft body, holes, melted edges, darker aged cracks, funny rare meme look.",
+      "randomizerTags": [
+        "soft",
+        "Bubbly",
+        "CHEESE RELIC"
+      ]
+    },
+    {
+      "index": 15,
+      "id": "cloudSteam",
+      "label": "CLOUD STEAM",
+      "surface": "steam",
+      "background": "#cfd8d6",
+      "primary": "#eef0ec",
+      "secondary": "#9da6a8",
+      "accent": "#d6ae4a",
+      "edge": "#ffffff",
+      "glow": "rgba(238,255,255,0.42)",
+      "liquidType": "Starlight Mercury",
+      "liquidTexture": "Smoky",
+      "notes": "White/gray vapor body, soft cloudy edges, golden small metal pieces floating inside.",
+      "randomizerTags": [
+        "steam",
+        "Smoky",
+        "CLOUD STEAM"
+      ]
+    },
+    {
+      "index": 16,
+      "id": "obsidianGlass",
+      "label": "OBSIDIAN GLASS",
+      "surface": "glass",
+      "background": "#161316",
+      "primary": "#08090b",
+      "secondary": "#191317",
+      "accent": "#ff3e2f",
+      "edge": "#f6f2ee",
+      "glow": "rgba(255,60,42,0.48)",
+      "liquidType": "Deep Core Magma",
+      "liquidTexture": "Crystal",
+      "notes": "Black volcanic glass, sharp shiny edges, small cracks, dark mirror reflections, red glow inside cracks.",
+      "randomizerTags": [
+        "glass",
+        "Crystal",
+        "OBSIDIAN GLASS"
+      ]
+    },
+    {
+      "index": 17,
+      "id": "opalMachine",
+      "label": "OPAL MACHINE",
+      "surface": "opal",
+      "background": "#e9e6d8",
+      "primary": "#f2eee4",
+      "secondary": "#9ee7f0",
+      "accent": "#ffc4ef",
+      "edge": "#fff1a8",
+      "glow": "rgba(199,241,255,0.48)",
+      "liquidType": "Cosmic Aurora",
+      "liquidTexture": "Luminous",
+      "notes": "Milky white body with rainbow shine inside, soft pastel reflections, smooth magical glass look.",
+      "randomizerTags": [
+        "opal",
+        "Luminous",
+        "OPAL MACHINE"
+      ]
+    },
+    {
+      "index": 18,
+      "id": "neonCarbon",
+      "label": "NEON CARBON",
+      "surface": "carbon",
+      "background": "#12181d",
+      "primary": "#111517",
+      "secondary": "#030607",
+      "accent": "#2eefff",
+      "edge": "#ff5dcb",
+      "glow": "rgba(55,229,255,0.5)",
+      "liquidType": "Abyssal Glow",
+      "liquidTexture": "Electric",
+      "notes": "Matte black carbon plates, thin neon blue/pink lines, cyber-lab feeling, clean and fast.",
+      "randomizerTags": [
+        "carbon",
+        "Electric",
+        "NEON CARBON"
+      ]
+    },
+    {
+      "index": 19,
+      "id": "copperVerdigris",
+      "label": "COPPER VERDIGRIS",
+      "surface": "metal",
+      "background": "#6d8b73",
+      "primary": "#b56a38",
+      "secondary": "#194f49",
+      "accent": "#55d6c0",
+      "edge": "#ffd08a",
+      "glow": "rgba(78,220,190,0.32)",
+      "liquidType": "Root Amber",
+      "liquidTexture": "Mineral Vein",
+      "notes": "Old copper metal with green oxidation, antique science machine vibe, dusty turquoise stains.",
+      "randomizerTags": [
+        "metal",
+        "Mineral Vein",
+        "COPPER VERDIGRIS"
+      ]
+    },
+    {
+      "index": 20,
+      "id": "frostedSteel",
+      "label": "FROSTED STEEL",
+      "surface": "ice",
+      "background": "#d0dde1",
+      "primary": "#dfe9ec",
+      "secondary": "#879ba8",
+      "accent": "#8eeeff",
+      "edge": "#ffffff",
+      "glow": "rgba(147,237,255,0.48)",
+      "liquidType": "Blue Coolant",
+      "liquidTexture": "Crystal",
+      "notes": "Pale silver metal with icy white frost, blue glow, cold scratches, frozen glass tubes.",
+      "randomizerTags": [
+        "ice",
+        "Crystal",
+        "FROSTED STEEL"
+      ]
+    },
+    {
+      "index": 21,
+      "id": "amberResin",
+      "label": "AMBER RESIN",
+      "surface": "resin",
+      "background": "#bd7733",
+      "primary": "#ff9d37",
+      "secondary": "#734016",
+      "accent": "#ffd478",
+      "edge": "#fff1a3",
+      "glow": "rgba(255,157,55,0.54)",
+      "liquidType": "Root Amber",
+      "liquidTexture": "Bubbly",
+      "notes": "Transparent orange/gold resin, trapped bubbles, fossil-like details inside, warm glowing edges.",
+      "randomizerTags": [
+        "resin",
+        "Bubbly",
+        "AMBER RESIN"
+      ]
+    },
+    {
+      "index": 22,
+      "id": "inkVoid",
+      "label": "INK VOID",
+      "surface": "ink",
+      "background": "#e7e2d6",
+      "primary": "#050505",
+      "secondary": "#1e1e25",
+      "accent": "#2f2f35",
+      "edge": "#d7d7d2",
+      "glow": "rgba(0,0,0,0.36)",
+      "liquidType": "Nebula Ink",
+      "liquidTexture": "Smoky",
+      "notes": "Black ink body, hand-drawn drip edges, smoky outlines, moving black stains, sketchy cursed look.",
+      "randomizerTags": [
+        "ink",
+        "Smoky",
+        "INK VOID"
+      ]
+    },
+    {
+      "index": 23,
+      "id": "porcelainRelic",
+      "label": "PORCELAIN RELIC",
+      "surface": "porcelain",
+      "background": "#efe9d6",
+      "primary": "#f8f4e8",
+      "secondary": "#1b5f8d",
+      "accent": "#d8a33a",
+      "edge": "#354d63",
+      "glow": "rgba(255,238,186,0.34)",
+      "liquidType": "Starlight Mercury",
+      "liquidTexture": "Smooth",
+      "notes": "White porcelain plates, blue cracks, gold repair lines like kintsugi, elegant broken-machine look.",
+      "randomizerTags": [
+        "porcelain",
+        "Smooth",
+        "PORCELAIN RELIC"
+      ]
+    },
+    {
+      "index": 24,
+      "id": "bloodGlass",
+      "label": "BLOOD GLASS",
+      "surface": "glass",
+      "background": "#3e1117",
+      "primary": "#5d0710",
+      "secondary": "#12070a",
+      "accent": "#ff2d3b",
+      "edge": "#ff8a86",
+      "glow": "rgba(255,28,52,0.54)",
+      "liquidType": "Red Pressure",
+      "liquidTexture": "Smooth",
+      "notes": "Dark red transparent glass, black metal frame, red liquid core, vampire-lab style.",
+      "randomizerTags": [
+        "glass",
+        "Smooth",
+        "BLOOD GLASS"
+      ]
+    },
+    {
+      "index": 25,
+      "id": "mossyBrass",
+      "label": "MOSSY BRASS",
+      "surface": "organic",
+      "background": "#86965c",
+      "primary": "#b18a32",
+      "secondary": "#295132",
+      "accent": "#88d15d",
+      "edge": "#e7d178",
+      "glow": "rgba(127,211,93,0.34)",
+      "liquidType": "Green Biofluid",
+      "liquidTexture": "Ancient Sediment",
+      "notes": "Old brass machine covered with green moss, tiny vines, soft nature-over-machine look.",
+      "randomizerTags": [
+        "organic",
+        "Ancient Sediment",
+        "MOSSY BRASS"
+      ]
+    },
+    {
+      "index": 26,
+      "id": "galaxyLiquid",
+      "label": "GALAXY LIQUID",
+      "surface": "cosmic",
+      "background": "#221b5f",
+      "primary": "#24105a",
+      "secondary": "#1763d1",
+      "accent": "#ff77e8",
+      "edge": "#82f7ff",
+      "glow": "rgba(117,89,255,0.6)",
+      "liquidType": "Cosmic Aurora",
+      "liquidTexture": "Starfield",
+      "notes": "Purple/blue liquid body with tiny stars inside, cosmic reflections, slow swirling nebula effect.",
+      "randomizerTags": [
+        "cosmic",
+        "Starfield",
+        "GALAXY LIQUID"
+      ]
+    },
+    {
+      "index": 27,
+      "id": "sandstoneRuin",
+      "label": "SANDSTONE RUIN",
+      "surface": "stone",
+      "background": "#d39b5c",
+      "primary": "#c99557",
+      "secondary": "#7a4f2d",
+      "accent": "#ffbb62",
+      "edge": "#6a3e22",
+      "glow": "rgba(255,164,75,0.26)",
+      "liquidType": "Root Amber",
+      "liquidTexture": "Ancient Sediment",
+      "notes": "Warm beige stone, carved edges, dust, ancient temple cracks, soft orange shadows.",
+      "randomizerTags": [
+        "stone",
+        "Ancient Sediment",
+        "SANDSTONE RUIN"
+      ]
+    },
+    {
+      "index": 28,
+      "id": "carbonAsh",
+      "label": "CARBON ASH",
+      "surface": "ash",
+      "background": "#4d4b44",
+      "primary": "#242322",
+      "secondary": "#080808",
+      "accent": "#d25a35",
+      "edge": "#8d8b82",
+      "glow": "rgba(214,82,43,0.32)",
+      "liquidType": "Rust Sludge",
+      "liquidTexture": "Smoky",
+      "notes": "Burnt black/gray metal, ash stains, fire damage, rough smoky outline, post-explosion look.",
+      "randomizerTags": [
+        "ash",
+        "Smoky",
+        "CARBON ASH"
+      ]
+    },
+    {
+      "index": 29,
+      "id": "pearlChrome",
+      "label": "PEARL CHROME",
+      "surface": "chrome",
+      "background": "#ece7db",
+      "primary": "#fbf8ee",
+      "secondary": "#cbd4d8",
+      "accent": "#ffc8ef",
+      "edge": "#9ff7ff",
+      "glow": "rgba(246,250,255,0.46)",
+      "liquidType": "Starlight Mercury",
+      "liquidTexture": "Metallic",
+      "notes": "White pearl surface with chrome shine, soft rainbow highlights, luxury clean machine look.",
+      "randomizerTags": [
+        "chrome",
+        "Metallic",
+        "PEARL CHROME"
+      ]
+    },
+    {
+      "index": 30,
+      "id": "toxicRubber",
+      "label": "TOXIC RUBBER",
+      "surface": "rubber",
+      "background": "#273225",
+      "primary": "#171a15",
+      "secondary": "#0b120a",
+      "accent": "#95ff29",
+      "edge": "#365b2d",
+      "glow": "rgba(132,255,42,0.52)",
+      "liquidType": "Green Biofluid",
+      "liquidTexture": "Slimy",
+      "notes": "Dark rubber body, green glowing slime seams, hazard labels, soft industrial weird look.",
+      "randomizerTags": [
+        "rubber",
+        "Slimy",
+        "TOXIC RUBBER"
+      ]
+    },
+    {
+      "index": 31,
+      "id": "oldLeatherMachine",
+      "label": "OLD LEATHER MACHINE",
+      "surface": "leather",
+      "background": "#8f6138",
+      "primary": "#744323",
+      "secondary": "#2c1a0e",
+      "accent": "#d0a257",
+      "edge": "#f1c77a",
+      "glow": "rgba(194,133,58,0.28)",
+      "liquidType": "Root Amber",
+      "liquidTexture": "Smooth",
+      "notes": "Brown leather straps, stitched panels, brass buckles, worn edges, explorer/aviator vibe.",
+      "randomizerTags": [
+        "leather",
+        "Smooth",
+        "OLD LEATHER MACHINE"
+      ]
+    },
+    {
+      "index": 32,
+      "id": "blueprintInk",
+      "label": "BLUEPRINT INK",
+      "surface": "blueprint",
+      "background": "#f7fbf5",
+      "primary": "#f8fbf7",
+      "secondary": "#0f1f26",
+      "accent": "#31dbff",
+      "edge": "#171b1d",
+      "glow": "rgba(49,219,255,0.38)",
+      "liquidType": "Blue Coolant",
+      "liquidTexture": "Smooth",
+      "notes": "White body with black technical lines, cyan measurement marks, clean engineering sketch style.",
+      "randomizerTags": [
+        "blueprint",
+        "Smooth",
+        "BLUEPRINT INK"
+      ]
+    },
+    {
+      "index": 33,
+      "id": "staticCrystal",
+      "label": "STATIC CRYSTAL",
+      "surface": "electric",
+      "background": "#98a8ae",
+      "primary": "#bfc8cb",
+      "secondary": "#3f4e5b",
+      "accent": "#ffffff",
+      "edge": "#8eefff",
+      "glow": "rgba(255,255,255,0.62)",
+      "liquidType": "Starlight Mercury",
+      "liquidTexture": "Electric",
+      "notes": "Gray glass body with electric cracks, white sparks inside, unstable science experiment look.",
+      "randomizerTags": [
+        "electric",
+        "Electric",
+        "STATIC CRYSTAL"
+      ]
+    },
+    {
+      "index": 34,
+      "id": "moltenGold",
+      "label": "MOLTEN GOLD",
+      "surface": "molten",
+      "background": "#d79b26",
+      "primary": "#e9b236",
+      "secondary": "#6d2f0e",
+      "accent": "#ff7a24",
+      "edge": "#fff3a0",
+      "glow": "rgba(255,166,36,0.62)",
+      "liquidType": "Gold Resin",
+      "liquidTexture": "Molten",
+      "notes": "Gold body partly melting, orange glow, liquid gold drips, royal but dangerous.",
+      "randomizerTags": [
+        "molten",
+        "Molten",
+        "MOLTEN GOLD"
+      ]
+    },
+    {
+      "index": 35,
+      "id": "darkWoodMechanic",
+      "label": "DARK WOOD MECHANIC",
+      "surface": "wood",
+      "background": "#6b4a2d",
+      "primary": "#4a2618",
+      "secondary": "#1f110b",
+      "accent": "#d6a044",
+      "edge": "#e3be78",
+      "glow": "rgba(184,114,49,0.24)",
+      "liquidType": "Root Amber",
+      "liquidTexture": "Ancient Sediment",
+      "notes": "Polished dark wood panels, brass screws, carved details, old clockwork furniture vibe.",
+      "randomizerTags": [
+        "wood",
+        "Ancient Sediment",
+        "DARK WOOD MECHANIC"
+      ]
+    },
+    {
+      "index": 36,
+      "id": "neonSludge",
+      "label": "NEON SLUDGE",
+      "surface": "sludge",
+      "background": "#15351c",
+      "primary": "#07100a",
+      "secondary": "#123214",
+      "accent": "#4dff35",
+      "edge": "#b3ff45",
+      "glow": "rgba(74,255,48,0.58)",
+      "liquidType": "Green Biofluid",
+      "liquidTexture": "Slimy",
+      "notes": "Black-green liquid, toxic bubbles, bright green edge glow, dirty sci-fi chemical look.",
+      "randomizerTags": [
+        "sludge",
+        "Slimy",
+        "NEON SLUDGE"
+      ]
+    },
+    {
+      "index": 37,
+      "id": "silverFog",
+      "label": "SILVER FOG",
+      "surface": "fog",
+      "background": "#b8c0c1",
+      "primary": "#cfd4d4",
+      "secondary": "#6f7b80",
+      "accent": "#e7ffff",
+      "edge": "#ffffff",
+      "glow": "rgba(220,245,255,0.42)",
+      "liquidType": "Silver Mercury",
+      "liquidTexture": "Smoky",
+      "notes": "Soft silver metal with mist around it, pale glow, ghost-machine but cleaner than smoke.",
+      "randomizerTags": [
+        "fog",
+        "Smoky",
+        "SILVER FOG"
+      ]
+    },
+    {
+      "index": 38,
+      "id": "redCeramic",
+      "label": "RED CERAMIC",
+      "surface": "ceramic",
+      "background": "#b9312e",
+      "primary": "#c92325",
+      "secondary": "#250708",
+      "accent": "#d8a33a",
+      "edge": "#ffb096",
+      "glow": "rgba(255,65,53,0.42)",
+      "liquidType": "Red Pressure",
+      "liquidTexture": "Smooth",
+      "notes": "Glossy red ceramic plates, black cracks, gold bolts, dramatic rare armor look.",
+      "randomizerTags": [
+        "ceramic",
+        "Smooth",
+        "RED CERAMIC"
+      ]
+    },
+    {
+      "index": 39,
+      "id": "electricPlasma",
+      "label": "ELECTRIC PLASMA",
+      "surface": "electric",
+      "background": "#1927a5",
+      "primary": "#1435c8",
+      "secondary": "#5b27d8",
+      "accent": "#59f5ff",
+      "edge": "#f08cff",
+      "glow": "rgba(65,153,255,0.68)",
+      "liquidType": "Purple Ether",
+      "liquidTexture": "Electric",
+      "notes": "Blue/purple energy body, transparent tubes, lightning lines, glowing plasma core.",
+      "randomizerTags": [
+        "electric",
+        "Electric",
+        "ELECTRIC PLASMA"
+      ]
+    },
+    {
+      "index": 40,
+      "id": "ancientMarble",
+      "label": "ANCIENT MARBLE",
+      "surface": "marble",
+      "background": "#e6dfcf",
+      "primary": "#f1eee5",
+      "secondary": "#8a8a84",
+      "accent": "#d7a13a",
+      "edge": "#595955",
+      "glow": "rgba(255,236,175,0.38)",
+      "liquidType": "Gold Resin",
+      "liquidTexture": "Mineral Vein",
+      "notes": "White marble body with gray veins, golden cracks, statue-like machine god look.",
+      "randomizerTags": [
+        "marble",
+        "Mineral Vein",
+        "ANCIENT MARBLE"
+      ]
+    },
+    {
+      "index": 41,
+      "id": "goldenEdition",
+      "label": "GOLDEN EDITION",
+      "surface": "royalGold",
+      "background": "#4b2a08",
+      "primary": "#e6a42f",
+      "secondary": "#3a2107",
+      "accent": "#fff0a6",
+      "edge": "#ffc43f",
+      "glow": "rgba(255,207,82,0.62)",
+      "liquidType": "Gold Resin",
+      "liquidTexture": "Metallic",
+      "notes": "Full special-edition gold machine: every major part, head, clothes, bag, counter, trim, badge, and scar becomes rich gold with dark gold shadow and engraved royal machine marks.",
+      "rarity": "Special Edition",
+      "randomizerTags": [
+        "royalGold",
+        "Metallic",
+        "GOLDEN EDITION",
+        "fullGold"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+[
+  { "wei": "0", "name": "No Major Sale", "effect": "none" },
+  { "wei": "1000000000000000000", "name": "Silver Provenance", "effect": "silver archive stamp" },
+  { "wei": "2000000000000000000", "name": "Gold Provenance", "effect": "gold archive stamp" },
+  { "wei": "3000000000000000000", "name": "High Market Signal", "effect": "glowing market signal lines" },
+  { "wei": "5000000000000000000", "name": "Royal Archive Seal", "effect": "royal seal behind head" },
+  { "wei": "7000000000000000000", "name": "Legendary Market Echo", "effect": "legendary gear halo" },
+  { "wei": "10000000000000000000", "name": "Mythic Provenance", "effect": "black-gold mythic aura" }
+]

@@ -1,0 +1,3212 @@
+{
+  "schemaVersion": 1,
+  "collection": "Motorheads",
+  "purpose": "Production trait bible. A trait is not approved unless it has visual identity, animation, chain reaction, history reaction, and connection behavior.",
+  "approvalRules": {
+    "minimumApprovedQualityScore": 3,
+    "requiredConnectionPointCount": 1,
+    "qualityScale": {
+      "0": "static / reject",
+      "1": "tiny animation only / weak",
+      "2": "clear movement but no chain meaning",
+      "3": "reacts to chain state",
+      "4": "reacts to chain + time + transfers",
+      "5": "connects with other traits and has rare states"
+    }
+  },
+  "reactionCategories": [
+    "heartbeat",
+    "pressure",
+    "age",
+    "bond",
+    "history",
+    "milestone",
+    "connection",
+    "mood"
+  ],
+  "connectionChannels": [
+    "antennaSignal",
+    "screenSignal",
+    "powerPulse",
+    "gearDrive",
+    "fluidFlow",
+    "steamPressure",
+    "soundWave",
+    "archiveStamp",
+    "marketEcho",
+    "lightCore",
+    "bodyBounce"
+  ],
+  "traits": [
+    {
+      "id": "head.crtTv",
+      "traitName": "CRT TV Head",
+      "category": "Head",
+      "rarityTier": "Common",
+      "visualIdentity": "dark rounded CRT box, brass bezel, cyan-green sleepy screen face, side vents, twin antenna sockets",
+      "animationComponent": "screen",
+      "idleAnimation": "soft scanline drift and sleepy face breathing glow",
+      "heartbeatReaction": "screen flicker pulse on every new block",
+      "pressureReaction": "high gas adds scanline tearing, antenna static, and warning face jitter",
+      "ageReaction": "dust on glass, subtle burn-in, warmer brass edge patina",
+      "bondReaction": "holder bond stabilizes signal and smooths face movement",
+      "historyReaction": "transfer count scratches the glass and adds tiny signal stamps",
+      "milestoneReaction": "major sale unlocks rare broadcast text inside the screen",
+      "moodStates": [
+        "calm",
+        "stressed",
+        "aged",
+        "legendary"
+      ],
+      "connectionPoints": [
+        "antenna",
+        "neckCable",
+        "screenSignal"
+      ],
+      "emits": [
+        "screenSignal"
+      ],
+      "receives": [
+        "antennaSignal",
+        "powerPulse",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "back.pressureGaugeShoulderBag",
+        "neck.wireScarf",
+        "chest.speakerCore",
+        "arm.signalTracker"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "head.clock",
+      "traitName": "Clock Head",
+      "category": "Head",
+      "rarityTier": "Common",
+      "visualIdentity": "large round brass clock face with dark glass, roman marks, side winding gears",
+      "animationComponent": "clockHands",
+      "idleAnimation": "hands tick slowly while inner gear makes tiny steps",
+      "heartbeatReaction": "minute hand snaps one small step on new block heartbeat",
+      "pressureReaction": "high gas makes hands spin faster and briefly redline the rim",
+      "ageReaction": "aged glass yellows and roman numerals gain relic glow",
+      "bondReaction": "strong holder bond makes ticking smoother and calmer",
+      "historyReaction": "transfers add hairline cracks and small archive date marks",
+      "milestoneReaction": "major sale adds golden clock seal behind the rim",
+      "moodStates": [
+        "calm",
+        "fast",
+        "aged",
+        "legendary"
+      ],
+      "connectionPoints": [
+        "gearCollar",
+        "neckCable",
+        "timeDrive"
+      ],
+      "emits": [
+        "gearDrive"
+      ],
+      "receives": [
+        "gearDrive",
+        "powerPulse",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "neck.gearCollar",
+        "back.batteryMeterBag",
+        "chest.gearPendant"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "head.cassettePlayer",
+      "traitName": "Cassette Player Head",
+      "category": "Head",
+      "rarityTier": "Common",
+      "visualIdentity": "rectangular cassette deck, dark shell, brass buttons, visible tape reels, glowing face inside tape window",
+      "animationComponent": "tapeReels",
+      "idleAnimation": "tape reels rotate lazily and buttons pulse",
+      "heartbeatReaction": "reels tick forward one frame per block",
+      "pressureReaction": "high gas makes reels spin wild and buttons jam-flash",
+      "ageReaction": "label fades, plastic scratches deepen, tape window gets dusty",
+      "bondReaction": "stable holder bond makes reel speed steady and glow cleaner",
+      "historyReaction": "transfer marks become worn label stickers and tape scuffs",
+      "milestoneReaction": "major sale plays a rare golden cassette flash",
+      "moodStates": [
+        "calm",
+        "jammed",
+        "aged",
+        "legendary"
+      ],
+      "connectionPoints": [
+        "audioOut",
+        "neckCable",
+        "tapeDrive"
+      ],
+      "emits": [
+        "soundWave",
+        "screenSignal"
+      ],
+      "receives": [
+        "powerPulse",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "chest.speakerCore",
+        "neck.wireScarf",
+        "back.chainEngineBag"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 4,
+      "approved": true
+    },
+    {
+      "id": "head.filmProjector",
+      "traitName": "Film Projector Head",
+      "category": "Head",
+      "rarityTier": "Uncommon",
+      "visualIdentity": "archive film projector head with twin reels, glass lens, brass focus barrel, and screen-face gate",
+      "animationComponent": "reelLensGate",
+      "idleAnimation": "projector reels turn slowly while the lens breathes a soft cyan focus glow",
+      "heartbeatReaction": "film gate clicks one frame forward on each new block",
+      "pressureReaction": "high gas makes reels jitter, lens flare, and the film strip stutter",
+      "ageReaction": "old reel scratches, dusty lens bloom, and sepia projector burn marks appear",
+      "bondReaction": "strong bond steadies the focus and makes the lens glow cleaner",
+      "historyReaction": "transfer history adds tiny film splice marks and numbered frame scratches",
+      "milestoneReaction": "major sale unlocks golden premiere beam from the projector lens",
+      "moodStates": [
+        "calm",
+        "flickering",
+        "aged",
+        "premiere"
+      ],
+      "connectionPoints": [
+        "lensBeam",
+        "reelAxle",
+        "powerCord"
+      ],
+      "emits": [
+        "screenSignal",
+        "powerPulse",
+        "lightBeam"
+      ],
+      "receives": [
+        "powerPulse",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "back.chainEngineBag",
+        "neck.wireScarf",
+        "chest.gearPendant"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 4,
+      "approved": true
+    },
+    {
+      "id": "head.divingHelmet",
+      "traitName": "Diving Helmet Head",
+      "category": "Head",
+      "rarityTier": "Uncommon",
+      "visualIdentity": "round black-and-brass diving helmet, bolted portholes, pressure ports, fogged glass",
+      "animationComponent": "portholeBubbles",
+      "idleAnimation": "soft breathing fog and slow bubble drift inside glass",
+      "heartbeatReaction": "porthole light pulses with each new block",
+      "pressureReaction": "high gas makes gauge needle shake and bubbles boil",
+      "ageReaction": "brass oxidizes, glass gets cloudy, bolts darken",
+      "bondReaction": "strong bond clears glass and makes breathing slower",
+      "historyReaction": "transfer history dents the helmet and scratches portholes",
+      "milestoneReaction": "major sale unlocks deep-sea relic glow around the rim",
+      "moodStates": [
+        "calm",
+        "pressurized",
+        "aged",
+        "deepRelic"
+      ],
+      "connectionPoints": [
+        "fluidIn",
+        "steamVent",
+        "neckSeal"
+      ],
+      "emits": [
+        "fluidFlow",
+        "steamPressure"
+      ],
+      "receives": [
+        "fluidFlow",
+        "steamPressure",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "clothes.fluidTubeJacket",
+        "back.fishTankBackpack",
+        "neck.pressureHose"
+      ],
+      "incompatibleWith": [
+        "hat.blackBeanie"
+      ],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "head.oldComputer",
+      "traitName": "Old Computer Head",
+      "category": "Head",
+      "rarityTier": "Common",
+      "visualIdentity": "beige old computer monitor with keyboard shelf, dark terminal screen, brass side badges",
+      "animationComponent": "terminalCursor",
+      "idleAnimation": "terminal cursor blinks and keyboard LEDs breathe",
+      "heartbeatReaction": "new block prints one tiny archive glyph",
+      "pressureReaction": "high gas stalls loading bar and flashes warning text",
+      "ageReaction": "case yellows, dust gathers in vents, screen burn increases",
+      "bondReaction": "holder bond makes boot sequence stable and cleaner",
+      "historyReaction": "transfer count adds command-line stamp marks",
+      "milestoneReaction": "major sale unlocks PROVENANCE VERIFIED terminal banner",
+      "moodStates": [
+        "calm",
+        "loading",
+        "aged",
+        "verified"
+      ],
+      "connectionPoints": [
+        "keyboardBus",
+        "screenSignal",
+        "powerCord"
+      ],
+      "emits": [
+        "screenSignal",
+        "archiveStamp"
+      ],
+      "receives": [
+        "powerPulse",
+        "antennaSignal",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "neck.wireScarf",
+        "back.transactionPrinterBag",
+        "arm.signalTracker"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 4,
+      "approved": true
+    },
+    {
+      "id": "head.gameboy",
+      "traitName": "Gameboy Head",
+      "category": "Head",
+      "rarityTier": "Uncommon",
+      "visualIdentity": "wide handheld console head, black shell, brass buttons, cyan-green screen face",
+      "animationComponent": "pixelScreen",
+      "idleAnimation": "pixel screen shimmer and small button glow",
+      "heartbeatReaction": "screen pixels step in a tiny heartbeat pattern",
+      "pressureReaction": "high gas shows low-battery glitch and pixel tear",
+      "ageReaction": "button edges polish and screen corners scratch",
+      "bondReaction": "strong bond gives stable pixel smile and cleaner screen",
+      "historyReaction": "transfers add cartridge sticker scuffs",
+      "milestoneReaction": "major sale unlocks rare golden START pulse",
+      "moodStates": [
+        "calm",
+        "lowBattery",
+        "aged",
+        "goldStart"
+      ],
+      "connectionPoints": [
+        "screenSignal",
+        "buttonBus",
+        "cartridgePort"
+      ],
+      "emits": [
+        "screenSignal"
+      ],
+      "receives": [
+        "powerPulse",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "back.batteryMeterBag",
+        "neck.wireScarf",
+        "chest.gearPendant"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 4,
+      "approved": true
+    },
+    {
+      "id": "head.camera",
+      "traitName": "Camera Head",
+      "category": "Head",
+      "rarityTier": "Uncommon",
+      "visualIdentity": "vintage camera head, central lens face, brass aperture ring, black leather panels",
+      "animationComponent": "lensShutter",
+      "idleAnimation": "lens breathing focus and aperture shimmer",
+      "heartbeatReaction": "shutter blinks once on new block",
+      "pressureReaction": "high gas overexposes flash and shakes focus ring",
+      "ageReaction": "leather texture roughens and brass ring gains patina",
+      "bondReaction": "strong bond produces steady focus lock glow",
+      "historyReaction": "transfer history adds photo contact-sheet scratches",
+      "milestoneReaction": "major sale unlocks provenance flash frame",
+      "moodStates": [
+        "calm",
+        "overexposed",
+        "aged",
+        "provenanceFlash"
+      ],
+      "connectionPoints": [
+        "lensSignal",
+        "flashPort",
+        "neckCable"
+      ],
+      "emits": [
+        "screenSignal",
+        "lightCore"
+      ],
+      "receives": [
+        "powerPulse",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "arm.floatingGauge",
+        "back.pressureGaugeShoulderBag",
+        "neck.wireScarf"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 4,
+      "approved": true
+    },
+    {
+      "id": "head.radio",
+      "traitName": "Radio Head",
+      "category": "Head",
+      "rarityTier": "Common",
+      "visualIdentity": "dark old radio box, brass tuning knobs, grille face, frequency rail",
+      "animationComponent": "tuningNeedle",
+      "idleAnimation": "tuning needle drifts and grille hums",
+      "heartbeatReaction": "needle ticks to latest block rhythm",
+      "pressureReaction": "high gas creates noisy signal waves and knob vibration",
+      "ageReaction": "frequency label fades and brass tarnishes",
+      "bondReaction": "strong bond locks to a clean station",
+      "historyReaction": "transfer count adds station stickers and grille scratches",
+      "milestoneReaction": "major sale unlocks royal broadcast tone",
+      "moodStates": [
+        "calm",
+        "noisy",
+        "aged",
+        "royalBroadcast"
+      ],
+      "connectionPoints": [
+        "speakerOut",
+        "antenna",
+        "neckCable"
+      ],
+      "emits": [
+        "soundWave",
+        "antennaSignal"
+      ],
+      "receives": [
+        "antennaSignal",
+        "powerPulse",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "chest.speakerCore",
+        "back.pressureGaugeShoulderBag",
+        "neck.wireScarf"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "head.rotaryPhone",
+      "traitName": "Rotary Phone Head",
+      "category": "Head",
+      "rarityTier": "Rare",
+      "visualIdentity": "black rotary phone body head, brass dial, receiver crown, coiled side cord",
+      "animationComponent": "rotaryDial",
+      "idleAnimation": "dial returns slowly and receiver trembles softly",
+      "heartbeatReaction": "dial clicks one notch per new block",
+      "pressureReaction": "high gas makes ringing vibration and busy signal flash",
+      "ageReaction": "bakelite surface dulls and dial numbers yellow",
+      "bondReaction": "strong bond makes ring cadence calm and steady",
+      "historyReaction": "transfers leave call log marks around the dial",
+      "milestoneReaction": "major sale unlocks golden connected-call glow",
+      "moodStates": [
+        "calm",
+        "ringing",
+        "aged",
+        "connected"
+      ],
+      "connectionPoints": [
+        "phoneCord",
+        "audioOut",
+        "neckCable"
+      ],
+      "emits": [
+        "soundWave"
+      ],
+      "receives": [
+        "powerPulse",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "neck.wireScarf",
+        "chest.speakerCore",
+        "back.transactionPrinterBag"
+      ],
+      "incompatibleWith": [
+        "hat.topHat"
+      ],
+      "animationCost": "medium",
+      "qualityScore": 4,
+      "approved": true
+    },
+    {
+      "id": "head.pressureGauge",
+      "traitName": "Pressure Gauge Head",
+      "category": "Head",
+      "rarityTier": "Rare",
+      "visualIdentity": "large pressure gauge face, redline arc, brass rim, pipe ports on both sides",
+      "animationComponent": "needle",
+      "idleAnimation": "needle breathes around low pressure",
+      "heartbeatReaction": "needle ticks with block heartbeat",
+      "pressureReaction": "high gas redlines needle and vents steam",
+      "ageReaction": "glass yellows and dial numbers darken",
+      "bondReaction": "strong bond steadies needle and reduces steam",
+      "historyReaction": "transfers crack gauge glass and add service stamps",
+      "milestoneReaction": "major sale unlocks mythic black-gold redline seal",
+      "moodStates": [
+        "calm",
+        "redline",
+        "aged",
+        "mythicRedline"
+      ],
+      "connectionPoints": [
+        "pressureIn",
+        "steamVent",
+        "neckPipe"
+      ],
+      "emits": [
+        "steamPressure"
+      ],
+      "receives": [
+        "steamPressure",
+        "fluidFlow",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "neck.pressureHose",
+        "back.fishTankBackpack",
+        "arm.floatingGauge"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "head.liquidTank",
+      "traitName": "Liquid Tank Head",
+      "category": "Head",
+      "rarityTier": "Rare",
+      "visualIdentity": "glass tank head, visible fluid level, bolted brass caps, cyan or exotic liquid",
+      "animationComponent": "liquid",
+      "idleAnimation": "liquid wave sways and small bubbles rise",
+      "heartbeatReaction": "bubble column pulses once per block",
+      "pressureReaction": "high gas makes liquid boil and glass glow red at edges",
+      "ageReaction": "liquid color deepens and sediment forms",
+      "bondReaction": "strong bond clarifies liquid and makes bubbles symmetrical",
+      "historyReaction": "transfers leave dents on metal caps and scratches on glass",
+      "milestoneReaction": "major sale unlocks rare aurora liquid shimmer",
+      "moodStates": [
+        "calm",
+        "boiling",
+        "sediment",
+        "aurora"
+      ],
+      "connectionPoints": [
+        "fluidIn",
+        "fluidOut",
+        "neckSeal"
+      ],
+      "emits": [
+        "fluidFlow",
+        "lightCore"
+      ],
+      "receives": [
+        "fluidFlow",
+        "steamPressure",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "clothes.fluidTubeJacket",
+        "back.fishTankBackpack",
+        "neck.liquidTubeNecklace"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "head.slotMachine",
+      "traitName": "Slot Machine Head",
+      "category": "Head",
+      "rarityTier": "Epic",
+      "visualIdentity": "small black-gold slot machine cabinet, reel window face, lever, coin lights",
+      "animationComponent": "reels",
+      "idleAnimation": "reels nudge slowly and coin lights breathe",
+      "heartbeatReaction": "one reel ticks on each new block",
+      "pressureReaction": "high gas spins reels wild and flashes tilt warning",
+      "ageReaction": "coin slot tarnishes and reel symbols fade",
+      "bondReaction": "strong bond creates calmer lucky glow",
+      "historyReaction": "transfers add casino-style service marks",
+      "milestoneReaction": "major sale triggers jackpot flash and gold confetti sparks",
+      "moodStates": [
+        "calm",
+        "tilt",
+        "aged",
+        "jackpot"
+      ],
+      "connectionPoints": [
+        "marketEcho",
+        "powerCord",
+        "coinBus"
+      ],
+      "emits": [
+        "marketEcho",
+        "lightCore"
+      ],
+      "receives": [
+        "marketEcho",
+        "powerPulse",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "chest.goldChain",
+        "back.chainEngineBag",
+        "arm.floatingGauge"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "head.typewriter",
+      "traitName": "Typewriter Head",
+      "category": "Head",
+      "rarityTier": "Rare",
+      "visualIdentity": "old typewriter head with paper carriage, key rows, brass carriage rail, archive page mouth",
+      "animationComponent": "keysAndPaper",
+      "idleAnimation": "keys twitch and paper subtly scrolls",
+      "heartbeatReaction": "one key taps a new block mark",
+      "pressureReaction": "high gas jams keys and shakes carriage",
+      "ageReaction": "paper yellows and ink grows darker",
+      "bondReaction": "strong bond types clean archival lines",
+      "historyReaction": "transfers stamp the paper with passport marks",
+      "milestoneReaction": "major sale types provenance line in gold ink",
+      "moodStates": [
+        "calm",
+        "jammed",
+        "aged",
+        "provenanceInk"
+      ],
+      "connectionPoints": [
+        "archivePaper",
+        "keyBus",
+        "neckCable"
+      ],
+      "emits": [
+        "archiveStamp"
+      ],
+      "receives": [
+        "powerPulse",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "neck.archiveTag",
+        "back.transactionPrinterBag",
+        "clothes.archiveTrench"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "clothes.transparentPinstripe",
+      "traitName": "Transparent Pinstripe Shirt",
+      "category": "Clothes",
+      "rarityTier": "Common",
+      "visualIdentity": "dark transparent pinstripe shirt with glass panels, gold buttons, visible machine ribs beneath",
+      "animationComponent": "pinstripeGlow",
+      "idleAnimation": "pinstripe lines breathe with core glow",
+      "heartbeatReaction": "center buttons pulse once per block",
+      "pressureReaction": "high gas makes pinstripes flicker and shoulder seams vibrate",
+      "ageReaction": "cloth glass gains tiny dust and old archive creases",
+      "bondReaction": "strong bond cleans the transparent panels",
+      "historyReaction": "transfers leave small stitch scars on cuffs",
+      "milestoneReaction": "major sale adds gold thread through pinstripes",
+      "moodStates": [
+        "calm",
+        "flicker",
+        "aged",
+        "goldThread"
+      ],
+      "connectionPoints": [
+        "chestCore",
+        "shoulderBus",
+        "neckLine"
+      ],
+      "emits": [
+        "lightCore"
+      ],
+      "receives": [
+        "powerPulse",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.crtTv",
+        "head.clock",
+        "chest.gearPendant",
+        "neck.gearCollar"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 4,
+      "approved": true
+    },
+    {
+      "id": "clothes.smokedGlassJacket",
+      "traitName": "Smoked Glass Jacket",
+      "category": "Clothes",
+      "rarityTier": "Uncommon",
+      "visualIdentity": "smoky transparent jacket panels with black chrome seams and brass hinge cuffs",
+      "animationComponent": "glassReflection",
+      "idleAnimation": "soft glass reflection rolls across shoulders",
+      "heartbeatReaction": "panel highlights step with new blocks",
+      "pressureReaction": "high gas fogs the glass and makes seams rattle",
+      "ageReaction": "smoked panels get dusty and scratched",
+      "bondReaction": "strong bond clears fog and sharpens reflections",
+      "historyReaction": "transfers add fine stress cracks near hinges",
+      "milestoneReaction": "major sale adds black-gold reflection aura",
+      "moodStates": [
+        "calm",
+        "fogged",
+        "aged",
+        "blackGold"
+      ],
+      "connectionPoints": [
+        "chestCore",
+        "shoulderGlass",
+        "backMount"
+      ],
+      "emits": [
+        "lightCore"
+      ],
+      "receives": [
+        "screenSignal",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.camera",
+        "head.oldComputer",
+        "back.pressureGaugeShoulderBag"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 4,
+      "approved": true
+    },
+    {
+      "id": "clothes.cyanLabGlassCoat",
+      "traitName": "Cyan Lab Glass Coat",
+      "category": "Clothes",
+      "rarityTier": "Rare",
+      "visualIdentity": "clear cyan lab coat made of glass plates, visible fluid vials, clean archive seams",
+      "animationComponent": "vialPulse",
+      "idleAnimation": "vials bubble slowly and coat edge glows cyan",
+      "heartbeatReaction": "vial bubbles jump on new block",
+      "pressureReaction": "high gas makes vials churn and glow brighter",
+      "ageReaction": "glass edges frost and labels yellow",
+      "bondReaction": "strong bond makes liquid settle into elegant waves",
+      "historyReaction": "transfers add lab labels and etched dates",
+      "milestoneReaction": "major sale unlocks laboratory certification stamp",
+      "moodStates": [
+        "calm",
+        "churning",
+        "frosted",
+        "certified"
+      ],
+      "connectionPoints": [
+        "fluidBus",
+        "chestCore",
+        "neckSeal"
+      ],
+      "emits": [
+        "fluidFlow",
+        "lightCore"
+      ],
+      "receives": [
+        "fluidFlow",
+        "steamPressure",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.liquidTank",
+        "head.divingHelmet",
+        "back.fishTankBackpack"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "clothes.amberResinRobe",
+      "traitName": "Amber Resin Robe",
+      "category": "Clothes",
+      "rarityTier": "Rare",
+      "visualIdentity": "warm amber transparent robe with fossil-like gears suspended in resin",
+      "animationComponent": "resinGlow",
+      "idleAnimation": "resin glows slowly around trapped gears",
+      "heartbeatReaction": "fossil gears pulse with each new block",
+      "pressureReaction": "high gas creates tiny amber stress fractures",
+      "ageReaction": "robe deepens from honey to old relic amber",
+      "bondReaction": "strong bond clears inclusions and brightens suspended gears",
+      "historyReaction": "transfers add fossil stamp marks in the resin",
+      "milestoneReaction": "major sale unlocks gold relic aura inside robe",
+      "moodStates": [
+        "calm",
+        "fractured",
+        "ancient",
+        "relicAura"
+      ],
+      "connectionPoints": [
+        "chestCore",
+        "gearThread",
+        "backMount"
+      ],
+      "emits": [
+        "lightCore",
+        "gearDrive"
+      ],
+      "receives": [
+        "gearDrive",
+        "marketEcho",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.clock",
+        "neck.gearCollar",
+        "chest.gearPendant"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "clothes.dirtyGlassMechanic",
+      "traitName": "Dirty Glass Mechanic Jacket",
+      "category": "Clothes",
+      "rarityTier": "Common",
+      "visualIdentity": "shop-worn transparent mechanic jacket, dark grime, brass snaps, visible shoulder pistons",
+      "animationComponent": "pistonTwitch",
+      "idleAnimation": "shoulder pistons twitch and grime shimmer shifts",
+      "heartbeatReaction": "brass snaps blink with block rhythm",
+      "pressureReaction": "high gas shakes the pistons and darkens grime",
+      "ageReaction": "jacket gains more oil stains and worn edges",
+      "bondReaction": "strong bond makes pistons move in smoother rhythm",
+      "historyReaction": "transfers add service-scratch tallies on sleeve",
+      "milestoneReaction": "major sale adds rare stamped shop badge",
+      "moodStates": [
+        "calm",
+        "rattling",
+        "aged",
+        "shopBadge"
+      ],
+      "connectionPoints": [
+        "shoulderBus",
+        "chestCore",
+        "armRail"
+      ],
+      "emits": [
+        "powerPulse"
+      ],
+      "receives": [
+        "steamPressure",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "arm.signalTracker",
+        "arm.valveHand",
+        "back.chainEngineBag"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 4,
+      "approved": true
+    },
+    {
+      "id": "clothes.mercuryHoodie",
+      "traitName": "Mercury Hoodie",
+      "category": "Clothes",
+      "rarityTier": "Uncommon",
+      "visualIdentity": "dark transparent hoodie with silver fluid cords and soft cyan drawstring glow",
+      "animationComponent": "fluidCords",
+      "idleAnimation": "silver fluid cords ripple around the collar",
+      "heartbeatReaction": "drawstring tips blink with each block",
+      "pressureReaction": "high gas makes cords twitch and mercury shimmer spike",
+      "ageReaction": "hood glass dims and cord fluid becomes heavier",
+      "bondReaction": "strong bond synchronizes left and right cord waves",
+      "historyReaction": "transfers add tiny sleeve tags and scratches",
+      "milestoneReaction": "major sale unlocks silver mercury halo along hood edge",
+      "moodStates": [
+        "calm",
+        "spiking",
+        "aged",
+        "mercuryHalo"
+      ],
+      "connectionPoints": [
+        "neckLine",
+        "fluidBus",
+        "chestCore"
+      ],
+      "emits": [
+        "fluidFlow",
+        "lightCore"
+      ],
+      "receives": [
+        "fluidFlow",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.gameboy",
+        "head.oldComputer",
+        "neck.liquidTubeNecklace"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 4,
+      "approved": true
+    },
+    {
+      "id": "clothes.blueReactorVest",
+      "traitName": "Blue Reactor Vest",
+      "category": "Clothes",
+      "rarityTier": "Rare",
+      "visualIdentity": "transparent reactor vest with blue tubes, small pressure cells, black chrome straps",
+      "animationComponent": "reactorFlow",
+      "idleAnimation": "blue fluid circulates from core into shoulder cells",
+      "heartbeatReaction": "reactor core pulse travels through tubes on new block",
+      "pressureReaction": "high gas makes tubes brighten and pressure cells tremble",
+      "ageReaction": "tube glass scratches and coolant darkens",
+      "bondReaction": "strong bond makes flow smooth and symmetrical",
+      "historyReaction": "transfers add stamped maintenance labels on straps",
+      "milestoneReaction": "major sale unlocks starfield coolant shimmer",
+      "moodStates": [
+        "calm",
+        "overpressure",
+        "aged",
+        "starfield"
+      ],
+      "connectionPoints": [
+        "chestCore",
+        "fluidBus",
+        "backMount"
+      ],
+      "emits": [
+        "fluidFlow",
+        "lightCore"
+      ],
+      "receives": [
+        "fluidFlow",
+        "steamPressure",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.liquidTank",
+        "head.pressureGauge",
+        "back.fishTankBackpack"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "clothes.goldWireSuit",
+      "traitName": "Gold Wire Suit",
+      "category": "Clothes",
+      "rarityTier": "Epic",
+      "visualIdentity": "dark suit made of fine gold wires over visible machine ribs, glowing circuit seams",
+      "animationComponent": "wireCurrent",
+      "idleAnimation": "gold current crawls through suit lines",
+      "heartbeatReaction": "current steps from chest to shoulders every block",
+      "pressureReaction": "high gas sparks along wire seams",
+      "ageReaction": "wire oxidizes and older traces glow warmer",
+      "bondReaction": "strong bond makes current flow in clean loops",
+      "historyReaction": "transfers add broken wire repairs and solder marks",
+      "milestoneReaction": "major sale unlocks royal market circuit",
+      "moodStates": [
+        "calm",
+        "sparking",
+        "aged",
+        "royalCircuit"
+      ],
+      "connectionPoints": [
+        "powerBus",
+        "chestCore",
+        "shoulderBus"
+      ],
+      "emits": [
+        "powerPulse",
+        "marketEcho"
+      ],
+      "receives": [
+        "marketEcho",
+        "powerPulse",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.slotMachine",
+        "head.crtTv",
+        "back.chainEngineBag"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "clothes.blackChromeHarness",
+      "traitName": "Black Chrome Harness",
+      "category": "Clothes",
+      "rarityTier": "Common",
+      "visualIdentity": "black chrome cross-body harness with brass buckles and visible chest core",
+      "animationComponent": "bucklePulse",
+      "idleAnimation": "buckles catch light and core window breathes",
+      "heartbeatReaction": "buckle highlights pulse on block heartbeat",
+      "pressureReaction": "high gas makes harness straps vibrate",
+      "ageReaction": "edges scuff and black chrome loses shine",
+      "bondReaction": "strong bond tightens motion and steadies core window",
+      "historyReaction": "transfers add notch marks on belt",
+      "milestoneReaction": "major sale adds gold provenance buckle",
+      "moodStates": [
+        "calm",
+        "vibrating",
+        "aged",
+        "provenanceBuckle"
+      ],
+      "connectionPoints": [
+        "chestCore",
+        "armRail",
+        "backMount"
+      ],
+      "emits": [
+        "powerPulse"
+      ],
+      "receives": [
+        "bodyBounce",
+        "gearDrive"
+      ],
+      "compatibleWith": [
+        "arm.signalTracker",
+        "chest.gearPendant",
+        "back.pressureGaugeShoulderBag"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 3,
+      "approved": true
+    },
+    {
+      "id": "clothes.rustedCageVest",
+      "traitName": "Rusted Cage Vest",
+      "category": "Clothes",
+      "rarityTier": "Uncommon",
+      "visualIdentity": "open rusted cage vest with bolted ribs, transparent gaps, old iron texture",
+      "animationComponent": "cageRattle",
+      "idleAnimation": "cage ribs rattle slightly with global life motion",
+      "heartbeatReaction": "rib bolts tick in block rhythm",
+      "pressureReaction": "high gas shakes cage and vents faint rust dust",
+      "ageReaction": "rust blooms around bolts",
+      "bondReaction": "strong bond reduces rattle into stable hum",
+      "historyReaction": "transfers leave travel scratches and patch plates",
+      "milestoneReaction": "major sale adds golden repair rivets",
+      "moodStates": [
+        "calm",
+        "rattling",
+        "rusted",
+        "goldRepair"
+      ],
+      "connectionPoints": [
+        "shoulderBus",
+        "chestCore",
+        "armRail"
+      ],
+      "emits": [
+        "archiveStamp"
+      ],
+      "receives": [
+        "steamPressure",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.pressureGauge",
+        "back.gasCanisterPack",
+        "arm.valveHand"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 4,
+      "approved": true
+    },
+    {
+      "id": "clothes.fluidTubeJacket",
+      "traitName": "Fluid Tube Jacket",
+      "category": "Clothes",
+      "rarityTier": "Rare",
+      "visualIdentity": "transparent jacket with visible liquid tubes running from chest to neck and shoulders",
+      "animationComponent": "tubeFlow",
+      "idleAnimation": "fluid crawls through jacket tubes",
+      "heartbeatReaction": "a bright droplet travels one segment on new block",
+      "pressureReaction": "high gas speeds droplets and creates tube bubbles",
+      "ageReaction": "tube walls stain and fluid gains mineral sediment",
+      "bondReaction": "strong bond makes fluid flow evenly and glow softly",
+      "historyReaction": "transfers add clamp marks and tube repair rings",
+      "milestoneReaction": "major sale unlocks rare cosmic fluid color",
+      "moodStates": [
+        "calm",
+        "pressurized",
+        "sediment",
+        "cosmic"
+      ],
+      "connectionPoints": [
+        "fluidBus",
+        "neckSeal",
+        "backMount"
+      ],
+      "emits": [
+        "fluidFlow"
+      ],
+      "receives": [
+        "fluidFlow",
+        "steamPressure",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.divingHelmet",
+        "head.liquidTank",
+        "back.fishTankBackpack",
+        "neck.pressureHose"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "clothes.speakerChestVest",
+      "traitName": "Speaker Chest Vest",
+      "category": "Clothes",
+      "rarityTier": "Rare",
+      "visualIdentity": "transparent vest with chest speaker core, brass sound rings, black straps",
+      "animationComponent": "speakerWave",
+      "idleAnimation": "speaker cone breathes and faint rings expand",
+      "heartbeatReaction": "one sound ring expands on every block",
+      "pressureReaction": "high gas distorts rings and rattles speaker bolts",
+      "ageReaction": "speaker fabric frays and brass rim patinas",
+      "bondReaction": "strong bond makes clean symmetrical sound waves",
+      "historyReaction": "transfers add concert-like stamp marks",
+      "milestoneReaction": "major sale unlocks royal broadcast ring",
+      "moodStates": [
+        "calm",
+        "distorted",
+        "aged",
+        "royalBroadcast"
+      ],
+      "connectionPoints": [
+        "speakerIn",
+        "chestCore",
+        "neckLine"
+      ],
+      "emits": [
+        "soundWave"
+      ],
+      "receives": [
+        "soundWave",
+        "antennaSignal",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.radio",
+        "head.cassettePlayer",
+        "head.rotaryPhone"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "clothes.archiveTrench",
+      "traitName": "Archive Trench Coat",
+      "category": "Clothes",
+      "rarityTier": "Epic",
+      "visualIdentity": "long transparent archive trench, paper tags, brass seals, visible inner machine silhouette",
+      "animationComponent": "archiveTags",
+      "idleAnimation": "paper tags sway and small seals glow",
+      "heartbeatReaction": "one tag flips on each new block",
+      "pressureReaction": "high gas shakes tags and makes seals flicker",
+      "ageReaction": "coat gains old paper texture and deeper archive glow",
+      "bondReaction": "strong bond makes tags align into calm archive order",
+      "historyReaction": "transfers add passport stamps on coat panels",
+      "milestoneReaction": "major sale unlocks museum provenance seal",
+      "moodStates": [
+        "calm",
+        "tagStorm",
+        "ancient",
+        "museumSeal"
+      ],
+      "connectionPoints": [
+        "archiveBus",
+        "chestCore",
+        "backMount"
+      ],
+      "emits": [
+        "archiveStamp"
+      ],
+      "receives": [
+        "archiveStamp",
+        "marketEcho",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.typewriter",
+        "neck.archiveTag",
+        "back.transactionPrinterBag"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "clothes.crimsonPressureCoat",
+      "traitName": "Crimson Pressure Coat",
+      "category": "Clothes",
+      "rarityTier": "Rare",
+      "visualIdentity": "red pressure coat with black steel panels, warning tubes, gauge chest, and brass clamps",
+      "animationComponent": "pressureGaugeTubes",
+      "idleAnimation": "gauge needle breathes and red tubes pulse softly",
+      "heartbeatReaction": "gauge clicks once per block heartbeat",
+      "pressureReaction": "high gas redlines the tubes and shakes the vent panels",
+      "ageReaction": "paint darkens into heat stains and red enamel chips",
+      "bondReaction": "strong bond steadies the needle and cools the red glow",
+      "historyReaction": "transfers add safety-stamp scratches and repaired pressure bands",
+      "milestoneReaction": "major sale unlocks a gold warning seal on the chest gauge",
+      "moodStates": [
+        "calm",
+        "redline",
+        "heatStained",
+        "goldWarning"
+      ],
+      "connectionPoints": [
+        "pressureIn",
+        "chestCore",
+        "shoulderVent"
+      ],
+      "emits": [
+        "steamPressure"
+      ],
+      "receives": [
+        "steamPressure",
+        "powerPulse",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.pressureGauge",
+        "head.valve",
+        "neck.pressureHose",
+        "back.gasCanisterPack"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "clothes.voidGlassCloak",
+      "traitName": "Void Glass Cloak",
+      "category": "Clothes",
+      "rarityTier": "Epic",
+      "visualIdentity": "violet-black transparent cloak, ghost glass panels, orbit rings, and a dark aperture core",
+      "animationComponent": "voidOrbit",
+      "idleAnimation": "thin violet arcs drift across the cloak",
+      "heartbeatReaction": "one orbit ring brightens on every new block",
+      "pressureReaction": "high gas makes the cloak ripple and aperture jitter",
+      "ageReaction": "glass darkens and gains star-dust scratches",
+      "bondReaction": "strong bond stabilizes the orbit rings into a clean halo",
+      "historyReaction": "transfers leave faint spectral stamp marks in the glass",
+      "milestoneReaction": "major sale unlocks a black-violet relic aperture",
+      "moodStates": [
+        "calm",
+        "warped",
+        "ancient",
+        "voidRelic"
+      ],
+      "connectionPoints": [
+        "lightCore",
+        "chestCore",
+        "backMount"
+      ],
+      "emits": [
+        "lightCore"
+      ],
+      "receives": [
+        "marketEcho",
+        "powerPulse",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.camera",
+        "head.satellite",
+        "head.crtTv",
+        "back.pressureGaugeShoulderBag"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "clothes.porcelainGridSuit",
+      "traitName": "Porcelain Grid Suit",
+      "category": "Clothes",
+      "rarityTier": "Uncommon",
+      "visualIdentity": "bone-white ceramic suit with clean grid ribs, mercury seams, and cyan lab vials",
+      "animationComponent": "gridPulse",
+      "idleAnimation": "porcelain grid lines glow softly under glass",
+      "heartbeatReaction": "center grid line pulses once per block",
+      "pressureReaction": "high gas adds fine ceramic hairline cracks",
+      "ageReaction": "porcelain yellows slightly and gains old laboratory dust",
+      "bondReaction": "strong bond clears the glass and aligns the grid",
+      "historyReaction": "transfers add small repair rivets on the ceramic plates",
+      "milestoneReaction": "major sale unlocks gold inlay between the grid ribs",
+      "moodStates": [
+        "calm",
+        "cracked",
+        "aged",
+        "goldInlay"
+      ],
+      "connectionPoints": [
+        "labBus",
+        "chestCore",
+        "shoulderClamp"
+      ],
+      "emits": [
+        "powerPulse"
+      ],
+      "receives": [
+        "fluidFlow",
+        "powerPulse",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.oldComputer",
+        "head.lamp",
+        "head.clock",
+        "neck.archiveTag"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 4,
+      "approved": true
+    },
+    {
+      "id": "clothes.copperCoilHarness",
+      "traitName": "Copper Coil Harness",
+      "category": "Clothes",
+      "rarityTier": "Uncommon",
+      "visualIdentity": "black harness crossed with copper coils, tesla chest spring, and amber arc contacts",
+      "animationComponent": "coilCharge",
+      "idleAnimation": "copper coil warms and tiny amber arcs crawl",
+      "heartbeatReaction": "coil ticks with block heartbeat",
+      "pressureReaction": "high gas overcharges the coil and throws brighter arcs",
+      "ageReaction": "copper oxidizes and the harness gains soot",
+      "bondReaction": "strong bond makes the coil hum steady",
+      "historyReaction": "transfers add replaced coil bands and solder marks",
+      "milestoneReaction": "major sale unlocks a perpetual copper spark",
+      "moodStates": [
+        "calm",
+        "overcharged",
+        "sooty",
+        "perpetualSpark"
+      ],
+      "connectionPoints": [
+        "powerIn",
+        "gearOut",
+        "chestCore"
+      ],
+      "emits": [
+        "powerPulse",
+        "gearDrive"
+      ],
+      "receives": [
+        "powerPulse",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.teslaCoil",
+        "back.batteryMeterBag",
+        "neck.gearCollar"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "clothes.greenSignalPoncho",
+      "traitName": "Green Signal Poncho",
+      "category": "Clothes",
+      "rarityTier": "Common",
+      "visualIdentity": "wide translucent signal-green poncho with antenna rods, frequency waves, and cyan rivets",
+      "animationComponent": "signalPoncho",
+      "idleAnimation": "green signal waves roll across the shoulders",
+      "heartbeatReaction": "frequency wave pings on every block",
+      "pressureReaction": "high gas adds noisy signal jitter and uneven wave spacing",
+      "ageReaction": "green glass gets weathered archive grain",
+      "bondReaction": "strong bond makes waves cleaner and more symmetrical",
+      "historyReaction": "transfers add small station labels near the shoulder seams",
+      "milestoneReaction": "major sale unlocks a bright broadcast crest",
+      "moodStates": [
+        "calm",
+        "noisy",
+        "weathered",
+        "broadcastCrest"
+      ],
+      "connectionPoints": [
+        "antenna",
+        "screenSignal",
+        "shoulderBus"
+      ],
+      "emits": [
+        "antennaSignal",
+        "screenSignal"
+      ],
+      "receives": [
+        "antennaSignal",
+        "screenSignal",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.radio",
+        "head.crtTv",
+        "back.pressureGaugeShoulderBag",
+        "neck.wireScarf"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "clothes.silverMercuryCoat",
+      "traitName": "Silver Mercury Coat",
+      "category": "Clothes",
+      "rarityTier": "Rare",
+      "visualIdentity": "silver liquid-metal coat with mercury tubes, glass reservoir core, and cold white highlights",
+      "animationComponent": "mercuryFlow",
+      "idleAnimation": "silver tubes slide like liquid metal",
+      "heartbeatReaction": "mercury reservoir pulses once per block",
+      "pressureReaction": "high gas makes mercury flash and ripple faster",
+      "ageReaction": "coat gains cloudy mirror tarnish",
+      "bondReaction": "strong bond makes mercury flow smooth and reflective",
+      "historyReaction": "transfers add dull scuffs to the mirror panels",
+      "milestoneReaction": "major sale unlocks bright moon-metal sheen",
+      "moodStates": [
+        "calm",
+        "rippling",
+        "tarnished",
+        "moonMetal"
+      ],
+      "connectionPoints": [
+        "fluidIn",
+        "fluidOut",
+        "chestCore"
+      ],
+      "emits": [
+        "fluidFlow",
+        "lightCore"
+      ],
+      "receives": [
+        "fluidFlow",
+        "powerPulse",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.liquidTank",
+        "head.divingHelmet",
+        "back.fishTankBackpack",
+        "neck.liquidTubeNecklace"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "clothes.rustForgeApron",
+      "traitName": "Rust Forge Apron",
+      "category": "Clothes",
+      "rarityTier": "Uncommon",
+      "visualIdentity": "rusted forge apron with copper rails, black vent grille, red heat lines, and work rivets",
+      "animationComponent": "forgeVent",
+      "idleAnimation": "forge vent glows under the apron and copper rails breathe heat",
+      "heartbeatReaction": "vent flares once per block",
+      "pressureReaction": "high gas makes the forge glow hotter and shakes apron rivets",
+      "ageReaction": "rust spreads and copper rails darken",
+      "bondReaction": "strong bond makes forge rhythm steady",
+      "historyReaction": "transfers add hammer marks and replacement rivets",
+      "milestoneReaction": "major sale unlocks a molten gold forge slit",
+      "moodStates": [
+        "calm",
+        "hotForge",
+        "rusted",
+        "goldForge"
+      ],
+      "connectionPoints": [
+        "forgeCore",
+        "steamIn",
+        "chestCore"
+      ],
+      "emits": [
+        "steamPressure",
+        "powerPulse"
+      ],
+      "receives": [
+        "steamPressure",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.pressureGauge",
+        "head.valve",
+        "back.gasCanisterPack",
+        "neck.pressureHose"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 4,
+      "approved": true
+    },
+    {
+      "id": "clothes.royalRelicMantle",
+      "traitName": "Royal Relic Mantle",
+      "category": "Clothes",
+      "rarityTier": "Epic",
+      "visualIdentity": "gold relic mantle over violet glass, shoulder gears, chain drapes, and royal center seal",
+      "animationComponent": "relicMantle",
+      "idleAnimation": "gold mantle gleams and chain drapes sway",
+      "heartbeatReaction": "royal seal clicks with each block",
+      "pressureReaction": "high gas makes violet underglass glow through the gold",
+      "ageReaction": "mantle gains antique tarnish and museum dust",
+      "bondReaction": "strong bond settles the chain swing into a ceremonial rhythm",
+      "historyReaction": "transfers add tiny provenance nicks along the gold edge",
+      "milestoneReaction": "major sale unlocks a royal market seal",
+      "moodStates": [
+        "calm",
+        "glowing",
+        "antique",
+        "royalSeal"
+      ],
+      "connectionPoints": [
+        "marketEcho",
+        "chainLoop",
+        "chestCore"
+      ],
+      "emits": [
+        "marketEcho",
+        "lightCore"
+      ],
+      "receives": [
+        "marketEcho",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.slotMachine",
+        "head.typewriter",
+        "chest.goldChain",
+        "neck.archiveTag"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "back.skateWheelPack",
+      "traitName": "Skate Wheel Pack",
+      "category": "BackAccessory",
+      "rarityTier": "Uncommon",
+      "visualIdentity": "cream side-shoulder board pack with brass trim, small rolling wheel pair, and cyan speed meter",
+      "animationComponent": "rollingWheelMeter",
+      "idleAnimation": "tiny wheel pair rolls lazily and cyan speed slit breathes",
+      "heartbeatReaction": "wheel ticks one notch per block",
+      "pressureReaction": "high gas makes the wheel spin fast and the pressure needle climb red",
+      "ageReaction": "cream deck gathers scuffs and brass trucks patina",
+      "bondReaction": "strong bond smooths wheel wobble and clears the speed slit",
+      "historyReaction": "transfers add tiny road nicks along the deck edge",
+      "milestoneReaction": "major sale unlocks a gold bearing ring",
+      "moodStates": [
+        "calm",
+        "rollingFast",
+        "scuffed",
+        "goldBearing"
+      ],
+      "connectionPoints": [
+        "backMount",
+        "wheelDrive",
+        "pressureDial"
+      ],
+      "emits": [
+        "powerPulse"
+      ],
+      "receives": [
+        "bodyBounce",
+        "steamPressure"
+      ],
+      "compatibleWith": [
+        "head.gameboy",
+        "head.camera",
+        "head.crtTv",
+        "neck.wireScarf"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "back.pressureGaugeShoulderBag",
+      "traitName": "Pressure Gauge Shoulder Bag",
+      "category": "BackAccessory",
+      "rarityTier": "Common",
+      "visualIdentity": "one-shoulder cream gauge bag with brass rim, black side band, and large readable pressure clock",
+      "animationComponent": "shoulderPressureClock",
+      "idleAnimation": "pressure clock hand rests with a tiny mechanical tremble",
+      "heartbeatReaction": "needle taps once per new block",
+      "pressureReaction": "high gas pushes the hand into the red sector",
+      "ageReaction": "cream enamel yellows and brass screws darken",
+      "bondReaction": "strong bond steadies the hand and cleans the dial glass",
+      "historyReaction": "transfers add service stamp dots near the gauge",
+      "milestoneReaction": "major sale adds a gold calibration mark",
+      "moodStates": [
+        "calm",
+        "redline",
+        "aged",
+        "calibrated"
+      ],
+      "connectionPoints": [
+        "backMount",
+        "pressureDial",
+        "fluidPort"
+      ],
+      "emits": [
+        "steamPressure"
+      ],
+      "receives": [
+        "bodyBounce",
+        "powerPulse"
+      ],
+      "compatibleWith": [
+        "head.pressureGauge",
+        "head.valve",
+        "head.crtTv",
+        "neck.pressureHose"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "back.chainEngineBag",
+      "traitName": "Chain Engine Bag",
+      "category": "BackAccessory",
+      "rarityTier": "Uncommon",
+      "visualIdentity": "compact side engine with visible brass chain loop, two sprockets, and cream shoulder band",
+      "animationComponent": "chainEngineLoop",
+      "idleAnimation": "chain links crawl slowly around the engine case",
+      "heartbeatReaction": "chain jumps one tooth per block",
+      "pressureReaction": "high gas makes sprockets and chain accelerate",
+      "ageReaction": "links darken with oil and old metal dust",
+      "bondReaction": "strong bond makes the chain loop quiet and synchronized",
+      "historyReaction": "transfers add worn chain marks and oil ticks",
+      "milestoneReaction": "major sale unlocks a gold master link",
+      "moodStates": [
+        "calm",
+        "racing",
+        "oiled",
+        "masterLink"
+      ],
+      "connectionPoints": [
+        "backMount",
+        "gearDrive",
+        "chainLoop"
+      ],
+      "emits": [
+        "gearDrive",
+        "powerPulse"
+      ],
+      "receives": [
+        "bodyBounce",
+        "gearDrive"
+      ],
+      "compatibleWith": [
+        "head.clock",
+        "head.slotMachine",
+        "neck.gearCollar",
+        "chest.gearPendant"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "back.fishTankBackpack",
+      "traitName": "Fish Tank Backpack",
+      "category": "BackAccessory",
+      "rarityTier": "Rare",
+      "visualIdentity": "glass side tank backpack with rounded cyan fluid chamber, bubbles, brass clamps, and cream band",
+      "animationComponent": "fishTankBubbles",
+      "idleAnimation": "bubbles rise through the tank in a slow loop",
+      "heartbeatReaction": "one bubble pops upward per block",
+      "pressureReaction": "high gas boils the fluid and shakes the little top gauge",
+      "ageReaction": "glass gains mineral fog and tiny water marks",
+      "bondReaction": "strong bond clears the tank and slows the bubbles",
+      "historyReaction": "transfers add clamp repair marks",
+      "milestoneReaction": "major sale unlocks aurora liquid shimmer",
+      "moodStates": [
+        "calm",
+        "boiling",
+        "mineralFog",
+        "aurora"
+      ],
+      "connectionPoints": [
+        "backMount",
+        "fluidOut",
+        "bubbleChamber"
+      ],
+      "emits": [
+        "fluidFlow"
+      ],
+      "receives": [
+        "bodyBounce",
+        "fluidFlow"
+      ],
+      "compatibleWith": [
+        "head.liquidTank",
+        "head.divingHelmet",
+        "clothes.fluidTubeJacket",
+        "neck.liquidTubeNecklace"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "back.cassetteBag",
+      "traitName": "Cassette Bag",
+      "category": "BackAccessory",
+      "rarityTier": "Uncommon",
+      "visualIdentity": "rectangular cassette shoulder bag with twin reels, tape window, and small pressure dial",
+      "animationComponent": "cassetteReels",
+      "idleAnimation": "cassette reels turn in opposite directions",
+      "heartbeatReaction": "tape reel clicks once per block",
+      "pressureReaction": "high gas makes reels spin unevenly and the dial climb",
+      "ageReaction": "label yellows and tape window scratches",
+      "bondReaction": "strong bond makes the reels turn cleanly",
+      "historyReaction": "transfers add tiny handwritten archive marks",
+      "milestoneReaction": "major sale unlocks a gold tape label",
+      "moodStates": [
+        "calm",
+        "fastReels",
+        "yellowed",
+        "goldLabel"
+      ],
+      "connectionPoints": [
+        "backMount",
+        "tapeSignal",
+        "pressureDial"
+      ],
+      "emits": [
+        "antennaSignal",
+        "powerPulse"
+      ],
+      "receives": [
+        "bodyBounce",
+        "antennaSignal"
+      ],
+      "compatibleWith": [
+        "head.cassettePlayer",
+        "head.radio",
+        "head.crtTv",
+        "neck.wireScarf"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "back.batteryMeterBag",
+      "traitName": "Battery Meter Bag",
+      "category": "BackAccessory",
+      "rarityTier": "Common",
+      "visualIdentity": "tall battery pack with stacked cyan charge cells, brass terminals, and a compact needle meter",
+      "animationComponent": "batteryCells",
+      "idleAnimation": "battery cells glow bottom to top in a slow loop",
+      "heartbeatReaction": "one charge segment flips on each block",
+      "pressureReaction": "high gas makes cells flash and needle move toward red",
+      "ageReaction": "battery casing scuffs and terminal brass tarnishes",
+      "bondReaction": "strong bond holds a stable full charge line",
+      "historyReaction": "transfers add replacement-cell labels",
+      "milestoneReaction": "major sale unlocks a gold terminal cap",
+      "moodStates": [
+        "calm",
+        "flashing",
+        "scuffed",
+        "goldTerminal"
+      ],
+      "connectionPoints": [
+        "backMount",
+        "powerOut",
+        "chargeMeter"
+      ],
+      "emits": [
+        "powerPulse"
+      ],
+      "receives": [
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.oldComputer",
+        "head.gameboy",
+        "head.teslaCoil",
+        "neck.gearCollar"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 4,
+      "approved": true
+    },
+    {
+      "id": "back.gasCanisterPack",
+      "traitName": "Gas Canister Pack",
+      "category": "BackAccessory",
+      "rarityTier": "Rare",
+      "visualIdentity": "rounded gas canister with warning valve, red/cyan pressure fluid, brass cap, and clear redline gauge",
+      "animationComponent": "gasCanisterValve",
+      "idleAnimation": "canister valve trembles and a liquid mark sways",
+      "heartbeatReaction": "valve taps with each block",
+      "pressureReaction": "high gas redlines the gauge and rattles the valve",
+      "ageReaction": "paint chips and canister edges rust",
+      "bondReaction": "strong bond reduces valve jitter",
+      "historyReaction": "transfers add dent and hazard stamp marks",
+      "milestoneReaction": "major sale unlocks black-gold hazard seal",
+      "moodStates": [
+        "calm",
+        "redline",
+        "dented",
+        "hazardSeal"
+      ],
+      "connectionPoints": [
+        "backMount",
+        "pressureOut",
+        "valvePort"
+      ],
+      "emits": [
+        "steamPressure"
+      ],
+      "receives": [
+        "steamPressure",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.pressureGauge",
+        "head.valve",
+        "neck.pressureHose",
+        "clothes.crimsonPressureCoat"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "back.transactionPrinterBag",
+      "traitName": "Transaction Printer Bag",
+      "category": "BackAccessory",
+      "rarityTier": "Rare",
+      "visualIdentity": "small archive printer pack with paper strip, flip digits, brass rollers, and cream service plate",
+      "animationComponent": "transactionPrinter",
+      "idleAnimation": "paper strip creeps out a millimeter and retracts",
+      "heartbeatReaction": "printer advances one tiny block mark per new block",
+      "pressureReaction": "high gas makes the paper jitter and warning ticks appear",
+      "ageReaction": "paper yellows and ink grows darker",
+      "bondReaction": "strong bond prints cleaner custody marks",
+      "historyReaction": "transfers stamp visible receipt ticks",
+      "milestoneReaction": "major sale prints a gold provenance receipt",
+      "moodStates": [
+        "calm",
+        "jitterPrint",
+        "yellowed",
+        "goldReceipt"
+      ],
+      "connectionPoints": [
+        "backMount",
+        "archiveBus",
+        "blockCounter"
+      ],
+      "emits": [
+        "archiveStamp"
+      ],
+      "receives": [
+        "bodyBounce",
+        "archiveStamp"
+      ],
+      "compatibleWith": [
+        "head.typewriter",
+        "head.oldComputer",
+        "head.rotaryPhone",
+        "neck.archiveTag"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "back.miniFanPack",
+      "traitName": "Mini Fan Pack",
+      "category": "BackAccessory",
+      "rarityTier": "Uncommon",
+      "visualIdentity": "rounded fan pack with visible turbine wheel, vent grille, and compact pressure clock",
+      "animationComponent": "miniFanRotor",
+      "idleAnimation": "fan rotor spins very slowly behind the grille",
+      "heartbeatReaction": "fan blips one step on each block",
+      "pressureReaction": "high gas makes the fan spin fast and push small wind marks",
+      "ageReaction": "fan grille gathers dust and metal smudges",
+      "bondReaction": "strong bond makes the fan hum steady",
+      "historyReaction": "transfers add bent grille scratches",
+      "milestoneReaction": "major sale unlocks a gold fan hub",
+      "moodStates": [
+        "calm",
+        "fastFan",
+        "dusty",
+        "goldHub"
+      ],
+      "connectionPoints": [
+        "backMount",
+        "windPort",
+        "pressureDial"
+      ],
+      "emits": [
+        "powerPulse"
+      ],
+      "receives": [
+        "bodyBounce",
+        "steamPressure"
+      ],
+      "compatibleWith": [
+        "head.radio",
+        "head.lamp",
+        "head.camera",
+        "neck.wireScarf"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "back.arcadePack",
+      "traitName": "Arcade Pack",
+      "category": "BackAccessory",
+      "rarityTier": "Epic",
+      "visualIdentity": "mini arcade side pack with screen slit, four blinking buttons, joystick pin, and brass trim",
+      "animationComponent": "arcadeButtons",
+      "idleAnimation": "buttons blink in a tiny attract-mode loop",
+      "heartbeatReaction": "one button flashes per block",
+      "pressureReaction": "high gas makes the button pattern frantic and the meter jump red",
+      "ageReaction": "screen slit gains scanline scratches",
+      "bondReaction": "strong bond settles button pattern into a rhythm",
+      "historyReaction": "transfers add small score tally marks",
+      "milestoneReaction": "major sale unlocks jackpot side lights",
+      "moodStates": [
+        "calm",
+        "frantic",
+        "scratched",
+        "jackpot"
+      ],
+      "connectionPoints": [
+        "backMount",
+        "screenSignal",
+        "buttonBus"
+      ],
+      "emits": [
+        "antennaSignal",
+        "powerPulse"
+      ],
+      "receives": [
+        "bodyBounce",
+        "antennaSignal"
+      ],
+      "compatibleWith": [
+        "head.gameboy",
+        "head.crtTv",
+        "head.slotMachine",
+        "neck.wireScarf"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "back.mercurySpinePack",
+      "traitName": "Mercury Spine Pack",
+      "category": "BackAccessory",
+      "rarityTier": "Epic",
+      "visualIdentity": "slender chrome spine pack with stacked mercury vials, silver clamps, and a small dial crown",
+      "animationComponent": "mercurySpine",
+      "idleAnimation": "mercury beads slide between stacked vial sections",
+      "heartbeatReaction": "silver bead jumps one segment per block",
+      "pressureReaction": "high gas ripples liquid metal and shakes the crown dial",
+      "ageReaction": "chrome dulls and glass gains cloudy rings",
+      "bondReaction": "strong bond makes mercury flow smooth and symmetrical",
+      "historyReaction": "transfers etch inventory marks into the spine clamps",
+      "milestoneReaction": "major sale unlocks mirror-bright mercury ascension",
+      "moodStates": [
+        "calm",
+        "rippling",
+        "clouded",
+        "ascended"
+      ],
+      "connectionPoints": [
+        "backMount",
+        "fluidOut",
+        "spineBus"
+      ],
+      "emits": [
+        "fluidFlow",
+        "lightCore"
+      ],
+      "receives": [
+        "bodyBounce",
+        "fluidFlow"
+      ],
+      "compatibleWith": [
+        "head.liquidTank",
+        "head.teslaCoil",
+        "clothes.silverMercuryCoat",
+        "clothes.mercuryHoodie"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "back.dragonFurnacePack",
+      "traitName": "Dragon Furnace Pack",
+      "category": "BackAccessory",
+      "rarityTier": "Epic",
+      "visualIdentity": "rusted furnace shoulder pack with black grille, brass horn valve, ember vial, and red warning dial",
+      "animationComponent": "dragonFurnace",
+      "idleAnimation": "ember vial glows like a slow furnace breath",
+      "heartbeatReaction": "furnace core flashes once per block",
+      "pressureReaction": "high gas shakes the horn valve and sends the needle into red",
+      "ageReaction": "soot gathers around the grille and brass browns",
+      "bondReaction": "strong bond stabilizes the ember breath",
+      "historyReaction": "transfers add heat stress cracks",
+      "milestoneReaction": "major sale unlocks chainfire furnace bloom",
+      "moodStates": [
+        "calm",
+        "overheated",
+        "sooty",
+        "chainfire"
+      ],
+      "connectionPoints": [
+        "backMount",
+        "heatPort",
+        "pressureDial"
+      ],
+      "emits": [
+        "steamPressure",
+        "lightCore"
+      ],
+      "receives": [
+        "bodyBounce",
+        "powerPulse"
+      ],
+      "compatibleWith": [
+        "head.pressureGauge",
+        "head.valve",
+        "clothes.rustForgeApron",
+        "clothes.crimsonPressureCoat"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "back.fireExtinguisherPack",
+      "traitName": "Fire Extinguisher Pack",
+      "category": "BackAccessory",
+      "rarityTier": "Rare",
+      "visualIdentity": "red fire extinguisher shoulder pack with brass handle, hose, warning label, and readable pressure dial",
+      "animationComponent": "extinguisherPressureDial",
+      "idleAnimation": "hose trembles softly and the label catches a small highlight",
+      "heartbeatReaction": "dial needle taps once per new block",
+      "pressureReaction": "high gas pushes the dial into red and makes the hose twitch",
+      "ageReaction": "paint chips and the warning label yellows",
+      "bondReaction": "strong bond steadies the hose and keeps the dial out of danger",
+      "historyReaction": "transfers add service sticker scratches",
+      "milestoneReaction": "major sale adds a black-gold emergency seal",
+      "moodStates": [
+        "calm",
+        "redline",
+        "chipped",
+        "sealed"
+      ],
+      "connectionPoints": [
+        "backMount",
+        "pressureDial",
+        "hosePort"
+      ],
+      "emits": [
+        "steamPressure"
+      ],
+      "receives": [
+        "bodyBounce",
+        "steamPressure"
+      ],
+      "compatibleWith": [
+        "head.frankenstein",
+        "head.pressureGauge",
+        "head.valve",
+        "neck.pressureHose"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "back.divingTankBattery",
+      "traitName": "Diving Tank Battery",
+      "category": "BackAccessory",
+      "rarityTier": "Rare",
+      "visualIdentity": "dual cyan diving tanks crossed with a battery bolt badge and top pressure gauge",
+      "animationComponent": "tankChargeGauge",
+      "idleAnimation": "cyan charge rises through both tanks in a slow breathing loop",
+      "heartbeatReaction": "one charge pulse jumps between tanks per block",
+      "pressureReaction": "high gas makes the tanks brighten and the gauge climb",
+      "ageReaction": "glass gains pressure fog and straps scuff",
+      "bondReaction": "strong bond creates a stable clear coolant line",
+      "historyReaction": "transfers add clamp repair ticks",
+      "milestoneReaction": "major sale unlocks deep-sea gold valve caps",
+      "moodStates": [
+        "calm",
+        "charged",
+        "fogged",
+        "deepGold"
+      ],
+      "connectionPoints": [
+        "backMount",
+        "powerOut",
+        "fluidOut"
+      ],
+      "emits": [
+        "fluidFlow",
+        "powerPulse"
+      ],
+      "receives": [
+        "bodyBounce",
+        "fluidFlow"
+      ],
+      "compatibleWith": [
+        "head.divingHelmet",
+        "head.spaceman",
+        "head.liquidTank",
+        "clothes.fluidTubeJacket"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "back.ledgerPack",
+      "traitName": "Ledger Pack",
+      "category": "BackAccessory",
+      "rarityTier": "Uncommon",
+      "visualIdentity": "hardware-wallet shoulder pack with hinged white shell and a tiny HIGH/MED/LOW gas display",
+      "animationComponent": "ledgerGasDisplay",
+      "idleAnimation": "screen hums with a tiny cyan cursor",
+      "heartbeatReaction": "display flips one character on every block",
+      "pressureReaction": "display changes from LOW to MED to HIGH as gas rises",
+      "ageReaction": "white hinge shell scratches and darkens",
+      "bondReaction": "strong bond makes the readout stable and crisp",
+      "historyReaction": "transfers add small signed receipt ticks",
+      "milestoneReaction": "major sale unlocks a provenance checkmark",
+      "moodStates": [
+        "low",
+        "medium",
+        "high",
+        "verified"
+      ],
+      "connectionPoints": [
+        "backMount",
+        "screenSignal",
+        "archiveBus"
+      ],
+      "emits": [
+        "screenSignal",
+        "archiveStamp"
+      ],
+      "receives": [
+        "bodyBounce",
+        "powerPulse"
+      ],
+      "compatibleWith": [
+        "head.oldComputer",
+        "head.crtTv",
+        "head.gameboy",
+        "neck.archiveTag"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "back.mailboxPack",
+      "traitName": "Mailbox Pack",
+      "category": "BackAccessory",
+      "rarityTier": "Uncommon",
+      "visualIdentity": "red archive mailbox side pack with brass flag and little envelope mouth",
+      "animationComponent": "mailboxFlag",
+      "idleAnimation": "flag rests with a tiny hinge wobble",
+      "heartbeatReaction": "mail slot blinks once per new block",
+      "pressureReaction": "high gas lifts the flag like urgent mail",
+      "ageReaction": "red paint gains scratches and postal patina",
+      "bondReaction": "strong bond lowers the flag and calms the hinge",
+      "historyReaction": "transfers add postmark dots",
+      "milestoneReaction": "major sale unlocks gold registered-mail trim",
+      "moodStates": [
+        "calm",
+        "urgent",
+        "postmarked",
+        "registered"
+      ],
+      "connectionPoints": [
+        "backMount",
+        "archiveBus",
+        "flagHinge"
+      ],
+      "emits": [
+        "archiveStamp"
+      ],
+      "receives": [
+        "bodyBounce",
+        "archiveStamp"
+      ],
+      "compatibleWith": [
+        "head.rotaryPhone",
+        "head.typewriter",
+        "head.radio",
+        "neck.archiveTag"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "back.floppyDiskPack",
+      "traitName": "Floppy Disk Pack",
+      "category": "BackAccessory",
+      "rarityTier": "Uncommon",
+      "visualIdentity": "blue-violet floppy disk shoulder pack with paper label, sad archive face, and tiny charge tab",
+      "animationComponent": "floppySaveLight",
+      "idleAnimation": "save light breathes softly",
+      "heartbeatReaction": "disk label ticks one save mark per block",
+      "pressureReaction": "high gas makes the face worried and the charge tab glow red",
+      "ageReaction": "paper label yellows and plastic corners wear",
+      "bondReaction": "strong bond steadies the save light",
+      "historyReaction": "transfers add overwritten file ticks",
+      "milestoneReaction": "major sale unlocks gold archive label",
+      "moodStates": [
+        "calm",
+        "worried",
+        "overwritten",
+        "goldLabel"
+      ],
+      "connectionPoints": [
+        "backMount",
+        "archiveBus",
+        "screenSignal"
+      ],
+      "emits": [
+        "archiveStamp",
+        "screenSignal"
+      ],
+      "receives": [
+        "bodyBounce",
+        "powerPulse"
+      ],
+      "compatibleWith": [
+        "head.gameboy",
+        "head.oldComputer",
+        "head.arcadeMachine",
+        "neck.wireScarf"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "back.roadBarrierPack",
+      "traitName": "Road Barrier Pack",
+      "category": "BackAccessory",
+      "rarityTier": "Rare",
+      "visualIdentity": "folded road barrier shoulder pack with black-yellow warning slats and riveted wood legs",
+      "animationComponent": "barrierWarningSlats",
+      "idleAnimation": "warning slats sway a few pixels",
+      "heartbeatReaction": "warning light ticks once per block",
+      "pressureReaction": "high gas makes the slats jitter like a blocked route",
+      "ageReaction": "yellow paint scuffs and wood legs darken",
+      "bondReaction": "strong bond holds the slats steady",
+      "historyReaction": "transfers add travel dents and road marks",
+      "milestoneReaction": "major sale unlocks gold caution rivets",
+      "moodStates": [
+        "calm",
+        "blocked",
+        "roadWorn",
+        "goldRivets"
+      ],
+      "connectionPoints": [
+        "backMount",
+        "warningLight",
+        "roadHinge"
+      ],
+      "emits": [
+        "steamPressure"
+      ],
+      "receives": [
+        "bodyBounce",
+        "archiveStamp"
+      ],
+      "compatibleWith": [
+        "head.samurai",
+        "head.valve",
+        "head.camera",
+        "clothes.rustForgeApron"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "back.trafficLightPack",
+      "traitName": "Traffic Light Pack",
+      "category": "BackAccessory",
+      "rarityTier": "Rare",
+      "visualIdentity": "rust-green traffic light shoulder pack with three glass lenses mapped to gas pressure",
+      "animationComponent": "trafficGasLights",
+      "idleAnimation": "green lens glows faintly",
+      "heartbeatReaction": "lens rim pulses once per block",
+      "pressureReaction": "gas level switches green to amber to red",
+      "ageReaction": "metal housing oxidizes and lens glass scratches",
+      "bondReaction": "strong bond holds the signal in calm green longer",
+      "historyReaction": "transfers add city service tags",
+      "milestoneReaction": "major sale unlocks royal traffic sigil",
+      "moodStates": [
+        "green",
+        "amber",
+        "red",
+        "royalSignal"
+      ],
+      "connectionPoints": [
+        "backMount",
+        "warningLight",
+        "screenSignal"
+      ],
+      "emits": [
+        "screenSignal",
+        "lightCore"
+      ],
+      "receives": [
+        "bodyBounce",
+        "steamPressure"
+      ],
+      "compatibleWith": [
+        "head.radio",
+        "head.crtTv",
+        "head.pressureGauge",
+        "neck.wireScarf"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "back.whaleVentPack",
+      "traitName": "Whale Vent Pack",
+      "category": "BackAccessory",
+      "rarityTier": "Epic",
+      "visualIdentity": "small glass whale vent pack with cyan water spout and rounded archive body",
+      "animationComponent": "whaleWaterSpout",
+      "idleAnimation": "water spout rises and falls softly from the whale back",
+      "heartbeatReaction": "spout pops a little higher on each block",
+      "pressureReaction": "high gas makes the spout burst faster and brighter",
+      "ageReaction": "glass body gains ocean fog and tiny salt marks",
+      "bondReaction": "strong bond makes the whale calm and smooth",
+      "historyReaction": "transfers add little voyage dots",
+      "milestoneReaction": "major sale unlocks moonlit whale aura",
+      "moodStates": [
+        "calm",
+        "bursting",
+        "salted",
+        "moonlit"
+      ],
+      "connectionPoints": [
+        "backMount",
+        "fluidOut",
+        "bubbleChamber"
+      ],
+      "emits": [
+        "fluidFlow",
+        "lightCore"
+      ],
+      "receives": [
+        "bodyBounce",
+        "fluidFlow"
+      ],
+      "compatibleWith": [
+        "head.divingHelmet",
+        "head.liquidTank",
+        "head.spaceman",
+        "clothes.fluidTubeJacket"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "neck.gearCollar",
+      "traitName": "Gear Collar",
+      "category": "NeckTrait",
+      "rarityTier": "Common",
+      "visualIdentity": "ring of small interlocking brass gears around the neck",
+      "animationComponent": "collarGears",
+      "idleAnimation": "small gears rotate in alternating directions",
+      "heartbeatReaction": "gear teeth step with new block heartbeat",
+      "pressureReaction": "high gas speeds collar and throws tiny sparks",
+      "ageReaction": "gear teeth wear and brass patinas",
+      "bondReaction": "strong bond synchronizes gear mesh",
+      "historyReaction": "transfers add worn teeth and repair screws",
+      "milestoneReaction": "major sale unlocks golden collar halo",
+      "moodStates": [
+        "calm",
+        "sparking",
+        "worn",
+        "halo"
+      ],
+      "connectionPoints": [
+        "gearIn",
+        "gearOut",
+        "neckLine"
+      ],
+      "emits": [
+        "gearDrive"
+      ],
+      "receives": [
+        "gearDrive",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.clock",
+        "back.chainEngineBag",
+        "back.batteryMeterBag",
+        "chest.gearPendant"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "neck.wireScarf",
+      "traitName": "Wire Scarf",
+      "category": "NeckTrait",
+      "rarityTier": "Common",
+      "visualIdentity": "looping black wires with brass clamps and cyan signal beads",
+      "animationComponent": "wireSignal",
+      "idleAnimation": "signal beads crawl through wire loops",
+      "heartbeatReaction": "one bead jumps on each new block",
+      "pressureReaction": "high gas makes wire signal jitter and spark",
+      "ageReaction": "rubber insulation scuffs and clamps tarnish",
+      "bondReaction": "strong bond makes bead travel smooth",
+      "historyReaction": "transfers add tape repairs around wires",
+      "milestoneReaction": "major sale unlocks gold signal bead",
+      "moodStates": [
+        "calm",
+        "jitter",
+        "aged",
+        "goldBead"
+      ],
+      "connectionPoints": [
+        "neckCable",
+        "signalIn",
+        "signalOut"
+      ],
+      "emits": [
+        "screenSignal",
+        "antennaSignal"
+      ],
+      "receives": [
+        "screenSignal",
+        "antennaSignal",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.crtTv",
+        "head.radio",
+        "head.oldComputer",
+        "back.pressureGaugeShoulderBag"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 4,
+      "approved": true
+    },
+    {
+      "id": "neck.liquidTubeNecklace",
+      "traitName": "Liquid Tube Necklace",
+      "category": "NeckTrait",
+      "rarityTier": "Rare",
+      "visualIdentity": "transparent necklace tube filled with cyan liquid and tiny brass clamps",
+      "animationComponent": "neckFluid",
+      "idleAnimation": "small bubble orbits through the necklace tube",
+      "heartbeatReaction": "bubble jumps forward on block heartbeat",
+      "pressureReaction": "high gas adds microbubbles and faster flow",
+      "ageReaction": "tube gains mineral staining",
+      "bondReaction": "strong bond clears tube and slows bubble elegantly",
+      "historyReaction": "transfers add clamp repair marks",
+      "milestoneReaction": "major sale unlocks aurora liquid ring",
+      "moodStates": [
+        "calm",
+        "microbubbles",
+        "stained",
+        "auroraRing"
+      ],
+      "connectionPoints": [
+        "fluidIn",
+        "fluidOut",
+        "neckLine"
+      ],
+      "emits": [
+        "fluidFlow"
+      ],
+      "receives": [
+        "fluidFlow",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.liquidTank",
+        "clothes.fluidTubeJacket",
+        "back.fishTankBackpack"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "neck.pressureHose",
+      "traitName": "Pressure Hose",
+      "category": "NeckTrait",
+      "rarityTier": "Uncommon",
+      "visualIdentity": "thick ribbed pressure hose crossing neck to chest valve",
+      "animationComponent": "hosePulse",
+      "idleAnimation": "hose pulses softly with internal pressure",
+      "heartbeatReaction": "pressure ripple moves down hose on new block",
+      "pressureReaction": "high gas swells hose and shakes clamps",
+      "ageReaction": "hose ribs crack and darken",
+      "bondReaction": "strong bond steadies pressure ripple",
+      "historyReaction": "transfers add metal repair bands",
+      "milestoneReaction": "major sale adds gold pressure clamp",
+      "moodStates": [
+        "calm",
+        "swollen",
+        "aged",
+        "goldClamp"
+      ],
+      "connectionPoints": [
+        "pressureIn",
+        "pressureOut",
+        "neckLine"
+      ],
+      "emits": [
+        "steamPressure"
+      ],
+      "receives": [
+        "steamPressure",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.pressureGauge",
+        "head.divingHelmet",
+        "back.fishTankBackpack",
+        "clothes.fluidTubeJacket"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 4,
+      "approved": true
+    },
+    {
+      "id": "neck.archiveTag",
+      "traitName": "Archive Tag",
+      "category": "NeckTrait",
+      "rarityTier": "Rare",
+      "visualIdentity": "hanging brass archive tag with small stamped serial plate",
+      "animationComponent": "tagSwing",
+      "idleAnimation": "tag swings gently with global life motion",
+      "heartbeatReaction": "serial plate flashes on new block",
+      "pressureReaction": "high gas makes tag shake and clink",
+      "ageReaction": "tag gains tarnish and tiny dents",
+      "bondReaction": "strong bond makes swing slow and ceremonial",
+      "historyReaction": "transfers stamp new marks onto tag back",
+      "milestoneReaction": "major sale engraves provenance tier onto front",
+      "moodStates": [
+        "calm",
+        "clinking",
+        "aged",
+        "engraved"
+      ],
+      "connectionPoints": [
+        "archiveBus",
+        "neckLine",
+        "chainLoop"
+      ],
+      "emits": [
+        "archiveStamp"
+      ],
+      "receives": [
+        "archiveStamp",
+        "marketEcho",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.typewriter",
+        "clothes.archiveTrench",
+        "back.transactionPrinterBag"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 4,
+      "approved": true
+    },
+    {
+      "id": "chest.gearPendant",
+      "traitName": "Gear Pendant",
+      "category": "ChestAccessory",
+      "rarityTier": "Common",
+      "visualIdentity": "small brass gear pendant hanging over the chest core",
+      "animationComponent": "pendantGear",
+      "idleAnimation": "pendant gear rotates gently and swings with body bounce",
+      "heartbeatReaction": "gear clicks once per block",
+      "pressureReaction": "high gas makes pendant swing wider",
+      "ageReaction": "pendant edge patinas and chain darkens",
+      "bondReaction": "strong bond makes rotation smooth",
+      "historyReaction": "transfers add tiny nicks on gear teeth",
+      "milestoneReaction": "major sale turns one tooth gold-white",
+      "moodStates": [
+        "calm",
+        "wideSwing",
+        "aged",
+        "goldTooth"
+      ],
+      "connectionPoints": [
+        "chainLoop",
+        "gearOut",
+        "chestCore"
+      ],
+      "emits": [
+        "gearDrive"
+      ],
+      "receives": [
+        "gearDrive",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "neck.gearCollar",
+        "head.clock",
+        "clothes.transparentPinstripe"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 4,
+      "approved": true
+    },
+    {
+      "id": "chest.speakerCore",
+      "traitName": "Speaker Core",
+      "category": "ChestAccessory",
+      "rarityTier": "Rare",
+      "visualIdentity": "round chest speaker over core, brass rim, black grille, cyan wave indicator",
+      "animationComponent": "speakerPulse",
+      "idleAnimation": "speaker cone breathes quietly",
+      "heartbeatReaction": "sound ring expands on block heartbeat",
+      "pressureReaction": "high gas distorts ring and rattles grille",
+      "ageReaction": "grille fabric frays and rim tarnishes",
+      "bondReaction": "strong bond makes waveform clean",
+      "historyReaction": "transfers add stamped show marks around rim",
+      "milestoneReaction": "major sale unlocks royal broadcast ring",
+      "moodStates": [
+        "calm",
+        "distorted",
+        "aged",
+        "royalRing"
+      ],
+      "connectionPoints": [
+        "speakerIn",
+        "speakerOut",
+        "chestCore"
+      ],
+      "emits": [
+        "soundWave"
+      ],
+      "receives": [
+        "soundWave",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.radio",
+        "head.cassettePlayer",
+        "head.rotaryPhone",
+        "back.pressureGaugeShoulderBag"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "chest.goldChain",
+      "traitName": "Gold Chain",
+      "category": "ChestAccessory",
+      "rarityTier": "Epic",
+      "visualIdentity": "heavy gold chain with small market-seal clasp across chest",
+      "animationComponent": "chainGleam",
+      "idleAnimation": "chain gleam walks from link to link",
+      "heartbeatReaction": "one link flashes with block heartbeat",
+      "pressureReaction": "high gas shakes chain links",
+      "ageReaction": "chain gains darker antique gold shadows",
+      "bondReaction": "strong bond makes chain settle and glow evenly",
+      "historyReaction": "transfers add tiny clasp scratches",
+      "milestoneReaction": "major sale unlocks market echo glow across all links",
+      "moodStates": [
+        "calm",
+        "rattling",
+        "aged",
+        "marketEcho"
+      ],
+      "connectionPoints": [
+        "chainLoop",
+        "marketEcho",
+        "chestCore"
+      ],
+      "emits": [
+        "marketEcho"
+      ],
+      "receives": [
+        "marketEcho",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.slotMachine",
+        "clothes.goldWireSuit",
+        "neck.archiveTag"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "arm.signalTracker",
+      "traitName": "Signal Tracker",
+      "category": "ArmSideItem",
+      "rarityTier": "Common",
+      "visualIdentity": "small forearm-mounted signal meter with cyan needle and brass clamps",
+      "animationComponent": "meterNeedle",
+      "idleAnimation": "needle sways with low signal",
+      "heartbeatReaction": "needle taps on every new block",
+      "pressureReaction": "high gas shakes needle and flashes warning dot",
+      "ageReaction": "glass scuffs and brass clamps darken",
+      "bondReaction": "strong bond stabilizes needle",
+      "historyReaction": "transfers add tiny service tick marks",
+      "milestoneReaction": "major sale unlocks gold signal notch",
+      "moodStates": [
+        "calm",
+        "shaking",
+        "aged",
+        "goldNotch"
+      ],
+      "connectionPoints": [
+        "armRail",
+        "signalIn",
+        "meterOut"
+      ],
+      "emits": [
+        "antennaSignal"
+      ],
+      "receives": [
+        "antennaSignal",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.crtTv",
+        "head.radio",
+        "back.pressureGaugeShoulderBag"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 4,
+      "approved": true
+    },
+    {
+      "id": "arm.floatingGauge",
+      "traitName": "Floating Gauge",
+      "category": "ArmSideItem",
+      "rarityTier": "Rare",
+      "visualIdentity": "small hovering pressure gauge near shoulder, brass ring, cyan needle",
+      "animationComponent": "hoverNeedle",
+      "idleAnimation": "gauge hovers and needle breathes",
+      "heartbeatReaction": "needle clicks with each block",
+      "pressureReaction": "high gas redlines needle and shakes hover ring",
+      "ageReaction": "gauge face yellows and ring tarnishes",
+      "bondReaction": "strong bond makes hover steady",
+      "historyReaction": "transfers crack the gauge glass slightly",
+      "milestoneReaction": "major sale adds mythic redline seal",
+      "moodStates": [
+        "calm",
+        "redline",
+        "aged",
+        "mythicSeal"
+      ],
+      "connectionPoints": [
+        "pressureIn",
+        "armRail",
+        "hoverBus"
+      ],
+      "emits": [
+        "steamPressure"
+      ],
+      "receives": [
+        "steamPressure",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.pressureGauge",
+        "head.camera",
+        "back.gasCanisterPack"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 4,
+      "approved": true
+    },
+    {
+      "id": "arm.valveHand",
+      "traitName": "Valve Hand",
+      "category": "ArmSideItem",
+      "rarityTier": "Uncommon",
+      "visualIdentity": "side valve wheel and short pipe cluster mounted near arm edge",
+      "animationComponent": "valveTurn",
+      "idleAnimation": "valve turns a few degrees and returns",
+      "heartbeatReaction": "valve ticks on new block",
+      "pressureReaction": "high gas spins valve and vents steam",
+      "ageReaction": "wheel rusts and pipe seams darken",
+      "bondReaction": "strong bond makes valve movement controlled",
+      "historyReaction": "transfers add repair clamps",
+      "milestoneReaction": "major sale adds gold valve cap",
+      "moodStates": [
+        "calm",
+        "venting",
+        "rusted",
+        "goldCap"
+      ],
+      "connectionPoints": [
+        "armRail",
+        "steamIn",
+        "steamOut"
+      ],
+      "emits": [
+        "steamPressure"
+      ],
+      "receives": [
+        "steamPressure",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "head.pressureGauge",
+        "back.gasCanisterPack",
+        "neck.pressureHose"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 4,
+      "approved": true
+    },
+    {
+      "id": "head.samurai",
+      "traitName": "Samurai Head",
+      "category": "Head",
+      "rarityTier": "Rare",
+      "visualIdentity": "dark ronin visor, brass face frame, layered straw-mech helmet brim, hanging chain tassels and guarded cyan eyes",
+      "animationComponent": "visorAndHelmet",
+      "idleAnimation": "helmet tassels sway, visor glow breathes, and side chains tick softly",
+      "heartbeatReaction": "visor line pulses on each new block like a guarded blink",
+      "pressureReaction": "high gas makes the side rails spark and the visor narrow into warning focus",
+      "ageReaction": "helmet brim gains paper scratches, oxidized brass, and darker edge wear",
+      "bondReaction": "strong holder bond steadies the visor and softens chain movement",
+      "historyReaction": "transfer marks become tiny sword-nick scratches on the helmet brim",
+      "milestoneReaction": "major sale unlocks a gold ronin seal above the visor",
+      "moodStates": [
+        "calm",
+        "focused",
+        "aged",
+        "sealed"
+      ],
+      "connectionPoints": [
+        "visorSignal",
+        "helmetRail",
+        "neckGuard"
+      ],
+      "emits": [
+        "screenSignal",
+        "bodyBounce"
+      ],
+      "receives": [
+        "antennaSignal",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "back.dragonFurnacePack",
+        "neck.gearCollar",
+        "clothes.royalRelicMantle"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "head.frankenstein",
+      "traitName": "Frankenstein Head",
+      "category": "Head",
+      "rarityTier": "Rare",
+      "visualIdentity": "stitched signal-green lab block head with flat black crown, side electrode bolts, lower pressure gauge and cyan screen eyes",
+      "animationComponent": "electrodeFace",
+      "idleAnimation": "small electrode arcs twitch while the eyes breathe unevenly",
+      "heartbeatReaction": "each block clicks the forehead rivets and jolts the face one pixel",
+      "pressureReaction": "high gas overcharges the side bolts, red sparks and warning eye jitter",
+      "ageReaction": "green glass yellows, stitches darken, and the top rail rusts",
+      "bondReaction": "strong holder bond turns the twitch into a calmer laboratory hum",
+      "historyReaction": "transfers add repair stitches and stamped lab tags",
+      "milestoneReaction": "major sale unlocks a revived-gold neck gauge flare",
+      "moodStates": [
+        "idle",
+        "overcharged",
+        "stitched",
+        "revived"
+      ],
+      "connectionPoints": [
+        "electrodeLeft",
+        "electrodeRight",
+        "neckGauge"
+      ],
+      "emits": [
+        "powerPulse",
+        "steamPressure"
+      ],
+      "receives": [
+        "powerPulse",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "back.gasCanisterPack",
+        "neck.pressureHose",
+        "clothes.crimsonPressureCoat"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "head.spaceman",
+      "traitName": "Spaceman Head",
+      "category": "Head",
+      "rarityTier": "Rare",
+      "visualIdentity": "rounded glass astronaut helmet, steel bolted ring, dark inner visor, side oxygen vial and orbital cable loop",
+      "animationComponent": "helmetVisor",
+      "idleAnimation": "helmet glass breathes, oxygen vial bubbles, and orbital ping arcs drift",
+      "heartbeatReaction": "new block sends a ping across the visor rim",
+      "pressureReaction": "high gas raises oxygen bubbles and makes the helmet warning spark blink",
+      "ageReaction": "glass collects micro scratches and faint lunar dust",
+      "bondReaction": "strong holder bond clears the visor and stabilizes oxygen flow",
+      "historyReaction": "transfers add tiny mission stamps around the bolted ring",
+      "milestoneReaction": "major sale unlocks a small orbital halo over the helmet",
+      "moodStates": [
+        "orbital",
+        "warning",
+        "dusty",
+        "haloed"
+      ],
+      "connectionPoints": [
+        "helmetAirIn",
+        "visorSignal",
+        "oxygenLoop"
+      ],
+      "emits": [
+        "fluidFlow",
+        "screenSignal"
+      ],
+      "receives": [
+        "fluidFlow",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "back.fishTankBackpack",
+        "neck.liquidTubeNecklace",
+        "clothes.cyanLabGlassCoat"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "head.ledgerBtc",
+      "traitName": "Ledger BTC Head",
+      "category": "Head",
+      "rarityTier": "Rare",
+      "visualIdentity": "black hardware wallet slab with silver swivel cover, cyan BTC screen, button ring and cold-storage glow",
+      "animationComponent": "btcScreen",
+      "idleAnimation": "BTC text breathes on the screen while the silver cover catches a slow highlight",
+      "heartbeatReaction": "each block blinks the BTC screen and clicks the tiny hardware button",
+      "pressureReaction": "high gas makes the screen flash warning cyan and the cover rattle",
+      "ageReaction": "cover gains brushed scratches and the black shell gets pocket scuffs",
+      "bondReaction": "strong holder bond steadies the BTC screen and makes the button glow calmer",
+      "historyReaction": "sale transfers add tiny cold-storage audit marks around the screen",
+      "milestoneReaction": "major sale unlocks a golden hardware-wallet seal behind the BTC text",
+      "moodStates": [
+        "awake",
+        "warning",
+        "scuffed",
+        "sealed"
+      ],
+      "connectionPoints": [
+        "usbBus",
+        "screenSignal",
+        "coldStorageButton"
+      ],
+      "emits": [
+        "screenSignal",
+        "marketEcho"
+      ],
+      "receives": [
+        "powerPulse",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "back.ledgerPack",
+        "neck.wireScarf",
+        "clothes.archiveTrench"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "head.ledgerEth",
+      "traitName": "Ledger ETH Head",
+      "category": "Head",
+      "rarityTier": "Rare",
+      "visualIdentity": "black hardware wallet slab with silver swivel cover, cyan ETH screen, button ring and gas-oracle glow",
+      "animationComponent": "ethScreen",
+      "idleAnimation": "ETH text breathes on the screen while the silver cover catches a slow highlight",
+      "heartbeatReaction": "each block blinks the ETH screen and clicks the tiny hardware button",
+      "pressureReaction": "high gas makes the screen flash gas-oracle cyan and the cover rattle",
+      "ageReaction": "hardware edges gather graphite dust, tiny cable scratches and worn button shine",
+      "bondReaction": "strong holder bond steadies the ETH screen into a clean vault glow",
+      "historyReaction": "sale transfers add small transaction hash ticks near the screen edge",
+      "milestoneReaction": "major sale unlocks a golden hardware-wallet seal behind the ETH text",
+      "moodStates": [
+        "awake",
+        "gasWarning",
+        "scuffed",
+        "sealed"
+      ],
+      "connectionPoints": [
+        "usbBus",
+        "screenSignal",
+        "coldStorageButton"
+      ],
+      "emits": [
+        "screenSignal",
+        "marketEcho"
+      ],
+      "receives": [
+        "powerPulse",
+        "bodyBounce"
+      ],
+      "compatibleWith": [
+        "back.ledgerPack",
+        "neck.wireScarf",
+        "clothes.archiveTrench"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "low",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "head.battery",
+      "traitName": "Battery Head",
+      "category": "Head",
+      "rarityTier": "Rare",
+      "visualIdentity": "chunky rusted battery case head with top terminals, thick cable loop, plus/minus side marks, green charge display and living cyan screen face",
+      "animationComponent": "chargeScreen",
+      "idleAnimation": "charge bars breathe while terminal caps hum with a soft green power pulse",
+      "heartbeatReaction": "each block snaps one charge segment brighter and clicks the top terminals",
+      "pressureReaction": "high gas turns the charge display yellow/red, adds warning sparks and shakes the cable loop",
+      "ageReaction": "battery shell corrodes, edges blacken, and old service scratches collect around the terminal caps",
+      "bondReaction": "strong holder bond stabilizes the charge meter into a clean full-cell glow",
+      "historyReaction": "sale transfers add tiny service-tally marks and recertification scratches near the display",
+      "milestoneReaction": "major sale unlocks a golden overcharge seal behind the battery screen",
+      "moodStates": [
+        "charged",
+        "lowCell",
+        "overcharged",
+        "deepCycle"
+      ],
+      "connectionPoints": [
+        "positiveTerminal",
+        "negativeTerminal",
+        "screenSignal",
+        "neckPowerBus"
+      ],
+      "emits": [
+        "powerPulse",
+        "screenSignal"
+      ],
+      "receives": [
+        "powerPulse",
+        "bodyBounce",
+        "lightCore"
+      ],
+      "compatibleWith": [
+        "back.batteryMeterBag",
+        "back.divingTankBattery",
+        "neck.wireScarf",
+        "clothes.copperCoilHarness"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    },
+    {
+      "id": "head.magnet",
+      "traitName": "Magnet Head",
+      "category": "Head",
+      "rarityTier": "Rare",
+      "visualIdentity": "horseshoe industrial magnet head with red N pole, blue S pole, bolted steel arms, side coils, colored cables and a cyan bridge face screen",
+      "animationComponent": "magneticField",
+      "idleAnimation": "soft magnetic field arcs breathe between the two poles while the side coils hum",
+      "heartbeatReaction": "each block flips a small pulse between north and south poles",
+      "pressureReaction": "high gas brightens the field arcs, heats the coils and jitters the polarity sparks",
+      "ageReaction": "steel arms collect scratches, pole paint chips, and coil wire darkens",
+      "bondReaction": "strong holder bond steadies the field into a smooth symmetrical pull",
+      "historyReaction": "sale transfers add small polarity calibration ticks around the bridge screen",
+      "milestoneReaction": "major sale unlocks a gold magnetic seal at the lower bridge",
+      "moodStates": [
+        "balanced",
+        "polarized",
+        "sparking",
+        "sealed"
+      ],
+      "connectionPoints": [
+        "northPole",
+        "southPole",
+        "coilLeft",
+        "coilRight",
+        "neckFieldBus"
+      ],
+      "emits": [
+        "powerPulse",
+        "screenSignal",
+        "gearDrive"
+      ],
+      "receives": [
+        "powerPulse",
+        "bodyBounce",
+        "gearDrive"
+      ],
+      "compatibleWith": [
+        "back.mercurySpinePack",
+        "back.chainEngineBag",
+        "neck.wireScarf",
+        "clothes.copperCoilHarness"
+      ],
+      "incompatibleWith": [],
+      "animationCost": "medium",
+      "qualityScore": 5,
+      "approved": true
+    }
+  ]
+}

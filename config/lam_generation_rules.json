@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "collection": "Motorheads",
+  "supply": 5555,
+  "specialSupply": {
+    "normalGenerated": 5555,
+    "legendary": 0,
+    "mythic": 0,
+    "total": 5555,
+    "source": "config/lam_special_backgrounds.json",
+    "policy": "Rejected one-of-one special machine visual pass removed. Retained material/background colors are reused by normal trait randomization. Golden Edition has 55 total slots: tokens 1-10 reserved for treasury mint checks and 45 deterministic lucky mint slots inside the 5555 supply."
+  },
+  "seedPolicy": {
+    "deterministic": true,
+    "seedSource": "LAM_PRODUCTION_SEED env var or checked-in preview seed",
+    "previewSeed": "living-archive-machines-preview-v1",
+    "productionSeed": "motorheads-mainnet-final-2026-06-07-v1",
+    "productionSeedPlaceholder": "SET_BEFORE_FINAL_5555",
+    "doNotChangeSeedAfterApproval": true
+  },
+  "outputFolders": {
+    "preview100": {
+      "images": "build/preview-100/images",
+      "layouts": "build/preview-100/layouts",
+      "animations": "build/preview-100/animations",
+      "metadata": "build/preview-100/metadata",
+      "reports": "build/preview-100/reports"
+    },
+    "production5555": {
+      "images": "build/5555/images",
+      "layouts": "build/5555/layouts",
+      "animations": "build/5555/animations",
+      "metadata": "build/5555/metadata",
+      "reports": "build/5555/reports"
+    }
+  },
+  "tokenTraitOrder": [
+    "Background",
+    "Chassis",
+    "Core",
+    "Head",
+    "Expression",
+    "Clothes",
+    "BackAccessory",
+    "NeckTrait",
+    "ChestAccessory",
+    "ArmSideItem",
+    "Hat",
+    "EvolutionOverlay"
+  ],
+  "compatibilityChecks": [
+    "head expression must exist for head family",
+    "hat must fit head silhouette",
+    "clothes must preserve body pose and crop",
+    "fluid traits must connect to at least one fluid-compatible head/accessory when possible",
+    "sound traits should pair with radio/cassette/phone often enough to be visible",
+    "gear traits should pair with clock/chain engine/gear collar often enough to be visible",
+    "no trait hash duplicates",
+    "no approved trait below quality score 3",
+    "no production trait without connection point"
+  ],
+  "previewRules": {
+    "previewCount": 100,
+    "forceCoverage": true,
+    "minimumEachApprovedHead": 2,
+    "minimumEachApprovedClothes": 2,
+    "minimumScore5ConnectionExamples": 12,
+    "writeRarityReport": true,
+    "writeConnectionReport": true,
+    "writeCompatibilityReport": true
+  },
+  "productionRules": {
+    "maxAttemptsPerToken": 400,
+    "rejectDuplicateHashes": true,
+    "rejectBrokenCompatibility": true,
+    "rebalanceRareTraitsAfterPreview": true,
+    "freezeCatalogBeforeRender": true,
+    "writeProvenanceInput": true,
+    "writeProvenanceHash": true
+  },
+  "assemblyRules": {
+    "localOnly": true,
+    "saveKeyPrefix": "livingArchiveMachineAssembly:",
+    "transferDoesNotMoveLocalSave": true,
+    "magnetSnapDefaultPx": 22,
+    "showGuidesInEditOnly": true,
+    "nftPreviewHidesGuides": true,
+    "allOfficialIdentityTraitsAreFixed": true
+  },
+  "renderRules": {
+    "canvasSize": 1024,
+    "staticImageMode": "assembled-clean-pfp",
+    "animationMode": "dismantled-local-assembly-live-chain",
+    "thumbnailReadabilityFirst": true,
+    "maxCommonAnimationCost": "medium",
+    "legendaryAnimationCostAllowed": "high"
+  }
+}

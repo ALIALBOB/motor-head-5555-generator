@@ -1,0 +1,27 @@
+﻿# Dependencies
+node_modules/
+
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+
+# Hardhat / generated contract output
+artifacts/
+cache/
+typechain-types/
+coverage/
+coverage.json
+
+# Generated collection/output payloads
+build/
+dist/
+dist-web/
+web/public/
+*.car
+
+# Local logs and editor/OS noise
+*.log
+.codex-*.log
+.DS_Store
+Thumbs.db

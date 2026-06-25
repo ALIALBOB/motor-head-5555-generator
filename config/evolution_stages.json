@@ -1,0 +1,57 @@
+{
+  "archiveAge": [
+    { "id": "fresh", "label": "Fresh Mint", "seconds": 0, "effect": "clean machine" },
+    { "id": "day_1", "label": "1 Day", "seconds": 86400, "effect": "light dust" },
+    { "id": "day_3", "label": "3 Days", "seconds": 259200, "effect": "settled dust and first hairline scratches" },
+    { "id": "week_1", "label": "1 Week", "seconds": 604800, "effect": "tiny scratches" },
+    { "id": "month_1", "label": "1 Month", "seconds": 2592000, "effect": "bronze patina" },
+    { "id": "months_3", "label": "3 Months", "seconds": 7776000, "effect": "aged machine marks" },
+    { "id": "months_6", "label": "6 Months", "seconds": 15552000, "effect": "small gold details" },
+    { "id": "months_9", "label": "9 Months", "seconds": 23328000, "effect": "deep archive glow" },
+    { "id": "year_1", "label": "12 Months", "seconds": 31536000, "effect": "year-one stamp" },
+    { "id": "years_2", "label": "2 Years", "seconds": 63072000, "effect": "relic texture" },
+    { "id": "years_3", "label": "3 Years", "seconds": 94608000, "effect": "stronger wear" },
+    { "id": "years_5", "label": "5 Years", "seconds": 157680000, "effect": "gold linework" },
+    { "id": "years_7", "label": "7 Years", "seconds": 220752000, "effect": "ancient signal aura" },
+    { "id": "years_10", "label": "10 Years", "seconds": 315360000, "effect": "decade relic seal" },
+    { "id": "years_15", "label": "15 Years", "seconds": 473040000, "effect": "historical aura" },
+    { "id": "years_20", "label": "20 Years", "seconds": 630720000, "effect": "museum artifact layer" },
+    { "id": "years_25", "label": "25 Years", "seconds": 788400000, "effect": "grand archive mark" },
+    { "id": "years_30", "label": "30 Years", "seconds": 946080000, "effect": "timeless relic aura" }
+  ],
+  "holderBond": [
+    { "id": "new_holder", "label": "New Holder", "minDays": 0, "maxDays": 0 },
+    { "id": "first_day", "label": "First Day", "minDays": 1, "maxDays": 2 },
+    { "id": "warming_bond", "label": "Warming Bond", "minDays": 3, "maxDays": 6 },
+    { "id": "bonded", "label": "Bonded", "minDays": 7, "maxDays": 29 },
+    { "id": "keeper", "label": "Keeper", "minDays": 30, "maxDays": 89 },
+    { "id": "guardian", "label": "Guardian", "minDays": 90, "maxDays": 179 },
+    { "id": "deep_holder", "label": "Deep Holder", "minDays": 180, "maxDays": 364 },
+    { "id": "permanent_keeper", "label": "Permanent Keeper", "minDays": 365, "maxDays": null }
+  ],
+  "transferMarks": [
+    { "id": "clean", "label": "Clean", "transfers": 0 },
+    { "id": "first_mark", "label": "First Mark", "transfers": 1 },
+    { "id": "traveled", "label": "Traveled", "transfers": 3 },
+    { "id": "well_worn", "label": "Well-Worn", "transfers": 5 },
+    { "id": "scarred_relic", "label": "Scarred Relic", "transfers": 10 },
+    { "id": "legendary_journey", "label": "Legendary Journey", "transfers": 20 }
+  ],
+  "globalPhases": [
+    "Mint",
+    "Minted Out",
+    "Archive Awakening",
+    "Machine Storm",
+    "Deep Signal",
+    "Next Chapter"
+  ],
+  "unlockFlags": [
+    "Founder Mark",
+    "Community Winner Aura",
+    "Secret Machine Layer",
+    "Collab Mark",
+    "Legendary Upgrade",
+    "Event Badge",
+    "Special Holder Reward"
+  ]
+}

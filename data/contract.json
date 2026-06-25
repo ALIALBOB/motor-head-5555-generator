@@ -1,0 +1,8 @@
+{
+  "name": "Mechanical Canvas Machines",
+  "description": "A 3333-piece dynamic mechanical canvas collection. Holders can freely move gears, pipes, oil tanks, and micro-parts to publish their own living machine artwork.",
+  "image": "ipfs://COLLECTION_IMAGE_CID/collection.png",
+  "banner_image": "ipfs://COLLECTION_IMAGE_CID/banner.png",
+  "external_link": "https://example.com",
+  "collaborators": []
+}

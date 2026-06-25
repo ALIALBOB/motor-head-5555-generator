@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "collection": "Motorheads",
+  "supply": 5555,
+  "rarityBands": {
+    "Common": {
+      "targetPercent": 55,
+      "weight": 550
+    },
+    "Uncommon": {
+      "targetPercent": 25,
+      "weight": 250
+    },
+    "Rare": {
+      "targetPercent": 12,
+      "weight": 120
+    },
+    "Epic": {
+      "targetPercent": 6,
+      "weight": 60
+    },
+    "Legendary": {
+      "targetPercent": 0.9,
+      "weight": 9
+    },
+    "Mythic": {
+      "targetPercent": 0.3,
+      "weight": 3
+    }
+  },
+  "specialEditions": {
+    "normalGenerated": 5555,
+    "legendaryArchetypes": 0,
+    "mythicArchetypes": 0,
+    "oneOfOneSpecials": false,
+    "source": "config/lam_special_backgrounds.json",
+    "policy": "Special machine archetypes are disabled; background/material colors remain available for normal randomizer expansion. Full Gold Edition has 55 total visual assignments inside the 5555 supply: tokens 1-10 reserved for treasury mint checks and 45 deterministic lucky mint slots."
+  },
+  "categoryTargets": {
+    "Background": {
+      "minOptionsBefore5555": 12,
+      "recommendedOptions": 18
+    },
+    "Chassis": {
+      "minOptionsBefore5555": 7,
+      "recommendedOptions": 14
+    },
+    "Head": {
+      "minOptionsBefore5555": 24,
+      "recommendedOptions": 36
+    },
+    "Expression": {
+      "minOptionsBefore5555": 8,
+      "recommendedOptionsPerHeadFamily": 10
+    },
+    "Clothes": {
+      "minOptionsBefore5555": 24,
+      "recommendedOptions": 42
+    },
+    "Hat": {
+      "minOptionsBefore5555": 11,
+      "recommendedOptions": 34
+    },
+    "BackAccessory": {
+      "minOptionsBefore5555": 10,
+      "recommendedOptions": 18
+    },
+    "NeckTrait": {
+      "minOptionsBefore5555": 5,
+      "recommendedOptions": 18
+    },
+    "ChestAccessory": {
+      "minOptionsBefore5555": 4,
+      "recommendedOptions": 30
+    },
+    "ArmSideItem": {
+      "minOptionsBefore5555": 3,
+      "recommendedOptions": 28
+    },
+    "Core": {
+      "minOptionsBefore5555": 3,
+      "recommendedOptions": 18
+    },
+    "EvolutionOverlay": {
+      "minOptionsBefore5555": 12,
+      "recommendedOptions": 24
+    }
+  },
+  "traitWeights": {
+    "head.crtTv": 95,
+    "head.clock": 88,
+    "head.cassettePlayer": 82,
+    "head.filmProjector": 64,
+    "head.divingHelmet": 56,
+    "head.oldComputer": 88,
+    "head.gameboy": 62,
+    "head.camera": 60,
+    "head.radio": 86,
+    "head.rotaryPhone": 42,
+    "head.pressureGauge": 36,
+    "head.liquidTank": 34,
+    "head.slotMachine": 12,
+    "head.typewriter": 30,
+    "clothes.transparentPinstripe": 92,
+    "clothes.smokedGlassJacket": 68,
+    "clothes.cyanLabGlassCoat": 34,
+    "clothes.amberResinRobe": 30,
+    "clothes.dirtyGlassMechanic": 86,
+    "clothes.mercuryHoodie": 58,
+    "clothes.blueReactorVest": 32,
+    "clothes.goldWireSuit": 14,
+    "clothes.blackChromeHarness": 90,
+    "clothes.rustedCageVest": 62,
+    "clothes.fluidTubeJacket": 28,
+    "clothes.speakerChestVest": 26,
+    "clothes.archiveTrench": 12,
+    "clothes.crimsonPressureCoat": 24,
+    "clothes.voidGlassCloak": 18,
+    "clothes.porcelainGridSuit": 42,
+    "clothes.copperCoilHarness": 36,
+    "clothes.greenSignalPoncho": 52,
+    "clothes.silverMercuryCoat": 30,
+    "clothes.rustForgeApron": 44,
+    "clothes.royalRelicMantle": 10,
+    "neck.gearCollar": 90,
+    "neck.wireScarf": 86,
+    "neck.liquidTubeNecklace": 30,
+    "neck.pressureHose": 56,
+    "neck.archiveTag": 28,
+    "chest.gearPendant": 96,
+    "chest.speakerCore": 26,
+    "chest.goldChain": 12,
+    "arm.signalTracker": 88,
+    "arm.floatingGauge": 34,
+    "arm.valveHand": 54,
+    "back.skateWheelPack": 52,
+    "back.pressureGaugeShoulderBag": 84,
+    "back.chainEngineBag": 68,
+    "back.fishTankBackpack": 42,
+    "back.cassetteBag": 62,
+    "back.batteryMeterBag": 86,
+    "back.gasCanisterPack": 44,
+    "back.transactionPrinterBag": 36,
+    "back.miniFanPack": 58,
+    "back.arcadePack": 22,
+    "back.mercurySpinePack": 18,
+    "back.dragonFurnacePack": 14
+  },
+  "scoreWeightModifiers": {
+    "3": 0.85,
+    "4": 1,
+    "5": 1.12
+  },
+  "connectionBias": {
+    "targetConnectedTokensPercent": 58,
+    "targetSignatureConnectedTokensPercent": 18,
+    "preferScore5Connections": true,
+    "minimumConnectionRulesBefore5555": 30
+  },
+  "caps": {
+    "maxSameHeadPercent": 7.5,
+    "maxSameClothesPercent": 7,
+    "maxSameHeadClothesPairCount": 24,
+    "maxMythicCombinationCount": 17
+  },
+  "mustNot": [
+    "Do not allow exact duplicate trait hash.",
+    "Do not allow incompatible head and hat pairs.",
+    "Do not allow approved score below 3.",
+    "Do not allow a trait with no connection point into production.",
+    "Do not let rare states make thumbnail silhouette unreadable."
+  ]
+}

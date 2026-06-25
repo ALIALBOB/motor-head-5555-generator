@@ -1,0 +1,974 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mechanical NFT Builder — Blueprint Prototype</title>
+  <style>
+    :root {
+      --paper: #f8f7f1;
+      --ink: #1f2427;
+      --soft-ink: #5d666b;
+      --line: rgba(28, 34, 38, 0.22);
+      --panel: rgba(255, 255, 255, 0.76);
+      --active: #111;
+      --locked: #838383;
+      --blue: #2b78a0;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; }
+
+    body {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 48% 15%, rgba(0,0,0,0.05), transparent 28%),
+        linear-gradient(rgba(0,0,0,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px),
+        var(--paper);
+      background-size: auto, 28px 28px, 28px 28px, auto;
+    }
+
+    .app {
+      height: 100vh;
+      display: grid;
+      grid-template-columns: 240px minmax(600px, 1fr);
+      grid-template-rows: minmax(0, 1fr) 176px 74px;
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .left,
+    .tray,
+    .statusbar,
+    .stage {
+      border: 1px solid rgba(0, 0, 0, 0.22);
+      background: var(--panel);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+      backdrop-filter: blur(6px);
+    }
+
+    .left {
+      grid-row: 1 / 4;
+      padding: 14px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 14px;
+      overflow: hidden;
+    }
+
+    .brand {
+      border: 1px solid rgba(0,0,0,0.25);
+      padding: 14px;
+      position: relative;
+      background: rgba(255,255,255,0.55);
+    }
+    .brand::after {
+      content: "";
+      position: absolute;
+      right: -1px; top: -1px;
+      width: 34px; height: 34px;
+      border-left: 1px solid rgba(0,0,0,0.22);
+      border-bottom: 1px solid rgba(0,0,0,0.22);
+      background: linear-gradient(135deg, transparent 49%, rgba(0,0,0,0.20) 50%, transparent 51%);
+    }
+    .brand h1 { margin: 0 0 8px; font-size: 17px; letter-spacing: 0.05em; }
+    .brand p { margin: 0; font-size: 12px; color: var(--soft-ink); line-height: 1.4; }
+
+    .hint-list { display: grid; gap: 10px; overflow: auto; padding-right: 3px; }
+    .hint {
+      border-bottom: 1px solid rgba(0,0,0,0.12);
+      padding: 10px 2px 14px;
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 10px;
+      align-items: center;
+    }
+    .hint .icon {
+      width: 38px; height: 38px;
+      display: grid; place-items: center;
+      font-size: 26px; color: #111;
+    }
+    .hint b { display: block; font-size: 12px; letter-spacing: .05em; margin-bottom: 4px; }
+    .hint span { display: block; color: var(--soft-ink); font-size: 12px; line-height: 1.35; }
+
+    .legend {
+      border: 1px solid rgba(0,0,0,0.15);
+      padding: 12px;
+      font-size: 12px;
+    }
+    .legend b { display: block; margin-bottom: 8px; letter-spacing: .06em; }
+    .legend div { display: flex; align-items: center; gap: 8px; margin: 7px 0; color: var(--soft-ink); }
+    .sample-line { width: 34px; height: 1px; border-top: 1px dashed #111; display: inline-block; }
+
+    .stage {
+      position: relative;
+      overflow: hidden;
+      min-width: 0;
+    }
+    #canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: rgba(255,255,255,0.36);
+      cursor: grab;
+    }
+    #canvas.dragging { cursor: grabbing; }
+
+    .floating-note {
+      position: absolute;
+      right: 18px;
+      top: 16px;
+      padding: 8px 10px;
+      border: 1px solid rgba(0,0,0,0.20);
+      background: rgba(255,255,255,0.68);
+      font-size: 12px;
+      color: var(--soft-ink);
+      pointer-events: none;
+    }
+
+    .tray {
+      grid-column: 2;
+      padding: 12px;
+      overflow: hidden;
+    }
+    .tray-head {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 10px;
+      font-size: 12px;
+      letter-spacing: .05em;
+    }
+    .tray-head small { color: var(--soft-ink); letter-spacing: 0; }
+    .parts {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 118px;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+    }
+    .part-card {
+      min-height: 102px;
+      padding: 8px;
+      border: 1px solid rgba(0,0,0,0.18);
+      background: rgba(255,255,255,0.54);
+      display: grid;
+      grid-template-rows: 1fr auto auto;
+      gap: 4px;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+    }
+    .part-card:hover { border-color: rgba(0,0,0,0.55); }
+    .part-card.locked { color: var(--locked); background: rgba(240,240,236,.55); }
+    .part-card .lock { position: absolute; right: 8px; top: 6px; font-size: 13px; }
+    .part-card canvas { width: 62px; height: 46px; margin: auto; opacity: .9; }
+    .part-card b { font-size: 11px; }
+    .part-card small { font-size: 10px; color: var(--soft-ink); }
+
+    .statusbar {
+      grid-column: 2;
+      display: grid;
+      grid-template-columns: 1fr auto auto auto auto;
+      gap: 10px;
+      padding: 12px;
+      align-items: center;
+    }
+    .stat-row { display: flex; gap: 26px; font-size: 12px; color: var(--soft-ink); }
+    .stat-row b { color: var(--ink); }
+    button {
+      height: 40px;
+      padding: 0 16px;
+      border: 1px solid rgba(0,0,0,0.25);
+      background: rgba(255,255,255,0.65);
+      color: var(--ink);
+      font: inherit;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    button:hover { border-color: #000; }
+    button.primary { background: #111; color: white; border-color: #111; }
+    button.active { box-shadow: inset 0 0 0 2px #111; }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      border: 1px solid rgba(0,0,0,0.25);
+      background: rgba(255,255,255,0.92);
+      padding: 10px 14px;
+      font-size: 12px;
+      box-shadow: 0 12px 28px rgba(0,0,0,.12);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease;
+    }
+    .toast.show { opacity: 1; }
+
+    @media (max-width: 1000px) {
+      .app { grid-template-columns: 1fr; grid-template-rows: auto 60vh 170px 76px; }
+      .left { grid-row: auto; grid-template-rows: auto; }
+      .hint-list, .legend { display: none; }
+      .tray, .statusbar { grid-column: 1; }
+      .statusbar { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="left">
+      <div class="brand">
+        <h1>MECHANICAL NFT BUILDER</h1>
+        <p>Blueprint prototype. Move starter parts for free. Buy/unlock extra parts only when you need more.</p>
+      </div>
+
+      <div class="hint-list">
+        <div class="hint"><div class="icon">↔</div><div><b>DRAG TO MOVE</b><span>Move any owned starter part freely around the canvas.</span></div></div>
+        <div class="hint"><div class="icon">⟳</div><div><b>ROTATE</b><span>Press R or use wheel while selected to change scale.</span></div></div>
+        <div class="hint"><div class="icon">⚙</div><div><b>CONNECTED SYSTEM</b><span>Gears mesh. Pipes snap. Fluid flows. Everything can move together.</span></div></div>
+        <div class="hint"><div class="icon">▶</div><div><b>PREVIEW MOTION</b><span>See the kinetic machine before saving or signing.</span></div></div>
+        <div class="hint"><div class="icon">▣</div><div><b>OWN MORE PARTS</b><span>Locked premium parts can be bought/unlocked later.</span></div></div>
+      </div>
+
+      <div class="legend">
+        <b>LEGEND</b>
+        <div><span>↻</span> rotation</div>
+        <div><span class="sample-line"></span> fluid / belt flow</div>
+        <div><span>○</span> connector point</div>
+      </div>
+    </aside>
+
+    <main class="stage">
+      <canvas id="canvas" width="1600" height="1100"></canvas>
+      <div class="floating-note">free edit mode · sign only when publishing</div>
+    </main>
+
+    <section class="tray">
+      <div class="tray-head">
+        <b>PARTS LIBRARY</b>
+        <small>click to add · locked parts preview the future economy</small>
+      </div>
+      <div id="parts" class="parts"></div>
+    </section>
+
+    <footer class="statusbar">
+      <div class="stat-row">
+        <span>BUILD: <b id="buildStatus">UNSAVED</b></span>
+        <span>PARTS: <b id="partsCount">0</b></span>
+        <span>CONNECTIONS: <b id="connectionsCount">0</b></span>
+      </div>
+      <button id="resetBtn">↻ RESET CANVAS</button>
+      <button id="previewBtn">▶ PREVIEW MOTION</button>
+      <button id="saveLocalBtn">▣ SAVE BUILD OFF-CHAIN</button>
+      <button id="publishBtn" class="primary">⬡ SAVE ON-CHAIN / SIGN</button>
+    </footer>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    /*
+      Mechanical NFT Builder prototype
+      --------------------------------
+      This file is intentionally standalone and heavily commented so Codex can
+      use it as a product/visual reference while building the real app.
+
+      Important architecture idea:
+      - This freeform layout JSON should not be stored fully in Solidity.
+      - Save off-chain can store it locally/IPFS/backend.
+      - Save on-chain should only publish layout URI/hash + compact state.
+    */
+
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const partsEl = document.getElementById("parts");
+    const toastEl = document.getElementById("toast");
+
+    const state = {
+      preview: true,
+      selectedId: null,
+      dragging: null,
+      dirty: true,
+      time: 0,
+      // In production this comes from contract/backend ownership state.
+      ownedPartIds: new Set(["gear.small", "gear.medium", "gear.large", "wheel", "pipe.straight", "pipe.elbow", "tank", "gauge", "bolt", "micro.dot"]),
+      placements: [],
+      connections: []
+    };
+
+    const catalog = [
+      { id: "gear.small", name: "SMALL GEAR", type: "gear", owned: true, radius: 36, teeth: 18, canDuplicate: true },
+      { id: "gear.medium", name: "MEDIUM GEAR", type: "gear", owned: true, radius: 58, teeth: 24, canDuplicate: true },
+      { id: "gear.large", name: "LARGE GEAR", type: "gear", owned: true, radius: 92, teeth: 32, canDuplicate: true },
+      { id: "wheel", name: "BELT WHEEL", type: "wheel", owned: true, radius: 62, teeth: 0, canDuplicate: true },
+      { id: "pipe.straight", name: "PIPE STRAIGHT", type: "pipeStraight", owned: true, canDuplicate: true },
+      { id: "pipe.elbow", name: "PIPE ELBOW", type: "pipeElbow", owned: true, canDuplicate: true },
+      { id: "tank", name: "FLUID TANK", type: "tank", owned: true, canDuplicate: false },
+      { id: "gauge", name: "PRESSURE GAUGE", type: "gauge", owned: true, canDuplicate: true },
+      { id: "bolt", name: "MICRO BOLT", type: "bolt", owned: true, canDuplicate: true },
+      { id: "micro.dot", name: "DRAW DOT", type: "dot", owned: true, canDuplicate: true },
+      { id: "bevel.gear", name: "BEVEL GEAR", type: "gear", owned: false, radius: 50, teeth: 22, premium: true },
+      { id: "chain.drive", name: "CHAIN DRIVE", type: "chain", owned: false, premium: true },
+      { id: "steam.valve", name: "STEAM VALVE", type: "valve", owned: false, premium: true },
+      { id: "tesla.coil", name: "TESLA COIL", type: "coil", owned: false, premium: true }
+    ];
+
+    function starterCanvas() {
+      let id = 1;
+      const add = (partId, x, y, rotation = 0, scale = 1, z = 1) => {
+        const part = catalog.find(p => p.id === partId);
+        state.placements.push({
+          placementId: id++,
+          partId,
+          type: part.type,
+          x, y, rotation,
+          scaleX: scale,
+          scaleY: scale,
+          zIndex: z,
+          locked: false,
+          owned: state.ownedPartIds.has(partId)
+        });
+      };
+
+      state.placements.length = 0;
+
+      // Border/frame machine. These parts create the "already art" starting point.
+      add("pipe.straight", 210, 100, 0, 1.6, 1);
+      add("pipe.elbow", 92, 118, Math.PI, 1.1, 1);
+      add("pipe.straight", 72, 300, Math.PI / 2, 1.7, 1);
+      add("pipe.straight", 78, 716, Math.PI / 2, 1.9, 1);
+      add("pipe.straight", 1330, 120, 0, 1.7, 1);
+      add("pipe.straight", 1510, 330, Math.PI / 2, 1.8, 1);
+      add("pipe.straight", 1260, 1014, 0, 2.7, 1);
+      add("pipe.straight", 450, 1012, 0, 2.2, 1);
+      add("gear.large", 260, 205, 0.1, 1.05, 3);
+      add("gear.medium", 440, 290, 0.3, 0.8, 3);
+      add("gear.large", 580, 165, -0.4, 1.15, 3);
+      add("gear.large", 1370, 184, 0.2, 1.2, 3);
+      add("gear.medium", 1285, 408, 0.1, 0.8, 3);
+      add("gear.large", 300, 828, 0.2, 1.2, 3);
+      add("gear.medium", 1080, 838, 0.8, 0.95, 3);
+      add("gear.medium", 1290, 810, -0.2, 0.85, 3);
+      add("wheel", 646, 855, 0, 0.95, 4);
+      add("tank", 365, 560, 0, 1, 2);
+      add("tank", 1400, 610, 0, 1.12, 2);
+      add("tank", 850, 915, Math.PI / 2, 1.15, 2);
+      add("gauge", 1168, 930, 0, 0.9, 5);
+      add("pipe.elbow", 552, 700, Math.PI / 2, 1.05, 2);
+      add("pipe.straight", 727, 745, 0.05, 1.25, 2);
+      add("gear.medium", 880, 442, 0.1, 0.8, 5); // central free gear
+      add("pipe.elbow", 600, 590, 0.4, 0.88, 5); // central free pipe
+      add("gear.small", 960, 600, 0.2, 0.72, 5);
+      add("bolt", 760, 318, 0, 1.0, 7);
+      add("bolt", 1010, 360, 0, 1.0, 7);
+      add("micro.dot", 838, 560, 0, 1, 7);
+
+      state.selectedId = 24;
+      state.dirty = true;
+      computeConnections();
+      updateStatus();
+    }
+
+    function getPartDef(placement) {
+      return catalog.find(p => p.id === placement.partId) || catalog[0];
+    }
+
+    function getSelected() {
+      return state.placements.find(p => p.placementId === state.selectedId);
+    }
+
+    function draw() {
+      const now = performance.now() / 1000;
+      const dt = Math.min(0.05, now - (state.time || now));
+      state.time = now;
+      if (state.preview) advanceMotion(dt);
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawPaperBackground();
+      computeConnections();
+      drawConnectionGuides();
+
+      const ordered = [...state.placements].sort((a, b) => a.zIndex - b.zIndex);
+      for (const p of ordered) drawPart(p);
+
+      drawSelection();
+      requestAnimationFrame(draw);
+    }
+
+    function drawPaperBackground() {
+      ctx.save();
+      ctx.fillStyle = "rgba(255,255,255,0.64)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Subtle blueprint crosshairs and central workspace.
+      ctx.strokeStyle = "rgba(0,0,0,0.07)";
+      ctx.lineWidth = 1;
+      for (let x = 60; x < canvas.width; x += 80) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+      }
+      for (let y = 60; y < canvas.height; y += 80) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+      }
+
+      ctx.strokeStyle = "rgba(0,0,0,0.18)";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(22, 22, canvas.width - 44, canvas.height - 44);
+      ctx.setLineDash([10, 12]);
+      ctx.strokeStyle = "rgba(0,0,0,0.12)";
+      ctx.strokeRect(52, 52, canvas.width - 104, canvas.height - 104);
+      ctx.setLineDash([]);
+
+      ctx.font = "18px ui-monospace, monospace";
+      ctx.fillStyle = "rgba(0,0,0,0.72)";
+      ctx.fillText("KINETIC CANVAS // FREEFORM MECHANICAL BUILD", 46, 62);
+      ctx.font = "13px ui-monospace, monospace";
+      ctx.fillStyle = "rgba(0,0,0,0.46)";
+      ctx.fillText("starter parts are editable · extra parts unlockable · active build publishes on chain", 46, canvas.height - 40);
+      ctx.restore();
+    }
+
+    function drawPart(p) {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation || 0);
+      ctx.scale(p.scaleX || 1, p.scaleY || 1);
+      ctx.globalAlpha = p.owned ? 1 : 0.42;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      switch (p.type) {
+        case "gear": drawGear(getPartDef(p)); break;
+        case "wheel": drawWheel(); break;
+        case "pipeStraight": drawPipeStraight(); break;
+        case "pipeElbow": drawPipeElbow(); break;
+        case "tank": drawTank(); break;
+        case "gauge": drawGauge(); break;
+        case "bolt": drawBolt(); break;
+        case "dot": drawDot(); break;
+        case "chain": drawChain(); break;
+        case "valve": drawValve(); break;
+        case "coil": drawCoil(); break;
+        default: drawBolt();
+      }
+      ctx.restore();
+    }
+
+    function inkStroke(width = 2, alpha = 0.82) {
+      ctx.strokeStyle = `rgba(22, 26, 28, ${alpha})`;
+      ctx.lineWidth = width;
+    }
+    function inkFill(alpha = 0.05) {
+      ctx.fillStyle = `rgba(22, 26, 28, ${alpha})`;
+    }
+
+    function drawGear(def) {
+      const r = def.radius || 60;
+      const teeth = def.teeth || 24;
+      inkStroke(2.4, 0.86);
+      inkFill(0.04);
+
+      ctx.beginPath();
+      for (let i = 0; i < teeth * 2; i++) {
+        const a = (i / (teeth * 2)) * Math.PI * 2;
+        const rr = i % 2 === 0 ? r + 8 : r - 2;
+        const x = Math.cos(a) * rr;
+        const y = Math.sin(a) * rr;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+
+      inkStroke(2, 0.75);
+      for (const ring of [r * .72, r * .42, r * .18]) {
+        ctx.beginPath(); ctx.arc(0, 0, ring, 0, Math.PI * 2); ctx.stroke();
+      }
+      for (let i = 0; i < 8; i++) {
+        const a = i / 8 * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * r * .24, Math.sin(a) * r * .24);
+        ctx.lineTo(Math.cos(a) * r * .66, Math.sin(a) * r * .66);
+        ctx.stroke();
+      }
+
+      // Rotation arrow tells the viewer this is a moving piece.
+      inkStroke(1.4, 0.42);
+      ctx.beginPath(); ctx.arc(0, 0, r + 22, -0.6, 0.95); ctx.stroke();
+      drawArrowHead(Math.cos(.95) * (r + 22), Math.sin(.95) * (r + 22), .95);
+    }
+
+    function drawWheel() {
+      inkStroke(2.2, .82);
+      ctx.beginPath(); ctx.arc(0, 0, 64, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(0, 0, 42, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(0, 0, 12, 0, Math.PI * 2); ctx.stroke();
+      for (let i = 0; i < 6; i++) {
+        const a = i / 6 * Math.PI * 2;
+        ctx.beginPath(); ctx.moveTo(Math.cos(a)*16, Math.sin(a)*16); ctx.lineTo(Math.cos(a)*58, Math.sin(a)*58); ctx.stroke();
+      }
+    }
+
+    function drawPipeStraight() {
+      inkStroke(2.3, .82);
+      ctx.strokeRect(-92, -18, 184, 36);
+      ctx.strokeRect(-102, -25, 24, 50);
+      ctx.strokeRect(78, -25, 24, 50);
+      ctx.beginPath(); ctx.moveTo(-70, 0); ctx.lineTo(70, 0); ctx.stroke();
+      drawFlowLine(-65, 0, 65, 0);
+      drawConnector(-102, 0); drawConnector(102, 0);
+    }
+
+    function drawPipeElbow() {
+      inkStroke(2.3, .82);
+      ctx.beginPath(); ctx.arc(-40, 40, 70, -Math.PI / 2, 0); ctx.stroke();
+      ctx.beginPath(); ctx.arc(-40, 40, 38, -Math.PI / 2, 0); ctx.stroke();
+      ctx.strokeRect(-62, -82, 44, 28);
+      ctx.strokeRect(52, 18, 28, 44);
+      drawFlowLine(-40, -55, 52, 40);
+      drawConnector(-40, -82); drawConnector(80, 40);
+    }
+
+    function drawTank() {
+      inkStroke(2.2, .82);
+      ctx.strokeRect(-46, -108, 92, 216);
+      ctx.strokeRect(-58, -96, 116, 28);
+      ctx.strokeRect(-58, 68, 116, 28);
+      ctx.beginPath(); ctx.roundRect(-34, -64, 68, 128, 24); ctx.stroke();
+
+      // Liquid waves. In production this is controlled by chain liquid state.
+      ctx.save();
+      ctx.beginPath(); ctx.roundRect(-34, -64, 68, 128, 24); ctx.clip();
+      const fillY = 26 + Math.sin(state.time * 2.4) * 4;
+      ctx.fillStyle = "rgba(30, 120, 160, 0.18)";
+      ctx.beginPath(); ctx.moveTo(-34, fillY);
+      for (let x = -34; x <= 36; x += 4) {
+        ctx.lineTo(x, fillY + Math.sin((x * 0.1) + state.time * 4) * 5);
+      }
+      ctx.lineTo(34, 64); ctx.lineTo(-34, 64); ctx.closePath(); ctx.fill();
+      ctx.restore();
+
+      for (let y of [-74, 82]) {
+        for (let x = -38; x <= 38; x += 19) {
+          ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI*2); ctx.stroke();
+        }
+      }
+      drawConnector(0, -126); drawConnector(0, 126);
+    }
+
+    function drawGauge() {
+      inkStroke(2.1, .83);
+      ctx.beginPath(); ctx.arc(0, 0, 52, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(0, 0, 42, 0, Math.PI * 2); ctx.stroke();
+      for (let i = 0; i < 9; i++) {
+        const a = Math.PI * (1 + i / 8);
+        ctx.beginPath(); ctx.moveTo(Math.cos(a)*35, Math.sin(a)*35); ctx.lineTo(Math.cos(a)*42, Math.sin(a)*42); ctx.stroke();
+      }
+      ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(-0.8 + Math.sin(state.time)*.4)*30, Math.sin(-0.8 + Math.sin(state.time)*.4)*30); ctx.stroke();
+      drawConnector(0, 56);
+    }
+
+    function drawBolt() {
+      inkStroke(1.8, .82);
+      ctx.beginPath();
+      for (let i=0;i<6;i++) {
+        const a = i/6*Math.PI*2 + Math.PI/6;
+        const x = Math.cos(a)*16, y = Math.sin(a)*16;
+        i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
+      }
+      ctx.closePath(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(0,0,5,0,Math.PI*2); ctx.stroke();
+    }
+
+    function drawDot() {
+      ctx.fillStyle = "rgba(18,22,24,.72)";
+      ctx.beginPath(); ctx.arc(0,0,5,0,Math.PI*2); ctx.fill();
+    }
+
+    function drawChain() {
+      inkStroke(2, .7);
+      for (let i=-4;i<=4;i++) {
+        ctx.beginPath(); ctx.ellipse(i*18, 0, 14, 8, i%2?Math.PI/2:0, 0, Math.PI*2); ctx.stroke();
+      }
+    }
+
+    function drawValve() {
+      drawPipeStraight();
+      inkStroke(2, .82);
+      ctx.beginPath(); ctx.arc(0,-48,26,0,Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-20,-48); ctx.lineTo(20,-48); ctx.moveTo(0,-68); ctx.lineTo(0,-28); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0,-18); ctx.lineTo(0,-48); ctx.stroke();
+    }
+
+    function drawCoil() {
+      inkStroke(2, .82);
+      ctx.strokeRect(-30, -90, 60, 180);
+      for (let y=-70; y<=70; y+=18) {
+        ctx.beginPath(); ctx.moveTo(-42, y); ctx.bezierCurveTo(-10, y-16, 10, y+16, 42, y); ctx.stroke();
+      }
+      drawConnector(0, 100);
+    }
+
+    function drawConnector(x, y) {
+      ctx.save();
+      ctx.strokeStyle = "rgba(0,0,0,.42)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI*2); ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawFlowLine(x1, y1, x2, y2) {
+      const pulse = ((state.time * 40) % 40) / 40;
+      inkStroke(1, .5);
+      ctx.setLineDash([8, 10]);
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      ctx.setLineDash([]);
+      const x = x1 + (x2 - x1) * pulse;
+      const y = y1 + (y2 - y1) * pulse;
+      ctx.fillStyle = "rgba(0,0,0,.5)";
+      ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI*2); ctx.fill();
+    }
+
+    function drawArrowHead(x, y, angle) {
+      ctx.save(); ctx.translate(x,y); ctx.rotate(angle);
+      ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-8,-4); ctx.lineTo(-6,5); ctx.closePath(); ctx.fillStyle = "rgba(0,0,0,.5)"; ctx.fill();
+      ctx.restore();
+    }
+
+    function getGearRadius(p) {
+      const def = getPartDef(p);
+      return (def.radius || 50) * ((p.scaleX + p.scaleY) / 2 || 1);
+    }
+
+    function getConnectors(p) {
+      // Connector points are in world coordinates. Codex can replace this with
+      // precise geometry from the part catalog.
+      const cos = Math.cos(p.rotation || 0);
+      const sin = Math.sin(p.rotation || 0);
+      const transform = (x, y, kind, id) => ({
+        id,
+        kind,
+        x: p.x + (x * (p.scaleX || 1)) * cos - (y * (p.scaleY || 1)) * sin,
+        y: p.y + (x * (p.scaleX || 1)) * sin + (y * (p.scaleY || 1)) * cos,
+        placementId: p.placementId
+      });
+      if (p.type === "pipeStraight") return [transform(-102,0,"pipe","west"), transform(102,0,"pipe","east")];
+      if (p.type === "pipeElbow") return [transform(-40,-82,"pipe","north"), transform(80,40,"pipe","east")];
+      if (p.type === "tank") return [transform(0,-126,"pipe","top"), transform(0,126,"pipe","bottom")];
+      if (p.type === "gauge") return [transform(0,56,"pipe","bottom")];
+      return [];
+    }
+
+    function computeConnections() {
+      const conns = [];
+      const gears = state.placements.filter(p => p.type === "gear" || p.type === "wheel");
+
+      for (let i=0;i<gears.length;i++) {
+        for (let j=i+1;j<gears.length;j++) {
+          const a = gears[i], b = gears[j];
+          const dx = a.x-b.x, dy = a.y-b.y;
+          const d = Math.hypot(dx,dy);
+          const target = getGearRadius(a) + getGearRadius(b);
+          if (Math.abs(d - target) < 24) {
+            conns.push({ type: "gearMesh", from: a.placementId, to: b.placementId, active: true });
+          } else if (d < target + 160 && d > target + 32) {
+            conns.push({ type: "belt", from: a.placementId, to: b.placementId, active: true });
+          }
+        }
+      }
+
+      const pipeParts = state.placements.filter(p => ["pipeStraight","pipeElbow","tank","gauge","valve"].includes(p.type));
+      const connectors = pipeParts.flatMap(getConnectors);
+      for (let i=0;i<connectors.length;i++) {
+        for (let j=i+1;j<connectors.length;j++) {
+          const a = connectors[i], b = connectors[j];
+          if (a.placementId === b.placementId || a.kind !== b.kind) continue;
+          const d = Math.hypot(a.x-b.x, a.y-b.y);
+          if (d < 26) conns.push({ type: "pipe", from: a.placementId, to: b.placementId, a, b, active: true });
+        }
+      }
+      state.connections = conns;
+      updateStatus();
+    }
+
+    function drawConnectionGuides() {
+      ctx.save();
+      for (const c of state.connections) {
+        const a = state.placements.find(p => p.placementId === c.from);
+        const b = state.placements.find(p => p.placementId === c.to);
+        if (!a || !b) continue;
+        ctx.strokeStyle = c.type === "pipe" ? "rgba(20,120,160,.35)" : "rgba(0,0,0,.25)";
+        ctx.lineWidth = c.type === "belt" ? 3 : 1.4;
+        if (c.type === "belt") ctx.setLineDash([12, 10]);
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      ctx.restore();
+    }
+
+    function advanceMotion(dt) {
+      for (const p of state.placements) {
+        if (p.type === "gear") {
+          const connected = state.connections.some(c => c.from === p.placementId || c.to === p.placementId);
+          p.rotation += (connected ? 0.75 : 0.24) * dt * (p.placementId % 2 ? 1 : -1);
+        }
+        if (p.type === "wheel") p.rotation += 0.45 * dt;
+      }
+    }
+
+    function drawSelection() {
+      const p = getSelected();
+      if (!p) return;
+      ctx.save();
+      ctx.translate(p.x, p.y); ctx.rotate(p.rotation || 0); ctx.scale(p.scaleX || 1, p.scaleY || 1);
+      const box = partBox(p);
+      ctx.strokeStyle = "rgba(0,0,0,.72)";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([8, 7]);
+      ctx.strokeRect(box.x, box.y, box.w, box.h);
+      ctx.setLineDash([]);
+      for (const [x,y] of [[box.x,box.y],[box.x+box.w,box.y],[box.x,box.y+box.h],[box.x+box.w,box.y+box.h]]) {
+        ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fillStyle = "white"; ctx.fill(); ctx.stroke();
+      }
+      // Rotation handle
+      ctx.beginPath(); ctx.moveTo(0, box.y - 8); ctx.lineTo(0, box.y - 36); ctx.stroke();
+      ctx.beginPath(); ctx.arc(0, box.y - 48, 14, 0, Math.PI*2); ctx.stroke();
+      ctx.font = "16px ui-monospace, monospace"; ctx.fillText("↻", -8, box.y - 42);
+      ctx.restore();
+
+      // World-space connector dots so the user understands snapping.
+      ctx.save();
+      for (const con of getConnectors(p)) {
+        ctx.strokeStyle = "rgba(20,120,160,.7)";
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(con.x, con.y, 7, 0, Math.PI*2); ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function partBox(p) {
+      const def = getPartDef(p);
+      if (p.type === "gear" || p.type === "wheel") {
+        const r = (def.radius || 60) + 28;
+        return { x:-r, y:-r, w:r*2, h:r*2 };
+      }
+      if (p.type === "tank") return { x:-70, y:-140, w:140, h:280 };
+      if (p.type === "pipeStraight") return { x:-114, y:-34, w:228, h:68 };
+      if (p.type === "pipeElbow") return { x:-86, y:-100, w:180, h:180 };
+      return { x:-40, y:-40, w:80, h:80 };
+    }
+
+    function hitTest(x, y) {
+      const ordered = [...state.placements].sort((a,b)=>b.zIndex-a.zIndex);
+      for (const p of ordered) {
+        const dx = x - p.x, dy = y - p.y;
+        const size = Math.max(partBox(p).w * (p.scaleX || 1), partBox(p).h * (p.scaleY || 1)) / 2;
+        if (Math.abs(dx) < size && Math.abs(dy) < size) return p;
+      }
+      return null;
+    }
+
+    function canvasPoint(event) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (event.clientX - rect.left) / rect.width * canvas.width,
+        y: (event.clientY - rect.top) / rect.height * canvas.height
+      };
+    }
+
+    canvas.addEventListener("pointerdown", event => {
+      const pt = canvasPoint(event);
+      const hit = hitTest(pt.x, pt.y);
+      state.selectedId = hit?.placementId ?? null;
+      if (hit) {
+        state.dragging = { startX: pt.x, startY: pt.y, x: hit.x, y: hit.y };
+        canvas.classList.add("dragging");
+        canvas.setPointerCapture(event.pointerId);
+      }
+    });
+
+    canvas.addEventListener("pointermove", event => {
+      if (!state.dragging || !getSelected()) return;
+      const pt = canvasPoint(event);
+      const p = getSelected();
+      p.x = state.dragging.x + pt.x - state.dragging.startX;
+      p.y = state.dragging.y + pt.y - state.dragging.startY;
+      state.dirty = true;
+    });
+
+    canvas.addEventListener("pointerup", event => {
+      canvas.classList.remove("dragging");
+      state.dragging = null;
+      try { canvas.releasePointerCapture(event.pointerId); } catch {}
+    });
+
+    canvas.addEventListener("wheel", event => {
+      const p = getSelected();
+      if (!p) return;
+      event.preventDefault();
+      const factor = event.deltaY < 0 ? 1.06 : 0.94;
+      p.scaleX = clamp(p.scaleX * factor, .25, 3.2);
+      p.scaleY = clamp(p.scaleY * factor, .25, 3.2);
+      state.dirty = true;
+    }, { passive: false });
+
+    window.addEventListener("keydown", event => {
+      const p = getSelected();
+      if (!p) return;
+      if (event.key.toLowerCase() === "r") { p.rotation += Math.PI / 18; state.dirty = true; }
+      if (event.key === "Delete" || event.key === "Backspace") {
+        state.placements = state.placements.filter(x => x.placementId !== p.placementId);
+        state.selectedId = null;
+        state.dirty = true;
+      }
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "d") {
+        event.preventDefault();
+        const def = getPartDef(p);
+        if (!def.canDuplicate) return toast("This part cannot be duplicated in the starter rules.");
+        const nextId = Math.max(...state.placements.map(x=>x.placementId)) + 1;
+        state.placements.push({ ...structuredClone(p), placementId: nextId, x: p.x + 24, y: p.y + 24, zIndex: p.zIndex + 1 });
+        state.selectedId = nextId;
+        state.dirty = true;
+      }
+    });
+
+    function addPart(part) {
+      if (!part.owned) {
+        toast(`${part.name} is locked. User must buy/unlock before publishing.`);
+        // Add as ghost preview so Codex understands preview behavior.
+      }
+      const nextId = Math.max(0, ...state.placements.map(x=>x.placementId)) + 1;
+      state.placements.push({
+        placementId: nextId,
+        partId: part.id,
+        type: part.type,
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        rotation: 0,
+        scaleX: 1,
+        scaleY: 1,
+        zIndex: Math.max(0, ...state.placements.map(x=>x.zIndex)) + 1,
+        owned: part.owned,
+        locked: !part.owned
+      });
+      state.selectedId = nextId;
+      state.dirty = true;
+    }
+
+    function renderPartsTray() {
+      partsEl.innerHTML = "";
+      for (const part of catalog) {
+        const card = document.createElement("button");
+        card.className = `part-card ${part.owned ? "" : "locked"}`;
+        card.innerHTML = `<span class="lock">${part.owned ? "✓" : "🔒"}</span><canvas width="90" height="60"></canvas><b>${part.name}</b><small>${part.owned ? "OWNED" : "PREMIUM"}</small>`;
+        card.addEventListener("click", () => addPart(part));
+        partsEl.appendChild(card);
+        const preview = card.querySelector("canvas").getContext("2d");
+        preview.translate(45, 30);
+        const oldCtx = ctx;
+        // Quick miniature preview using duplicated drawing logic by temporarily switching context.
+        drawMini(preview, part);
+      }
+    }
+
+    function drawMini(mctx, part) {
+      mctx.save();
+      mctx.strokeStyle = part.owned ? "rgba(0,0,0,.72)" : "rgba(0,0,0,.34)";
+      mctx.fillStyle = "rgba(0,0,0,.04)";
+      mctx.lineWidth = 2;
+      if (part.type === "gear") {
+        const r = 20;
+        mctx.beginPath();
+        for (let i=0;i<24;i++) {
+          const a=i/24*Math.PI*2, rr=i%2?r:r+4;
+          const x=Math.cos(a)*rr, y=Math.sin(a)*rr;
+          i?mctx.lineTo(x,y):mctx.moveTo(x,y);
+        }
+        mctx.closePath(); mctx.stroke();
+        mctx.beginPath(); mctx.arc(0,0,8,0,Math.PI*2); mctx.stroke();
+      } else if (part.type.includes("pipe")) {
+        mctx.strokeRect(-32,-8,64,16);
+        mctx.beginPath(); mctx.moveTo(-25,0); mctx.lineTo(25,0); mctx.stroke();
+      } else if (part.type === "tank") {
+        mctx.strokeRect(-14,-24,28,48);
+        mctx.beginPath(); mctx.moveTo(-10,8); mctx.quadraticCurveTo(0,2,10,8); mctx.stroke();
+      } else {
+        mctx.beginPath(); mctx.arc(0,0,18,0,Math.PI*2); mctx.stroke();
+      }
+      mctx.restore();
+    }
+
+    function exportLayout() {
+      return {
+        version: 1,
+        tokenId: 1,
+        canvas: { width: canvas.width, height: canvas.height, style: "blueprint-ink-white", baseCanvas: "kinetic-frame" },
+        liquid: { type: "Blue Coolant", fillLevel: 72, texture: "Bubbly" },
+        placements: state.placements,
+        connections: state.connections,
+        updatedAt: new Date().toISOString()
+      };
+    }
+
+    function saveOffChain() {
+      const layout = exportLayout();
+      localStorage.setItem("mechanical-builder-demo-layout", JSON.stringify(layout));
+      state.dirty = false;
+      toast("Saved draft off-chain/local. No wallet signature needed.");
+    }
+
+    function publishOnChain() {
+      const locked = state.placements.filter(p => !p.owned);
+      if (locked.length) {
+        toast(`Cannot publish: ${locked.length} locked part(s) need to be bought/unlocked first.`);
+        return;
+      }
+      const layout = exportLayout();
+      // Real implementation: upload JSON, compute hash, call publishBuild(tokenId, uri, hash).
+      console.log("Publish payload for contract/IPFS:", layout);
+      toast("Ready to sign: upload layout + call publishBuild(tokenId, uri, hash).");
+    }
+
+    function resetCanvas() { starterCanvas(); toast("Canvas reset to starter machine."); }
+    function togglePreview() {
+      state.preview = !state.preview;
+      document.getElementById("previewBtn").classList.toggle("active", state.preview);
+      toast(state.preview ? "Preview motion on." : "Preview motion paused.");
+    }
+
+    function updateStatus() {
+      document.getElementById("buildStatus").textContent = state.dirty ? "UNSAVED" : "SAVED";
+      document.getElementById("partsCount").textContent = state.placements.length;
+      document.getElementById("connectionsCount").textContent = state.connections.length;
+    }
+
+    function toast(message) {
+      toastEl.textContent = message;
+      toastEl.classList.add("show");
+      clearTimeout(toastEl._timer);
+      toastEl._timer = setTimeout(() => toastEl.classList.remove("show"), 2800);
+    }
+    function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+    document.getElementById("resetBtn").addEventListener("click", resetCanvas);
+    document.getElementById("previewBtn").addEventListener("click", togglePreview);
+    document.getElementById("saveLocalBtn").addEventListener("click", saveOffChain);
+    document.getElementById("publishBtn").addEventListener("click", publishOnChain);
+
+    // Polyfill for older browsers in local test environments.
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r) {
+        r = Math.min(r, w/2, h/2);
+        this.beginPath(); this.moveTo(x+r,y); this.arcTo(x+w,y,x+w,y+h,r); this.arcTo(x+w,y+h,x,y+h,r); this.arcTo(x,y+h,x,y,r); this.arcTo(x,y,x+w,y,r); this.closePath(); return this;
+      };
+    }
+
+    renderPartsTray();
+    starterCanvas();
+    document.getElementById("previewBtn").classList.add("active");
+    draw();
+  </script>
+</body>
+</html>

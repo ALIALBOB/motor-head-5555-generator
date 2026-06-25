@@ -1,0 +1,28 @@
+{
+  "name": "Mechanical Canvas #0009",
+  "description": "A freeform mechanical canvas NFT. The holder can move gears, pipes, oil, and micro-parts to build any mechanical drawing or face.",
+  "image": "ipfs://PREVIEW_CID/previews/0009.svg",
+  "animation_url": "ipfs://RENDERER_CID/index.html?tokenId=9",
+  "attributes": [
+    {
+      "trait_type": "Canvas",
+      "value": "Broken Mechanism"
+    },
+    {
+      "trait_type": "Liquid",
+      "value": "Red Pressure"
+    },
+    {
+      "trait_type": "Texture",
+      "value": "Electric"
+    },
+    {
+      "trait_type": "Placed Parts",
+      "value": 88
+    },
+    {
+      "trait_type": "Layout Hash",
+      "value": "e5ebb5ef95fe157f"
+    }
+  ]
+}

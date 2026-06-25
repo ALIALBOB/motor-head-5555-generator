@@ -1,0 +1,22 @@
+[
+  { "id": 1, "key": "gear.large", "name": "Large Gear", "category": 1, "rarity": 1, "active": true, "duplicable": true },
+  { "id": 2, "key": "gear.small", "name": "Small Gear", "category": 1, "rarity": 1, "active": true, "duplicable": true },
+  { "id": 3, "key": "pipe.straight", "name": "Straight Pipe", "category": 2, "rarity": 1, "active": true, "duplicable": true },
+  { "id": 4, "key": "pipe.elbow", "name": "Elbow Pipe", "category": 2, "rarity": 1, "active": true, "duplicable": true },
+  { "id": 5, "key": "pipe.curve", "name": "Curved Pipe", "category": 2, "rarity": 2, "active": true, "duplicable": true },
+  { "id": 6, "key": "bolt.micro", "name": "Micro Bolt", "category": 7, "rarity": 1, "active": true, "duplicable": true },
+  { "id": 7, "key": "screw.micro", "name": "Micro Screw", "category": 7, "rarity": 1, "active": true, "duplicable": true },
+  { "id": 8, "key": "ring.eye", "name": "Eye Ring", "category": 5, "rarity": 1, "active": true, "duplicable": true },
+  { "id": 9, "key": "lens.core", "name": "Core Lens", "category": 5, "rarity": 2, "active": true, "duplicable": true },
+  { "id": 10, "key": "tank.round", "name": "Round Liquid Tank", "category": 4, "rarity": 2, "active": true, "duplicable": true },
+  { "id": 11, "key": "drop.liquid", "name": "Liquid Drop", "category": 4, "rarity": 1, "active": true, "duplicable": true },
+  { "id": 12, "key": "smoke.curl", "name": "Smoke Curl", "category": 7, "rarity": 1, "active": true, "duplicable": true },
+  { "id": 13, "key": "spark.star", "name": "Spark Star", "category": 7, "rarity": 1, "active": true, "duplicable": true },
+  { "id": 14, "key": "plate.jaw", "name": "Jaw Plate", "category": 5, "rarity": 2, "active": true, "duplicable": true },
+  { "id": 15, "key": "frame.box", "name": "Frame Box", "category": 3, "rarity": 1, "active": true, "duplicable": true },
+  { "id": 16, "key": "wire.arc", "name": "Arc Wire", "category": 2, "rarity": 1, "active": true, "duplicable": true },
+  { "id": 17, "key": "crown.cog", "name": "Cog Crown", "category": 8, "rarity": 4, "active": true, "duplicable": false },
+  { "id": 18, "key": "horn.pipe", "name": "Pipe Horn", "category": 6, "rarity": 3, "active": true, "duplicable": true },
+  { "id": 19, "key": "beak.pipe", "name": "Pipe Beak", "category": 6, "rarity": 3, "active": true, "duplicable": true },
+  { "id": 20, "key": "rare.mercury", "name": "Mercury Core", "category": 8, "rarity": 5, "active": true, "duplicable": false }
+]

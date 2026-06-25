@@ -1,0 +1,199 @@
+{
+  "schemaVersion": 1,
+  "rendererVersion": "LAM_RENDER_V1",
+  "customizationStateVersion": "LAM_CUSTOM_STATE_V1",
+  "customizationEnabled": true,
+  "policy": "Base DNA traits are permanent. Owner edits are stored as overlay state and must not mutate base trait indexes or base trait names.",
+  "aliveProtocol": {
+    "schemaVersion": 1,
+    "id": "LAM_ALIVE_V1",
+    "awakenable": true,
+    "burnRequired": false,
+    "baseTraitsMutable": false,
+    "ownerCanCustomizeVisuals": true,
+    "futureRegistryAddress": "TBD_AFTER_DEPLOY",
+    "tokenBoundAccountStandard": "ERC-6551-ready",
+    "agentIdentityStandard": "ERC-8004-ready",
+    "stateUriTemplate": "https://example.com/lam/{tokenId}/alive",
+    "agentCardUriTemplate": "https://example.com/lam/{tokenId}/agent-card"
+  },
+  "goldenEdition": {
+    "enabled": true,
+    "count": 55,
+    "selection": "reservedTreasuryFirstTenPlusDeterministicTokenIdLottery",
+    "reservedTokenIds": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    "seedSalt": "lam-full-gold-lucky-mint-v1",
+    "paletteId": "goldenEdition",
+    "mintPolicy": "Golden Edition is assigned to exact token IDs during deterministic collection generation. Tokens 1-10 are reserved treasury golds for the initial owner mint, and 45 more are deterministic lucky mint slots. It is not a burn, reroll, or mutable base trait."
+  },
+  "customStateUriTemplate": "https://example.com/lam/{tokenId}/state",
+  "partManifestUri": "ipfs://PART_MANIFEST_CID/part-manifest.json",
+  "paletteManifestUri": "ipfs://PALETTE_MANIFEST_CID/lam_special_backgrounds.json",
+  "editableSlots": [
+    {
+      "id": "backgroundColor",
+      "label": "Background Color",
+      "affects": ["canvas.backgroundColor"],
+      "ownerEditable": true
+    },
+    {
+      "id": "bodyMaterial",
+      "label": "Body Material",
+      "affects": ["placement.role:body", "placement.role:chassis", "placement.role:coreFrame"],
+      "ownerEditable": true
+    },
+    {
+      "id": "headMaterial",
+      "label": "Head Material",
+      "affects": ["placement.role:head"],
+      "ownerEditable": true
+    },
+    {
+      "id": "clothesColor",
+      "label": "Clothes Color",
+      "affects": ["placement.traitLayer:clothes"],
+      "ownerEditable": true
+    },
+    {
+      "id": "bagColor",
+      "label": "Bag Color",
+      "affects": ["placement.role:backAccessory"],
+      "ownerEditable": true
+    },
+    {
+      "id": "eyeColor",
+      "label": "Eye/Face Color",
+      "affects": ["placement.traitLayer:expression", "placement.role:expression"],
+      "ownerEditable": true
+    },
+    {
+      "id": "coreColor",
+      "label": "Core Glow",
+      "affects": ["layout.liquid", "placement.role:core"],
+      "ownerEditable": true
+    },
+    {
+      "id": "metalTrim",
+      "label": "Metal Trim",
+      "affects": ["fasteners", "rails", "gears"],
+      "ownerEditable": true
+    },
+    {
+      "id": "extraParts",
+      "label": "Extra Parts",
+      "affects": ["custom.overlay.parts"],
+      "ownerEditable": true,
+      "requiresCompatibilityCheck": true
+    },
+    {
+      "id": "saleCounterStyle",
+      "label": "Sale Counter Style",
+      "affects": ["placement.key:counter.saleScreen"],
+      "ownerEditable": true
+    },
+    {
+      "id": "blockCounterStyle",
+      "label": "Block Counter Style",
+      "affects": ["placement.key:counter.block"],
+      "ownerEditable": true
+    },
+    {
+      "id": "saleDigitColor",
+      "label": "Sale Number Color",
+      "affects": ["placement.key:counter.saleScreen"],
+      "ownerEditable": true
+    },
+    {
+      "id": "blockDigitColor",
+      "label": "Block Number Color",
+      "affects": ["placement.key:counter.block"],
+      "ownerEditable": true
+    }
+  ],
+  "counterStyles": {
+    "sale": [
+      "pixelPocket",
+      "redRoller",
+      "blackFlip",
+      "ticketStub",
+      "vaultSeal",
+      "glassTube",
+      "stampTag",
+      "punchCard",
+      "dialBadge",
+      "ledgerStrip"
+    ],
+    "block": [
+      "flipBlack",
+      "whiteOdometer",
+      "blackOdometer",
+      "redCapsule",
+      "orangeClicker",
+      "lcdGreen",
+      "brassGearbox",
+      "glassTube",
+      "paperTicker",
+      "verticalDrums"
+    ]
+  },
+  "counterDigitColors": [
+    "#66f5dd",
+    "#55e7ff",
+    "#ffd94d",
+    "#ff5a4d",
+    "#c899ff",
+    "#f5f5f1",
+    "#95ff29",
+    "#ff9d37",
+    "#31dbff",
+    "#ff77e8"
+  ],
+  "paletteWeights": {
+    "liquid": 8,
+    "glass": 8,
+    "stone": 5,
+    "chrome": 6,
+    "volcanic": 3,
+    "metal": 8,
+    "organic": 5,
+    "paper": 4,
+    "ceramic": 5,
+    "coolant": 5,
+    "rust": 5,
+    "void": 3,
+    "crystal": 4,
+    "soft": 2,
+    "steam": 3,
+    "opal": 3,
+    "carbon": 4,
+    "ice": 4,
+    "resin": 4,
+    "ink": 3,
+    "porcelain": 4,
+    "cosmic": 3,
+    "ash": 4,
+    "rubber": 3,
+    "leather": 4,
+    "blueprint": 4,
+    "electric": 4,
+    "molten": 3,
+    "wood": 4,
+    "sludge": 3,
+    "fog": 4,
+    "marble": 4,
+    "royalGold": 0
+  },
+  "protectedBaseFields": [
+    "chassis",
+    "head",
+    "expression",
+    "clothes",
+    "hat",
+    "backAccessory",
+    "neckTrait",
+    "chestAccessory",
+    "armItem",
+    "background",
+    "core"
+  ]
+}
