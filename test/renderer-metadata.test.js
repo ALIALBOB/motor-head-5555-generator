@@ -3,6 +3,7 @@ const { ethers } = require("hardhat");
 const { decodeParts, buildTokenMetadata } = require("../renderer/build-metadata");
 
 const FEE = ethers.parseEther("0.0004");
+const SCHEMA = 1;
 const CONFIG = {
   name: "MotorHead",
   imageBaseUrl: "https://render.example/img",
@@ -28,13 +29,13 @@ async function setup() {
 }
 
 describe("renderer/build-metadata (integration vs the real contract)", function () {
-  it("produces metadata that reflects the on-chain parts", async function () {
+  it("produces metadata that reflects the on-chain layout", async function () {
     const { parts, alice } = await setup();
     const layout = [
-      { partId: 7, x: 10, y: -20, scale: 1000, rotation: 0, color: 0xff8800ff },
-      { partId: 3, x: -5, y: 15, scale: 1200, rotation: 90, color: 0x00ccffff },
+      { itemId: 7, x: 10, y: -20, scale: 1000, rotation: 0, colorwayId: 2, transparency: 0 },
+      { itemId: 3, x: -5, y: 15, scale: 1200, rotation: 90, colorwayId: 5, transparency: 40 },
     ];
-    await parts.connect(alice).applyParts(1, layout, { value: FEE });
+    await parts.connect(alice).applyParts(1, SCHEMA, layout, { value: FEE });
 
     // ---- the renderer's read path (as the worker will do it) ----
     const decoded = decodeParts(await parts.partsOf(1));
@@ -46,16 +47,18 @@ describe("renderer/build-metadata (integration vs the real contract)", function 
     expect(meta.animation_url).to.equal("https://render.example/anim/1.html?rev=1");
     expect(meta.external_url).to.equal("https://motorheadsonline.com/token/1");
 
-    expect(decoded[0]).to.deep.equal({ partId: 7, x: 10, y: -20, scale: 1000, rotation: 0, color: 0xff8800ff });
+    expect(decoded[0]).to.deep.equal({ itemId: 7, x: 10, y: -20, scale: 1000, rotation: 0, colorwayId: 2, transparency: 0 });
+    expect(decoded[1].colorwayId).to.equal(5);
+    expect(decoded[1].transparency).to.equal(40);
     expect(meta.attributes.find((a) => a.trait_type === "Parts").value).to.equal(2);
     expect(meta.attributes.find((a) => a.trait_type === "Build Revision").value).to.equal(1);
-    expect(meta.attributes.filter((a) => a.trait_type.startsWith("Part ")).length).to.equal(2);
+    expect(meta.attributes.filter((a) => a.trait_type.startsWith("Item ")).length).to.equal(2);
   });
 
   it("bumps image/animation ?rev on every save so the marketplace refreshes", async function () {
     const { parts, alice } = await setup();
-    await parts.connect(alice).applyParts(1, [{ partId: 1, x: 0, y: 0, scale: 1000, rotation: 0, color: 0 }], { value: FEE });
-    await parts.connect(alice).applyParts(1, [{ partId: 2, x: 0, y: 0, scale: 1000, rotation: 0, color: 0 }], { value: FEE });
+    await parts.connect(alice).applyParts(1, SCHEMA, [{ itemId: 1, x: 0, y: 0, scale: 1000, rotation: 0, colorwayId: 0, transparency: 0 }], { value: FEE });
+    await parts.connect(alice).applyParts(1, SCHEMA, [{ itemId: 2, x: 0, y: 0, scale: 1000, rotation: 0, colorwayId: 0, transparency: 0 }], { value: FEE });
 
     const rev = await parts.buildRevision(1);
     const meta = buildTokenMetadata({ tokenId: 1, parts: decodeParts(await parts.partsOf(1)), buildRevision: rev, config: CONFIG });

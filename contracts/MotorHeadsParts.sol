@@ -39,22 +39,29 @@ contract MotorHeadsParts is AccessControl, Pausable, ReentrancyGuard {
     /// Per-save edit fee in wei (~$1). Adjustable by CONFIG_ROLE as the ETH price moves.
     uint256 public editFeeWei;
 
-    /// A placed part. `partId` is a catalog id whose meaning lives OFF-chain (append-only:
-    /// an id always means the same part). Placement is fixed-point: scale of 1000 == 1.0x;
-    /// rotation is degrees (0-359); color is a packed value (e.g. RGBA or a colorway id).
+    /// A placed holder item — mirrors what the Owner Canvas actually saves:
+    /// item + colorway + transparency + a free transform. `itemId`/`colorwayId` are catalog
+    /// ids whose meaning lives OFF-chain (append-only: an id always means the same thing).
+    /// Placement is fixed-point: scale of 1000 == 1.0x; rotation is degrees (0-359);
+    /// transparency is 0-100.
     struct Part {
-        uint16 partId;
+        uint16 itemId;
         int32 x;
         int32 y;
         uint16 scale;
         uint16 rotation;
-        uint32 color;
+        uint16 colorwayId;
+        uint8 transparency;
     }
 
     mapping(uint256 => Part[]) private _parts;
     mapping(uint256 => uint32) public buildRevision;
 
-    event PartsApplied(uint256 indexed tokenId, address indexed editor, uint32 revision, uint256 partCount, uint256 feeWei);
+    /// Encoding version of the saved layout — lets the placement model evolve without
+    /// breaking already-saved on-chain data (the renderer interprets by schema).
+    mapping(uint256 => uint16) public schemaVersion;
+
+    event PartsApplied(uint256 indexed tokenId, address indexed editor, uint16 schema, uint32 revision, uint256 partCount, uint256 feeWei);
     event EditFeeSet(uint256 feeWei);
     event TreasurySet(address indexed treasury);
     event Swept(address indexed treasury, uint256 amount);
@@ -72,9 +79,9 @@ contract MotorHeadsParts is AccessControl, Pausable, ReentrancyGuard {
 
     // -------------------------------------------------------------------- Holder save
 
-    /// Save `parts` on-chain for `tokenId`. Caller must own the token in the live collection
-    /// and send at least `editFeeWei`. Replaces any previously saved parts for the token.
-    function applyParts(uint256 tokenId, Part[] calldata parts)
+    /// Save `parts` on-chain for `tokenId` under encoding `schema`. Caller must own the token
+    /// in the live collection and send at least `editFeeWei`. Replaces any previous layout.
+    function applyParts(uint256 tokenId, uint16 schema, Part[] calldata parts)
         external
         payable
         nonReentrant
@@ -84,12 +91,13 @@ contract MotorHeadsParts is AccessControl, Pausable, ReentrancyGuard {
         require(parts.length <= MAX_PARTS, "too many parts");
         require(msg.value >= editFeeWei, "fee too low");
 
-        // Effects: replace the stored layout and bump the revision.
+        // Effects: replace the stored layout, record the schema, and bump the revision.
         delete _parts[tokenId];
         Part[] storage stored = _parts[tokenId];
         for (uint256 i = 0; i < parts.length; i++) {
             stored.push(parts[i]);
         }
+        schemaVersion[tokenId] = schema;
         uint32 revision = ++buildRevision[tokenId];
 
         // Interaction: refund any overpayment; the fee itself stays for withdraw().
@@ -99,7 +107,7 @@ contract MotorHeadsParts is AccessControl, Pausable, ReentrancyGuard {
             require(ok, "refund failed");
         }
 
-        emit PartsApplied(tokenId, msg.sender, revision, parts.length, editFeeWei);
+        emit PartsApplied(tokenId, msg.sender, schema, revision, parts.length, editFeeWei);
         emit MetadataUpdate(tokenId);
     }
 

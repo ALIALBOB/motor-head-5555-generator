@@ -14,12 +14,13 @@
 function decodeParts(raw) {
   if (!Array.isArray(raw)) return [];
   return raw.map((p) => ({
-    partId: Number(p.partId ?? p[0]),
+    itemId: Number(p.itemId ?? p[0]),
     x: Number(p.x ?? p[1]),
     y: Number(p.y ?? p[2]),
     scale: Number(p.scale ?? p[3]),
     rotation: Number(p.rotation ?? p[4]),
-    color: Number(p.color ?? p[5]),
+    colorwayId: Number(p.colorwayId ?? p[5]),
+    transparency: Number(p.transparency ?? p[6]),
   }));
 }
 
@@ -44,7 +45,7 @@ function buildTokenMetadata({ tokenId, parts = [], buildRevision = 0, config = {
     attributes: [
       { trait_type: "Parts", value: list.length },
       { trait_type: "Build Revision", value: rev },
-      ...list.map((p, i) => ({ trait_type: `Part ${i + 1}`, value: `#${Number(p.partId)}` })),
+      ...list.map((p, i) => ({ trait_type: `Item ${i + 1}`, value: `#${Number(p.itemId)}` })),
     ],
   };
   if (externalUrl) meta.external_url = `${externalUrl}/${id}`;
