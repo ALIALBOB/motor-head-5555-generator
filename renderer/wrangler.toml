@@ -1,0 +1,20 @@
+# MotorHeads renderer — a NEW standalone worker, separate from the prod backend.
+# Serves dynamic metadata (reads on-chain parts) + the customized image (R2) + the animation.
+name = "motorheads-renderer"
+main = "index.js"
+compatibility_date = "2026-06-08"
+compatibility_flags = ["nodejs_compat"]
+
+# The customized-image snapshots (client-captured PNGs). Local `wrangler dev` simulates this.
+[[r2_buckets]]
+binding = "RENDERS"
+bucket_name = "motorheads-renders"
+
+[vars]
+COLLECTION_NAME = "MotorHead"
+RENDER_BASE_URL = "http://127.0.0.1:8789"
+# Set per environment (local/testnet/mainnet):
+#   PARTS_CONTRACT   = "0x…"  (the MotorHeadsParts companion)
+#   RENDER_RPC_URL   = "http://127.0.0.1:8545" | Sepolia | mainnet RPC
+PARTS_CONTRACT = ""
+RENDER_RPC_URL = ""
