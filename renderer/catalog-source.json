@@ -1,0 +1,1068 @@
+{
+  "items": [
+    {
+      "id": "first-machine",
+      "group": "badges",
+      "label": "First Machine",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "small-crew",
+      "group": "badges",
+      "label": "Small Crew",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "machine-collector",
+      "group": "badges",
+      "label": "Machine Collector",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "archive-builder",
+      "group": "badges",
+      "label": "Archive Builder",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "motorheads-elite",
+      "group": "badges",
+      "label": "MotorHeads Elite",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "golden-archive",
+      "group": "badges",
+      "label": "Golden Archive",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "golden-crew",
+      "group": "badges",
+      "label": "Golden Crew",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "archive-og",
+      "group": "badges",
+      "label": "Archive OG",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "golden-aviator-sunglasses",
+      "group": null,
+      "label": "Relic Aviator Goggles",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "golden-spike-crown-helmet",
+      "group": null,
+      "label": "Steamforge Spike Helm",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "golden-sombrero",
+      "group": null,
+      "label": "Sunforge Sombrero",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "golden-left-jacket",
+      "group": null,
+      "label": "Gold Jacket — Left",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "golden-right-jacket",
+      "group": null,
+      "label": "Gold Jacket — Right",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "golden-eagle-helm",
+      "group": null,
+      "label": "Gold Eagle Helm",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "golden-gear-medallion",
+      "group": "stickers",
+      "label": "Chronogear Watch Sticker",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "golden-flame-skull-reactor",
+      "group": "stickers",
+      "label": "Golden Mechanical Skull Sticker",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "graphics-card",
+      "group": "parts",
+      "label": "High-End Graphics Card",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "rgb-cooling-fan",
+      "group": "parts",
+      "label": "RGB Cooling Fan",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "liquid-cooling-tube",
+      "group": "parts",
+      "label": "Liquid Cooling Tube",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "cpu-core-chip",
+      "group": "parts",
+      "label": "CPU Core Chip",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "ram-stick",
+      "group": "parts",
+      "label": "RAM Stick",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "keyboard-plate",
+      "group": "parts",
+      "label": "Keyboard Plate",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "rgb-cable-bundle",
+      "group": "parts",
+      "label": "RGB Cable Bundle",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "cooling-radiator",
+      "group": "parts",
+      "label": "Cooling Radiator",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "power-supply-unit",
+      "group": "parts",
+      "label": "Power Supply Unit",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "pc-case-side-panel",
+      "group": "parts",
+      "label": "PC Case Side Panel",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "cursor",
+      "group": "stickers",
+      "label": "Pixel Cursor",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "keyboard-key",
+      "group": "stickers",
+      "label": "Keyboard Key",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "power-symbol",
+      "group": "stickers",
+      "label": "Power Symbol",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "loading-bar",
+      "group": "stickers",
+      "label": "Loading Bar",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "low-battery",
+      "group": "stickers",
+      "label": "Low Battery",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "overclock-warning",
+      "group": "stickers",
+      "label": "Overclock Warning",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "circuit-pattern",
+      "group": "stickers",
+      "label": "Circuit Pattern",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "rgb-lightning",
+      "group": "stickers",
+      "label": "RGB Lightning",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "game-over",
+      "group": "stickers",
+      "label": "Game Over",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "system-online",
+      "group": "stickers",
+      "label": "System Online",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "error-code",
+      "group": "stickers",
+      "label": "Error Code",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "cooling-fan-icon",
+      "group": "stickers",
+      "label": "Cooling Fan Icon",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "dj-turntable",
+      "group": "parts",
+      "label": "Turntable Deck",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "dj-speaker",
+      "group": "parts",
+      "label": "Speaker Cabinet",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "dj-mixer",
+      "group": "parts",
+      "label": "DJ Mixer",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "dj-headphones",
+      "group": "parts",
+      "label": "DJ Headphones",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "dj-microphone",
+      "group": "parts",
+      "label": "Studio Microphone",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "dj-cassette",
+      "group": "parts",
+      "label": "Cassette Tape",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "dj-vinyl",
+      "group": "parts",
+      "label": "Vinyl Record",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "dj-synth",
+      "group": "parts",
+      "label": "Synth Keys",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "dj-note",
+      "group": "stickers",
+      "label": "Music Note",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "dj-soundwave",
+      "group": "stickers",
+      "label": "Soundwave",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "dj-vinyl-disc",
+      "group": "stickers",
+      "label": "Vinyl Disc",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "dj-eq",
+      "group": "stickers",
+      "label": "EQ Bars",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "dj-play",
+      "group": "stickers",
+      "label": "Play Button",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "dj-boombox",
+      "group": "stickers",
+      "label": "Boombox",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "smoking-pipe",
+      "group": "parts",
+      "label": "Smoking Pipe",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "gear-top-hat",
+      "group": "parts",
+      "label": "Gear Top Hat",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "pixel-sunglasses",
+      "group": "parts",
+      "label": "Pixel Sunglasses",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "shoulder-drone",
+      "group": "parts",
+      "label": "Shoulder Drone",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "archive-scarf",
+      "group": "parts",
+      "label": "Archive Scarf",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "heart-shades-sticker",
+      "group": "stickers",
+      "label": "Heart Shades",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "monkey-head-sticker",
+      "group": "stickers",
+      "label": "Monkey Head",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "penguin-sticker",
+      "group": "stickers",
+      "label": "Penguin",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "gear-cat-pet",
+      "group": "pets",
+      "label": "Gear Cat",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "gear-dog-pet",
+      "group": "pets",
+      "label": "Gear Dog",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "penguin-badge",
+      "group": "pets",
+      "label": "Mechanical Penguin",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "monkey-head-badge",
+      "group": "pets",
+      "label": "Monkey Bot",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "mechanical-shark-pet",
+      "group": "pets",
+      "label": "Mechanical Shark",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "heart-head-balloon",
+      "group": "golden-traits",
+      "label": "Heart Head Balloon",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "bat-head-balloon",
+      "group": "stickers",
+      "label": "Bat Balloon",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "archive-background-blackhole",
+      "group": "backgrounds",
+      "label": "Black Hole",
+      "defaultColorwayId": "blackhole"
+    },
+    {
+      "id": "archive-background-graffiti",
+      "group": "backgrounds",
+      "label": "Graffiti Wall",
+      "defaultColorwayId": "graffiti"
+    },
+    {
+      "id": "archive-background-color",
+      "group": "backgrounds",
+      "label": "Gold Forge",
+      "defaultColorwayId": "gold"
+    },
+    {
+      "id": "archive-background-cyan",
+      "group": "backgrounds",
+      "label": "Cyan Reactor",
+      "defaultColorwayId": "cyan"
+    },
+    {
+      "id": "archive-background-rust",
+      "group": "backgrounds",
+      "label": "Rust Furnace",
+      "defaultColorwayId": "rust"
+    },
+    {
+      "id": "archive-background-black",
+      "group": "backgrounds",
+      "label": "Black Chrome",
+      "defaultColorwayId": "black"
+    },
+    {
+      "id": "archive-background-bone",
+      "group": "backgrounds",
+      "label": "Bone Archive",
+      "defaultColorwayId": "bone"
+    },
+    {
+      "id": "archive-background-orange",
+      "group": "backgrounds",
+      "label": "Orange Reactor",
+      "defaultColorwayId": "orange"
+    },
+    {
+      "id": "archive-background-space",
+      "group": "backgrounds",
+      "label": "Deep Space",
+      "defaultColorwayId": "space"
+    },
+    {
+      "id": "archive-background-holo",
+      "group": "backgrounds",
+      "label": "Holographic Prism",
+      "defaultColorwayId": "holo"
+    },
+    {
+      "id": "archive-background-nebula",
+      "group": "backgrounds",
+      "label": "Nebula Bloom",
+      "defaultColorwayId": "nebula"
+    },
+    {
+      "id": "archive-background-aurora",
+      "group": "backgrounds",
+      "label": "Aurora Circuit",
+      "defaultColorwayId": "aurora"
+    },
+    {
+      "id": "archive-background-smoke",
+      "group": "backgrounds",
+      "label": "Smoke Black",
+      "defaultColorwayId": "smoke"
+    },
+    {
+      "id": "archive-background-bubbles",
+      "group": "backgrounds",
+      "label": "Bubbles",
+      "defaultColorwayId": "bubbles"
+    },
+    {
+      "id": "archive-background-starfield",
+      "group": "backgrounds",
+      "label": "Starfield",
+      "defaultColorwayId": "starfield"
+    },
+    {
+      "id": "archive-background-magma",
+      "group": "backgrounds",
+      "label": "Magma",
+      "defaultColorwayId": "magma"
+    },
+    {
+      "id": "archive-background-plasma",
+      "group": "backgrounds",
+      "label": "Plasma",
+      "defaultColorwayId": "plasma"
+    },
+    {
+      "id": "archive-background-amber",
+      "group": "backgrounds",
+      "label": "Amber Haze",
+      "defaultColorwayId": "amber"
+    },
+    {
+      "id": "archive-background-grunge",
+      "group": "backgrounds",
+      "label": "Blue Grunge",
+      "defaultColorwayId": "grunge"
+    },
+    {
+      "id": "archive-background-spotlight",
+      "group": "backgrounds",
+      "label": "Spotlight",
+      "defaultColorwayId": "spotlight"
+    },
+    {
+      "id": "archive-background-pastel",
+      "group": "backgrounds",
+      "label": "Pastel Dream",
+      "defaultColorwayId": "pastel"
+    },
+    {
+      "id": "biker-road-helmet",
+      "group": "parts",
+      "label": "Eagle Road Helmet",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "biker-left-jacket",
+      "group": "parts",
+      "label": "Left Jacket",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "biker-right-jacket",
+      "group": "parts",
+      "label": "Right Jacket",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "biker-smoke-stick",
+      "group": "parts",
+      "label": "Smoke Stick",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "biker-metal-shades",
+      "group": "parts",
+      "label": "Aviator Goggles",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "biker-rider-scarf",
+      "group": "parts",
+      "label": "Rider Scarf",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "biker-flame-decal",
+      "group": "stickers",
+      "label": "Flame Decal",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "biker-chain-decal",
+      "group": "stickers",
+      "label": "Chain Decal",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "biker-skull-badge",
+      "group": "stickers",
+      "label": "Rider Skull Decal",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "biker-eagle-rider-sticker",
+      "group": "stickers",
+      "label": "Eagle Rider",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "biker-pinup-rider-sticker",
+      "group": "stickers",
+      "label": "Pin-Up Rider",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "biker-flaming-skull-sticker",
+      "group": "stickers",
+      "label": "Flaming Skull",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "space-rider-badge",
+      "group": "collections",
+      "label": "Space Rider Badge",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "biker-goggle-badge",
+      "group": "parts",
+      "label": "Goggle Badge",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "biker-wing-wheel-badge",
+      "group": "parts",
+      "label": "Wheel Badge",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "pixel-block-shades",
+      "group": "parts",
+      "label": "Pixel Block Shades",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "pixel-block-scarf",
+      "group": "parts",
+      "label": "Pixel Block Scarf",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "pixel-heart",
+      "group": "stickers",
+      "label": "Pixel Heart",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "pixel-skull",
+      "group": "stickers",
+      "label": "Pixel Skull",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "pixel-invader",
+      "group": "stickers",
+      "label": "Space Invader",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "pixel-coin",
+      "group": "stickers",
+      "label": "Pixel Coin",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "pixel-smiley",
+      "group": "stickers",
+      "label": "Pixel Smiley",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "pixel-star",
+      "group": "stickers",
+      "label": "Pixel Star",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "pixel-cowboy-hat",
+      "group": "parts",
+      "label": "Pixel Cowboy Hat",
+      "defaultColorwayId": "brown"
+    },
+    {
+      "id": "pixel-hard-hat",
+      "group": "parts",
+      "label": "Pixel Hard Hat",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "pixel-wizard-hat",
+      "group": "parts",
+      "label": "Pixel Wizard Hat",
+      "defaultColorwayId": "black"
+    },
+    {
+      "id": "pixel-3d-glasses",
+      "group": "parts",
+      "label": "Pixel 3D Glasses",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "pixel-round-glasses",
+      "group": "parts",
+      "label": "Pixel Round Glasses",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "pixel-deal-glasses",
+      "group": "parts",
+      "label": "Deal With It",
+      "defaultColorwayId": "black"
+    },
+    {
+      "id": "crypto-bitcoin",
+      "group": "stickers",
+      "label": "Bitcoin Coin",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "crypto-ethereum",
+      "group": "stickers",
+      "label": "Ethereum",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "crypto-chart-up",
+      "group": "stickers",
+      "label": "Green Candles",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "crypto-chart-down",
+      "group": "stickers",
+      "label": "Red Candles",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "crypto-diamond",
+      "group": "stickers",
+      "label": "Diamond Hands",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "crypto-rocket",
+      "group": "stickers",
+      "label": "To The Moon",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "crypto-gm",
+      "group": "stickers",
+      "label": "GM",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "crypto-coffee",
+      "group": "stickers",
+      "label": "Coffee Cup",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "crypto-trading-visor",
+      "group": "parts",
+      "label": "BTC Trading Visor",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "crypto-eth-visor",
+      "group": "parts",
+      "label": "ETH Trading Visor",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "crypto-laser-eyes",
+      "group": "parts",
+      "label": "Laser Eyes",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "crypto-money-chain",
+      "group": "parts",
+      "label": "Money Chain",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "graffiti-spray-can",
+      "group": "stickers",
+      "label": "Spray Can",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "graffiti-crown",
+      "group": "stickers",
+      "label": "King Crown",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "graffiti-arrow",
+      "group": "stickers",
+      "label": "Tag Arrow",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "graffiti-bomb",
+      "group": "stickers",
+      "label": "Bomb Tag",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "graffiti-drip-heart",
+      "group": "stickers",
+      "label": "Drip Heart",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "graffiti-star",
+      "group": "stickers",
+      "label": "Throwie Star",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "graffiti-skateboard",
+      "group": "parts",
+      "label": "NFT Skateboard",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "graffiti-beanie",
+      "group": "parts",
+      "label": "Street Beanie",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "graffiti-respirator",
+      "group": "parts",
+      "label": "Paint Respirator",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "graffiti-flat-cap",
+      "group": "parts",
+      "label": "Flat Brim Cap",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "halloween-candle-pipe",
+      "group": "parts",
+      "label": "Candle Pipe",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "halloween-night-scarf",
+      "group": "parts",
+      "label": "Night Scarf",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "halloween-pumpkin-plate",
+      "group": "stickers",
+      "label": "Pumpkin Plate",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "halloween-web-gear",
+      "group": "parts",
+      "label": "Web Gear Badge",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "christmas-light-rail",
+      "group": "parts",
+      "label": "Light Rail",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "christmas-ribbon-scarf",
+      "group": "parts",
+      "label": "Ribbon Scarf",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "christmas-gift-seal",
+      "group": "stickers",
+      "label": "Gift Seal",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "christmas-snow-gear",
+      "group": "parts",
+      "label": "Snow Gear Badge",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "summer-sun-visor",
+      "group": "parts",
+      "label": "Sun Visor",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "summer-breeze-scarf",
+      "group": "parts",
+      "label": "Breeze Scarf",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "summer-wave-plate",
+      "group": "stickers",
+      "label": "Wave Plate",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "summer-solar-charm",
+      "group": "parts",
+      "label": "Solar Charm",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "winter-frost-goggles",
+      "group": "parts",
+      "label": "Frost Goggles",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "winter-frost-scarf",
+      "group": "parts",
+      "label": "Frost Scarf",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "winter-ice-chip",
+      "group": "stickers",
+      "label": "Ice Chip",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "winter-frost-badge",
+      "group": "parts",
+      "label": "Frost Badge",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "racer-checker-scarf",
+      "group": "parts",
+      "label": "Checker Scarf",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "racer-track-visor",
+      "group": "parts",
+      "label": "Track Visor",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "racer-number-plate",
+      "group": "stickers",
+      "label": "Number Plate",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "racer-tire-medal",
+      "group": "parts",
+      "label": "Tire Medal",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "scrapyard-oil-scarf",
+      "group": "parts",
+      "label": "Oil Rag Scarf",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "scrapyard-wrench-jaw",
+      "group": "parts",
+      "label": "Wrench Jaw",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "scrapyard-hazard-patch",
+      "group": "stickers",
+      "label": "Hazard Patch",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "scrapyard-cog-badge",
+      "group": "parts",
+      "label": "Scrap Cog",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "neon-cable-scarf",
+      "group": "parts",
+      "label": "Cable Scarf",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "neon-laser-visor",
+      "group": "parts",
+      "label": "Laser Visor",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "neon-circuit-decal",
+      "group": "stickers",
+      "label": "Circuit Decal",
+      "defaultColorwayId": null
+    },
+    {
+      "id": "neon-ring-badge",
+      "group": "parts",
+      "label": "Neon Ring",
+      "defaultColorwayId": null
+    }
+  ],
+  "colorways": [
+    {
+      "id": "gold",
+      "label": "Gold"
+    },
+    {
+      "id": "cyan",
+      "label": "Cyan"
+    },
+    {
+      "id": "rust",
+      "label": "Rust"
+    },
+    {
+      "id": "black",
+      "label": "Black"
+    },
+    {
+      "id": "bone",
+      "label": "Bone"
+    },
+    {
+      "id": "red",
+      "label": "Red"
+    },
+    {
+      "id": "green",
+      "label": "Green"
+    },
+    {
+      "id": "violet",
+      "label": "Violet"
+    },
+    {
+      "id": "orange",
+      "label": "Orange"
+    },
+    {
+      "id": "silver",
+      "label": "Silver"
+    },
+    {
+      "id": "teal",
+      "label": "Teal"
+    },
+    {
+      "id": "blue",
+      "label": "Blue"
+    },
+    {
+      "id": "yellow",
+      "label": "Yellow"
+    },
+    {
+      "id": "pink",
+      "label": "Pink"
+    },
+    {
+      "id": "brown",
+      "label": "Brown"
+    }
+  ]
+}
