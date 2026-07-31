@@ -18,6 +18,9 @@ build/
 dist/
 dist-web/
 web/public/
+!web/public/
+web/public/*
+!web/public/motorheads-room05-addons-layout.json
 *.car
 
 # Local logs and editor/OS noise
@@ -25,3 +28,6 @@ web/public/
 .codex-*.log
 .DS_Store
 Thumbs.db
+
+# renderer local dev env
+renderer/.dev.vars
