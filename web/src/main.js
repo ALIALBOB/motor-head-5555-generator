@@ -87,6 +87,12 @@ async function loadLamPfpLayout(tokenId = liveReview.tokenId) {
   return res.json();
 }
 
+async function loadRoom05AddonsLayout() {
+  const res = await fetch("/motorheads-room05-addons-layout.json");
+  if (!res.ok) throw new Error("Could not load the editable Room 05 add-on kit.");
+  return res.json();
+}
+
 function download(filename, text) {
   const blob = new Blob([text], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -608,6 +614,11 @@ function bindButtons() {
 
   el("loadLamPfp").addEventListener("click", async () => {
     await loadLamReviewToken(liveReview.tokenId);
+  });
+
+  el("loadRoom05Addons").addEventListener("click", async () => {
+    const addons = await loadRoom05AddonsLayout();
+    loadLayoutIntoEditor(addons, "Loaded editable Room 05 add-on kit.");
   });
 
   el("resetCanvas").addEventListener("click", async () => {

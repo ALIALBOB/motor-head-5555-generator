@@ -348,6 +348,7 @@ export function drawMachine(ctx, layout, chainState = {}, options = {}) {
   const performanceMode = options.performanceMode || "normal";
   const dragFastPath = performanceMode === "drag";
   const marketplaceFastPath = performanceMode === "marketplace";
+  blinkPhaseOffset = (Math.abs(Number(layout?.tokenId) || 1) * 1.371) % 3.25; // desync blink per token
 
   if (ctx.canvas.width !== width) ctx.canvas.width = width;
   if (ctx.canvas.height !== height) ctx.canvas.height = height;
@@ -417,7 +418,7 @@ export function drawMachine(ctx, layout, chainState = {}, options = {}) {
     }
     if (options.previewMotion !== false && partCanMove && !def?.noExternalRotate && (def?.kind === "gear" || def?.kind === "wheel")) {
       const defaultSpeed = def.kind === "wheel" ? 0.42 : 0.3;
-      const speed = rotationMap.get(part.id) || defaultSpeed;
+      const speed = part.spinSpeed != null ? part.spinSpeed : (rotationMap.get(part.id) || defaultSpeed);
       part.rotation = (part.rotation || 0) + time * speed * liveMotion.speedMultiplier;
     }
     drawPart(ctx, part, {
@@ -569,9 +570,12 @@ function buildLifeMotion(layout, chainState, time, options = {}) {
   };
 }
 
+// Per-token blink phase offset (set by drawMachine each render) so the whole collection doesn't blink
+// in unison — each MotorHead blinks on its own clock.
+let blinkPhaseOffset = 0;
 function blinkAmount(time) {
   const cycle = 3.25;
-  const phase = (time + 0.42) % cycle;
+  const phase = (time + 0.42 + blinkPhaseOffset) % cycle;
   if (phase > 0.42) return 0;
   if (phase < 0.1) return phase / 0.1;
   if (phase < 0.24) return 1;

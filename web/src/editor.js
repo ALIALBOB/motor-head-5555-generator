@@ -74,6 +74,10 @@ export class MechanicalEditor {
     this.nftPreview = false;
     this.mouseLook = { active: false, x: this.canvas.width / 2, y: this.canvas.height / 2 };
     this.dirty = true;
+    this.lastFrameAt = 0;
+    this.liveFrameMs = 1000 / 30;
+    this.dragFrameMs = 1000 / 45;
+    this.stillFrameMs = 1000 / 12;
     this.onSelectionChange = () => {};
     this.onLayoutChange = () => {};
     this.onViewportChange = () => {};
@@ -81,7 +85,7 @@ export class MechanicalEditor {
 
     this.resizeObserver = new ResizeObserver(() => {
       this.applyViewport();
-      this.render();
+      this.requestRender();
     });
     this.resizeObserver.observe(canvas.parentElement || canvas);
     this.applyViewport();
@@ -180,7 +184,7 @@ export class MechanicalEditor {
     this.computeConnections();
     this.onSelectionChange(null);
     this.onLayoutChange(this.layout);
-    this.render();
+    this.requestRender();
   }
 
   setChainState(state) {
@@ -317,19 +321,19 @@ export class MechanicalEditor {
   select(id) {
     this.selectedId = id;
     this.onSelectionChange(this.selected);
-    this.render();
+    this.requestRender();
   }
 
   changed() {
     this.dirty = true;
     this.computeConnections();
     this.onLayoutChange(this.layout);
-    this.render();
+    this.requestRender();
   }
 
   togglePreviewMotion() {
     this.previewMotion = !this.previewMotion;
-    this.render();
+    this.requestRender();
     return this.previewMotion;
   }
 
@@ -339,7 +343,7 @@ export class MechanicalEditor {
       this.drag = null;
       this.canvas.classList.remove("dragging");
     }
-    this.render();
+    this.requestRender();
     return this.nftPreview;
   }
 
@@ -512,11 +516,13 @@ export class MechanicalEditor {
 
     this.canvas.addEventListener("pointermove", (event) => {
       this.mouseLook = { active: true, ...this.eventToCanvas(event) };
+      if (this.previewMotion || this.nftPreview) this.requestRender();
       if (!this.drag) return;
       if (this.drag.mode === "pan") {
         this.viewport.panX = this.drag.panX + event.clientX - this.drag.startClientX;
         this.viewport.panY = this.drag.panY + event.clientY - this.drag.startClientY;
         this.applyViewport();
+        this.requestRender();
         return;
       }
       if (this.nftPreview || !this.selected) return;
@@ -623,11 +629,23 @@ export class MechanicalEditor {
       shadeStyle: this.layout.canvas?.shadeStyle || this.layout.defaults?.shadeStyle || "pencilSketch",
       visualConnectors: this.selected ? getVisualConnectors(this.selected) : []
     });
+    this.dirty = false;
   }
 
   loop() {
-    this.render();
+    const now = performance.now();
+    const liveMotion = this.previewMotion && !document.hidden;
+    const dragging = Boolean(this.drag);
+    const targetFrameMs = dragging ? this.dragFrameMs : liveMotion ? this.liveFrameMs : this.stillFrameMs;
+    if ((this.dirty || liveMotion || dragging) && now - this.lastFrameAt >= targetFrameMs) {
+      this.lastFrameAt = now;
+      this.render();
+    }
     requestAnimationFrame(() => this.loop());
+  }
+
+  requestRender() {
+    this.dirty = true;
   }
 }
 

@@ -70,19 +70,21 @@ const HEAD_TOP_ANCHORS = {
 
 const HEAD_PRESENTATION = {
   "Camera Head": { scale: 1.04, y: -16, rotation: -0.002 },
-  "Liquid Tank Head": { scale: 1.18, y: 30, rotation: 0.004 },
+  "Liquid Tank Head": { scale: 1.18, y: 2, rotation: 0.004 },
   "Valve Head": { scale: 1.24, y: 34, rotation: -0.006 },
   "Satellite Head": { scale: 1.12, y: 24, rotation: 0.004 },
   "Tesla Coil Head": { scale: 1.14, y: 30, rotation: -0.004 },
-  "Lamp Head": { scale: 1.12, y: 24, rotation: 0.004 },
+  "Lamp Head": { scale: 1.12, y: 6, rotation: 0.004 },
   "Pressure Gauge Head": { scale: 1.08, y: 18, rotation: -0.004 },
   "Samurai Head": { scale: 1.08, y: 18, rotation: -0.004 },
-  "Frankenstein Head": { scale: 1.08, y: 16, rotation: 0.004 },
+  "Frankenstein Head": { scale: 1.08, y: -8, rotation: 0.004 },
   "Spaceman Head": { scale: 1.08, y: 18, rotation: -0.004 },
-  "Ledger BTC Head": { scale: 1.24, y: 44, rotation: -0.004 },
-  "Ledger ETH Head": { scale: 1.24, y: 44, rotation: -0.004 },
-  "Battery Head": { scale: 1.1, y: 30, rotation: -0.004 },
-  "Magnet Head": { scale: 1.08, y: 22, rotation: -0.004 }
+  "Typewriter Head": { scale: 1.02, y: -22, rotation: 0.002 },
+  "Slot Machine Head": { scale: 1.0, y: -14, rotation: 0 },
+  "Ledger BTC Head": { scale: 1.24, y: -4, rotation: -0.004 },
+  "Ledger ETH Head": { scale: 1.24, y: -4, rotation: -0.004 },
+  "Battery Head": { scale: 1.1, y: 0, rotation: -0.004 },
+  "Magnet Head": { scale: 1.08, y: -26, rotation: -0.004 }
 };
 
 function ensureDirs() {
@@ -185,9 +187,12 @@ function makePlacementFactory(tokenId, placements, defaults) {
       expression: options.expression,
       blink: options.blink,
       facePart: options.facePart,
+      arc: options.arc,
+      faceGlow: options.faceGlow,
       traitLayer,
       liveGasMeter: options.liveGasMeter,
       motion: options.motion,
+      spinSpeed: options.spinSpeed,
       static: options.static,
       lifeRotation: options.lifeRotation,
       packShape: options.packShape,
@@ -197,6 +202,7 @@ function makePlacementFactory(tokenId, placements, defaults) {
       meterStyle: options.meterStyle,
       counterStyle: options.counterStyle,
       counterLabel: options.counterLabel,
+      tickerScroll: options.tickerScroll,
       counterColor: options.counterColor,
       counterAccent: options.counterAccent,
       scarVariant: options.scarVariant,
@@ -2063,40 +2069,74 @@ const EXPR_FACE = {
   Sad:       { eArc: 0.55, pDy: 3, mArc: -0.5 },
   Sleepy:    { closed: true, mScale: 0.5 },
   Surprised: { eArc: -0.3, pDy: -3, pScale: 1.3, oMouth: true },
-  Focus:     { eArc: -0.22, pScale: 0.72 },
+  Focus:     { narrow: true, pScale: 0.62, mScale: 0.68 },
   Glitch:    { glitch: true },
   Dead:      { xEyes: true },
 };
 
-function addScreenExpression(place, expression, cx = 488, cy = 328, scale = 1, z = 70) {
-  const cfg = EXPR_FACE[familyOf(expression)] || {};
+// Per-family glow tint: the face's stroke + glow + pupil color, so each emotion reads with its own
+// color instead of every face glowing the same terminal-green. The dark contrast halo under each
+// stroke keeps the shape legible even when the tint matches the head/background color.
+const FAMILY_GLOW = {
+  Neutral:   "#8fffd0", // baseline terminal green
+  Happy:     "#ffd24a", // warm gold
+  Smirk:     "#ffab4d", // amber
+  Angry:     "#ff5347", // warm red
+  Sad:       "#5aa6ff", // cool blue
+  Sleepy:    "#b18cff", // soft violet
+  Surprised: "#4fe3ff", // bright cyan
+  Focus:     "#5dff9e", // sharp green
+  Glitch:    "#ff5ad6", // magenta
+  Dead:      "#93b3ba", // cold dim grey
+};
+
+function addScreenExpression(place, expression, cx = 488, cy = 328, scale = 1, z = 70, opts = {}) {
+  const fam = familyOf(expression);
+  const cfg = EXPR_FACE[fam] || {};
+  const glow = FAMILY_GLOW[fam] || null;
+  // Vertical spread factor: shrink for short/wide screens so brows + mouth stay inside the screen,
+  // WITHOUT shrinking the eyes horizontally. vh = 1 leaves every already-good head exactly as-is.
+  const vh = opts.vh ?? 1;
+  const vy = scale * vh;
   const mat = "pfpFace";
-  const faceBase = { role: "expression", expression: true };
+  const faceBase = { role: "expression", expression: true, faceGlow: glow };
   const eyelid = { ...faceBase, material: mat, shadeStyle: "terminalGlow", opacity: 1, blink: "eyeLine" };
   const pupilOpt = { ...faceBase, material: mat, shadeStyle: "terminalGlow", opacity: 0.98, blink: "eyePupil" };
   const eyeW = 0.4 * scale, eyeH = 0.14 * scale;
   const pupR = 0.39 * scale * (cfg.pScale || 1);
-  const eY = cy - 16 * scale, pY = cy + 2 * scale + (cfg.pDy || 0) * scale, mY = cy + 52 * scale;
+  const eY = cy - 16 * vy, pY = cy + 2 * vy + (cfg.pDy || 0) * vy, mY = cy + 52 * vy;
   const eL = cx - 46 * scale, eR = cx + 46 * scale;
   const eTilt = cfg.eTilt || 0, eArc = cfg.eArc || 0;
 
   if (cfg.xEyes) {
     for (const [i, ex] of [eL, eR].entries()) {
-      place("face.stroke", ex, eY + 6 * scale, 0.7, 0.24 * scale, 0.09 * scale, z, { ...eyelid, facePart: i ? "rightEyeLine" : "leftEyeLine" });
-      place("face.stroke", ex, eY + 6 * scale, -0.7, 0.24 * scale, 0.09 * scale, z, { ...faceBase, material: mat, shadeStyle: "terminalGlow", opacity: 1, facePart: i ? "rightEyePupil" : "leftEyePupil" });
+      place("face.stroke", ex, eY + 6 * vy, 0.7, 0.24 * scale, 0.09 * scale, z, { ...eyelid, facePart: i ? "rightEyeLine" : "leftEyeLine" });
+      place("face.stroke", ex, eY + 6 * vy, -0.7, 0.24 * scale, 0.09 * scale, z, { ...faceBase, material: mat, shadeStyle: "terminalGlow", opacity: 1, facePart: i ? "rightEyePupil" : "leftEyePupil" });
     }
   } else if (cfg.closed) {
-    place("face.stroke", eL, eY + 8 * scale, 0, eyeW, eyeH, z, { ...eyelid, facePart: "leftEyeLine", arc: 0.12 });
-    place("face.stroke", eR, eY + 8 * scale, 0, eyeW, eyeH, z, { ...eyelid, facePart: "rightEyeLine", arc: 0.12 });
+    // Heavy-lidded "sleepy": a bold droopy upper lid with a small pupil peeking beneath, so it clearly
+    // reads as drowsy eyes — a bare closed line vanishes on bright gold heads and looks eyeless.
+    for (const [i, ex] of [eL, eR].entries()) {
+      place("face.pupil", ex, eY + 15 * vy, 0, pupR * 0.62, pupR * 0.62, z, { ...pupilOpt, facePart: i ? "rightEyePupil" : "leftEyePupil" });
+      place("face.stroke", ex, eY + 5 * vy, 0, eyeW * 1.04, eyeH, z + 1, { ...eyelid, facePart: i ? "rightEyeLine" : "leftEyeLine", arc: 0.42 });
+    }
+  } else if (cfg.narrow) {
+    // Focus: an alert, narrowed stare — a small pupil pinched between a low upper lid and a lower lid
+    // (a determined squint/scan), clearly distinct from Neutral's plain wide-open eyes.
+    for (const [i, ex] of [eL, eR].entries()) {
+      place("face.pupil", ex, pY, 0, pupR, pupR, z + 2, { ...pupilOpt, facePart: i ? "rightEyePupil" : "leftEyePupil" });
+      place("face.stroke", ex, pY - 8 * vy, 0, eyeW * 1.05, eyeH, z, { ...eyelid, facePart: i ? "rightEyeLine" : "leftEyeLine", arc: -0.06 });
+      place("face.stroke", ex, pY + 9 * vy, 0, eyeW * 0.84, eyeH * 0.9, z, { ...faceBase, material: mat, shadeStyle: "terminalGlow", opacity: 0.82, arc: 0.08 });
+    }
   } else if (cfg.glitch) {
-    place("face.stroke", eL, eY - 4 * scale, 0, eyeW, eyeH, z, { ...eyelid, facePart: "leftEyeLine" });
-    place("face.stroke", eR, eY + 5 * scale, 0, eyeW, eyeH, z, { ...eyelid, facePart: "rightEyeLine" });
-    place("face.pupil", eL, pY - 3 * scale, 0, pupR, pupR, z + 2, { ...pupilOpt, facePart: "leftEyePupil" });
-    place("face.pupil", eR, pY + 4 * scale, 0, pupR, pupR, z + 2, { ...pupilOpt, facePart: "rightEyePupil" });
+    place("face.stroke", eL, eY - 4 * vy, 0, eyeW, eyeH, z, { ...eyelid, facePart: "leftEyeLine" });
+    place("face.stroke", eR, eY + 5 * vy, 0, eyeW, eyeH, z, { ...eyelid, facePart: "rightEyeLine" });
+    place("face.pupil", eL, pY - 3 * vy, 0, pupR, pupR, z + 2, { ...pupilOpt, facePart: "leftEyePupil" });
+    place("face.pupil", eR, pY + 4 * vy, 0, pupR, pupR, z + 2, { ...pupilOpt, facePart: "rightEyePupil" });
   } else {
     if (cfg.brows) {
-      place("face.stroke", eL, eY - 16 * scale, 0.17, 0.28 * scale, 0.08 * scale, z, { ...faceBase, material: mat, shadeStyle: "terminalGlow", opacity: 0.95, facePart: "leftEyeLine", arc: -0.3 });
-      place("face.stroke", eR, eY - 16 * scale, -0.17, 0.28 * scale, 0.08 * scale, z, { ...faceBase, material: mat, shadeStyle: "terminalGlow", opacity: 0.95, facePart: "rightEyeLine", arc: -0.3 });
+      place("face.stroke", eL, eY - 14 * vy, 0.17, 0.28 * scale, 0.08 * scale, z, { ...faceBase, material: mat, shadeStyle: "terminalGlow", opacity: 0.95, facePart: "leftEyeLine", arc: -0.3 });
+      place("face.stroke", eR, eY - 14 * vy, -0.17, 0.28 * scale, 0.08 * scale, z, { ...faceBase, material: mat, shadeStyle: "terminalGlow", opacity: 0.95, facePart: "rightEyeLine", arc: -0.3 });
     }
     place("face.stroke", eL, eY, eTilt, eyeW, eyeH, z, { ...eyelid, facePart: "leftEyeLine", arc: eArc });
     place("face.stroke", eR, eY, -eTilt, eyeW, eyeH, z, { ...eyelid, facePart: "rightEyeLine", arc: eArc });
@@ -2104,8 +2144,12 @@ function addScreenExpression(place, expression, cx = 488, cy = 328, scale = 1, z
     place("face.pupil", eR, pY, 0, pupR, pupR, z + 2, { ...pupilOpt, facePart: "rightEyePupil" });
   }
 
-  if (cfg.oMouth) {
-    place("face.pupil", cx, mY, 0, 0.15 * scale, 0.2 * scale, z + 1, { ...faceBase, material: mat, shadeStyle: "terminalGlow", opacity: 0.92, facePart: "mouth" });
+  if (opts.noMouth) {
+    // Head supplies its own tuned mouth (e.g. the Ledger heads, whose ETH/BTC label sits mid-screen) —
+    // skip ours so there aren't two mouths.
+  } else if (cfg.oMouth) {
+    // Surprised "O" mouth — placed uniform so drawFacePupil renders it as a round donut ring.
+    place("face.pupil", cx, mY, 0, 0.22 * scale, 0.22 * scale, z + 1, { ...faceBase, material: mat, shadeStyle: "terminalGlow", opacity: 0.95, facePart: "mouth" });
   } else {
     place("face.stroke", cx, mY, cfg.mTilt || 0, 0.36 * scale * (cfg.mScale || 1), 0.11 * scale, z + 1, {
       ...faceBase, material: mat, shadeStyle: "terminalGlow", opacity: 1, facePart: "mouth", arc: cfg.mArc || 0,
@@ -2382,6 +2426,9 @@ function addLiquidTankHead(place, chassis, traits) {
 }
 
 function addValveHead(place, chassis, traits) {
+  // Slowly-rotating gear halo behind the whole head — placed first at the back of the head layer so it
+  // sits behind every other head part and its teeth peek out around the silhouette.
+  place("gear.large", 488, 308, 0, 0.70, 0.70, 40, { material: "pfpGold", shadeStyle: "rustWash", opacity: 0.9, spinSpeed: 0.12 });
   place("pipe.sleeved", 512, 354, 0, 1.22, 0.34, 40, { material: "pfpSteel", shadeStyle: "cleanLine" });
   place("pipe.sleeved", 412, 354, 1.5708, 0.38, 0.18, 40, { material: "pfpSteel", shadeStyle: "cleanLine" });
   place("pipe.sleeved", 612, 354, 1.5708, 0.38, 0.18, 40, { material: "pfpSteel", shadeStyle: "cleanLine" });
@@ -2471,7 +2518,7 @@ function addTeslaCoilHead(place, chassis, traits) {
   place("arc.lightning", 586, 230, 0.2, 0.5, 0.5, 44, { material: "pfpGlow", shadeStyle: "terminalGlow", opacity: 0.92, flipX: true });
   place("tube.flex", 438, 380, 1.5708, 0.24, 0.42, 45, { material: "pfpGlow", shadeStyle: "terminalGlow", opacity: 0.58 });
   place("tube.flex", 586, 380, 1.5708, 0.24, 0.42, 45, { material: "pfpGlow", shadeStyle: "terminalGlow", opacity: 0.58 });
-  addScreenExpression(place, traits.expression, 512, 390, 0.78, 70);
+  addScreenExpression(place, traits.expression, 512, 384, 0.78, 70, { vh: 0.6 }); // short/wide screen — keep the face inside
 }
 
 function addLampHead(place, chassis, traits) {
@@ -2526,7 +2573,7 @@ function addLedgerHardwareHead(place, traits, label, accent = "pfpGlow") {
   place("plate.riveted", 450, 334, -0.06, 1.25, 0.64, 40, { material: "pfpBlack", shadeStyle: "heavyInk", opacity: 0.84 });
   place("plate.riveted", 580, 330, -0.025, 0.42, 0.86, 41, { material: "pfpSteel", shadeStyle: "cleanLine", opacity: 0.76 });
   place("mesh.panel", 450, 332, -0.06, 0.76, 0.24, 44, { material: "pfpBlack", shadeStyle: "heavyInk", opacity: 0.5 });
-  place("counter.block", 448, 330, -0.06, 0.48, 0.34, 49, { material: "pfpBlack", shadeStyle: "cleanLine", opacity: 0.98, counterLabel: label, lifeRotation: false });
+  place("counter.block", 448, 330, -0.06, 0.48, 0.34, 49, { material: "pfpBlack", shadeStyle: "cleanLine", opacity: 0.98, counterLabel: label, lifeRotation: false, tickerScroll: traits.expression === label + " Awake" });
   place("ring.bolted", 606, 358, -0.02, 0.2, 0.2, 47, { material: "pfpSteel", shadeStyle: "cleanLine", opacity: 0.72 });
   place("fastener.washer", 606, 358, 0, 0.28, 0.28, 50, { material: "pfpSteel", shadeStyle: "cleanLine", opacity: 0.88 });
   place("plate.riveted", 392, 296, -0.06, 0.48, 0.17, 46, { material: "pfpSteel", shadeStyle: "cleanLine", opacity: 0.68 });
@@ -2534,7 +2581,14 @@ function addLedgerHardwareHead(place, traits, label, accent = "pfpGlow") {
   place("pipe.sleeved", 512, 444, 0, 0.56, 0.14, 44, { material: "pfpGold", shadeStyle: "cleanLine", opacity: 0.78 });
   place("tube.flex", 386, 390, -0.32, 0.26, 0.18, 46, { material: accent, shadeStyle: "terminalGlow", opacity: 0.46 });
   addButtonRow(place, 558, 392, 3, 18, 50, "pfpGold");
-  addScreenExpression(place, traits.expression, 448, 314, 0.34, 70);
+  // Taller neck riser — the wide Ledger head rides high on the torso, so bridge the gap with a neck
+  // column (this head's chin is a thin bar, unlike the tall classic heads that reach the neck on their own).
+  place("pipe.sleeved", 470, 512, 1.5708, 1.08, 0.5, 39, { material: "pfpSteel", shadeStyle: "cleanLine" });
+  place("pipe.sleeved", 470, 512, 1.5708, 0.8, 0.32, 39.2, { material: "pfpBlack", shadeStyle: "cleanLine", opacity: 0.82 });
+  place("tube.flex", 451, 516, 1.5708, 0.42, 0.46, 39.3, { material: accent, shadeStyle: "terminalGlow", opacity: 0.6 });
+  place("tube.flex", 489, 516, 1.5708, 0.42, 0.46, 39.3, { material: accent, shadeStyle: "terminalGlow", opacity: 0.6 });
+  place("clamp.u", 470, 468, 0, 0.34, 0.3, 39.4, { material: "pfpSteel", shadeStyle: "cleanLine" });
+  addScreenExpression(place, traits.expression, 448, 314, 0.34, 70, { noMouth: true }); // head draws its own mouth below the label
   place("face.stroke", 450, 350, -0.08, 0.2, 0.055, 73, {
     role: "expression",
     expression: true,

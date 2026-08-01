@@ -141,7 +141,7 @@ function drawFinishLine(ctx, x1, y1, x2, y2, color, width = 1) {
 
 function applyMaterialFinish(ctx, part, state = {}) {
   if (part.key === "pack.icon" || part.key === "pack.shoulder.shell" || part.key === "pack.shoulder.band") return;
-  if (String(part.key || "").startsWith("counter.") || part.key === "pack.gas.reader") return;
+  if (String(part.key || "").startsWith("counter.") || String(part.key || "").startsWith("face.") || part.key === "pack.gas.reader") return;
   const style = styleFor(part);
   const bounds = partBounds({ ...part, scaleX: 1, scaleY: 1 });
 
@@ -3032,22 +3032,61 @@ function drawBlockCounter(ctx, part, state) {
       shadow: 0.015,
       lineWidth: 1.1
     });
-    ctx.save();
-    ctx.globalCompositeOperation = "lighter";
-    ctx.shadowColor = colorAlpha(palette.digit, 0.62);
-    ctx.shadowBlur = 7;
-    ctx.fillStyle = colorAlpha(palette.digit, 0.94);
-    ctx.font = "bold 22px ui-monospace, Menlo, Consolas, monospace";
-    ctx.letterSpacing = "0px";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(label, 0, 0);
-    ctx.restore();
+    if (part.tickerScroll) {
+      // "Awake" ledger: scroll the symbol + a green up-arrow across the screen (enters left, exits right,
+      // wraps) — a live-ticker read for the BTC Awake / ETH Awake expressions.
+      const time = state.previewMotion === false ? 0 : (state.time || 0);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(-w / 2 + 12, -h / 2 + 13, w - 24, h - 25);
+      ctx.clip();
+      ctx.font = "bold 19px ui-monospace, Menlo, Consolas, monospace";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      const symW = ctx.measureText(label).width;
+      const arrow = 8;
+      const tile = symW + arrow * 2 + 26; // one "ETH ▲   " unit
+      const scroll = (((time * 26) % tile) + tile) % tile; // px/sec, rightward, wrapped
+      for (let x = -w / 2 - tile + scroll; x < w / 2 + tile; x += tile) {
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        ctx.shadowColor = colorAlpha(palette.digit, 0.6);
+        ctx.shadowBlur = 6;
+        ctx.fillStyle = colorAlpha(palette.digit, 0.95);
+        ctx.fillText(label, x, 1);
+        ctx.restore();
+        const ax = x + symW + 9;
+        ctx.save();
+        ctx.fillStyle = "#5dffa0";
+        ctx.shadowColor = "#5dffa0";
+        ctx.shadowBlur = 5;
+        ctx.beginPath();
+        ctx.moveTo(ax, -arrow);
+        ctx.lineTo(ax + arrow * 0.9, arrow * 0.75);
+        ctx.lineTo(ax - arrow * 0.9, arrow * 0.75);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+      ctx.restore();
+    } else {
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.shadowColor = colorAlpha(palette.digit, 0.62);
+      ctx.shadowBlur = 7;
+      ctx.fillStyle = colorAlpha(palette.digit, 0.94);
+      ctx.font = "bold 22px ui-monospace, Menlo, Consolas, monospace";
+      ctx.letterSpacing = "0px";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(label, 0, 0);
+      ctx.restore();
+    }
     ctx.fillStyle = colorAlpha(palette.accent, 0.76);
     ctx.font = "bold 6px ui-monospace, Menlo, Consolas, monospace";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("VAULT", 0, h / 2 - 8);
+    ctx.fillText(part.tickerScroll ? "LIVE" : "VAULT", 0, h / 2 - 8);
     for (const [x, y] of [[-w / 2 + 8, -h / 2 + 8], [w / 2 - 8, -h / 2 + 8], [-w / 2 + 8, h / 2 - 8], [w / 2 - 8, h / 2 - 8]]) {
       drawRivet(ctx, x, y, 2.5);
     }
@@ -6805,10 +6844,12 @@ function drawAxleRod(ctx, part) {
   ctx.restore();
 }
 
-function drawFaceStroke(ctx, part) {
+function drawFaceStroke(ctx, part, state = {}) {
   const style = setup(ctx, part, 1.45, 0.96);
-  const strokeColor = colorAlpha(style.stroke || "#baffdf", 0.96);
-  const glowColor = colorAlpha(style.dim || style.stroke || "#76ffc4", 0.5);
+  // Full Gold Edition: the whole machine is gold, so the face glows gold too (overrides the expression tint).
+  const tint = isGoldenEditionSkin(state.specialMaterialSkin || state.materialSkin) ? "#ffd257" : part.faceGlow;
+  const strokeColor = colorAlpha(tint || style.stroke || "#baffdf", 0.96);
+  const glowColor = colorAlpha(tint || style.dim || style.stroke || "#76ffc4", 0.5);
   const highlightColor = colorAlpha(style.highlight || "#f5ffee", 0.76);
   const isMouth = part.facePart === "mouth";
   const half = isMouth ? 78 : 70;
@@ -6819,25 +6860,43 @@ function drawFaceStroke(ctx, part) {
   const mid = lift + arc * (isMouth ? 22 : 20);
 
   ctx.save();
-  ctx.shadowColor = glowColor;
-  ctx.shadowBlur = 10;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
+  // Bold, consistent DEVICE weight regardless of the part's anisotropic squish (eyes/mouth are placed
+  // with scaleY ~0.11-0.14, often times a small head-scale) — without compensating, the fixed local
+  // line width goes sub-pixel and the eyes/mouth vanish on small-screen heads. The floor keeps a face
+  // legible even on the tiniest screens.
+  const tf = ctx.getTransform();
+  const sx = Math.hypot(tf.a, tf.b) || 1;
+  const sy = Math.hypot(tf.c, tf.d) || 1;
+  const weightPx = Math.max(isMouth ? 2.8 : 3, sx * (isMouth ? 6 : 6.5));
+  const tracePath = () => {
+    ctx.beginPath();
+    if (arc) {
+      ctx.moveTo(-half, lift);
+      ctx.quadraticCurveTo(0, mid, half, lift);
+    } else {
+      ctx.moveTo(-half, lift + (isMouth ? 3 : 1));
+      ctx.quadraticCurveTo(-half * 0.35, lift - 4, 0, lift - 2);
+      ctx.quadraticCurveTo(half * 0.4, lift, half, lift - (isMouth ? 5 : 7));
+    }
+  };
+  // Dark contrast halo underneath — keeps the face legible on the bright/gold classic heads, where a
+  // bare cyan-on-gold stroke washes out (this was the "missing mouth/eyes"). Invisible on dark heads.
+  ctx.strokeStyle = "rgba(6,10,12,0.6)";
+  ctx.lineWidth = (weightPx + 2.8) / sy;
+  tracePath();
+  ctx.stroke();
+  // Bright glowing stroke on top.
+  ctx.shadowColor = glowColor;
+  ctx.shadowBlur = 10;
   ctx.strokeStyle = strokeColor;
-  ctx.lineWidth = isMouth ? 7 : 8.5;
-  ctx.beginPath();
-  if (arc) {
-    ctx.moveTo(-half, lift);
-    ctx.quadraticCurveTo(0, mid, half, lift);
-  } else {
-    ctx.moveTo(-half, lift + (isMouth ? 3 : 1));
-    ctx.quadraticCurveTo(-half * 0.35, lift - 4, 0, lift - 2);
-    ctx.quadraticCurveTo(half * 0.4, lift, half, lift - (isMouth ? 5 : 7));
-  }
+  ctx.lineWidth = weightPx / sy;
+  tracePath();
   ctx.stroke();
   ctx.shadowBlur = 0;
   ctx.strokeStyle = highlightColor;
-  ctx.lineWidth = isMouth ? 1.35 : 1.55;
+  ctx.lineWidth = Math.max(0.85, weightPx * 0.3) / sy;
   const hy = arc ? lift + mid * 0.35 : lift - 2;
   roughLine(ctx, -half + 10, hy, half - 12, arc ? hy : lift - (isMouth ? 6 : 8), 0.14, 8, 2230);
   ctx.restore();
@@ -6845,33 +6904,68 @@ function drawFaceStroke(ctx, part) {
 
 function drawFacePupil(ctx, part, state = {}) {
   const style = setup(ctx, part, 1.25, 0.96);
-  const glowColor = colorAlpha(style.dim || style.stroke || "#76ffc4", 0.58);
+  // Full Gold Edition: gold face (overrides the per-expression tint) to match the all-gold machine.
+  const tint = isGoldenEditionSkin(state.specialMaterialSkin || state.materialSkin) ? "#ffd257" : part.faceGlow;
+  const glowColor = colorAlpha(tint || style.dim || style.stroke || "#76ffc4", 0.58);
+  const tf = ctx.getTransform();
+  const s = Math.hypot(tf.a, tf.b) || 1;
+
+  // Surprised "O" mouth: a glowing donut RING (outer + inner edge read as two circles), not a filled
+  // dot. Device radius is floored so it stays a clear donut on any head size.
+  if (part.facePart === "mouth") {
+    const rr = 15 * s < 12 ? 12 / s : 15;
+    const lw = rr * 0.42;
+    const ring = () => { ctx.beginPath(); ctx.ellipse(0, 0, rr, rr, 0, 0, Math.PI * 2); };
+    ctx.save();
+    ctx.lineCap = "round";
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = "rgba(6,10,12,0.55)"; // dark contrast halo
+    ctx.lineWidth = lw + 3 / s;
+    ring(); ctx.stroke();
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur = 10;
+    ctx.strokeStyle = colorAlpha(tint || style.stroke || "#baffdf", 0.96);
+    ctx.lineWidth = lw;
+    ring(); ctx.stroke();
+    ctx.restore();
+    return;
+  }
+
+  // Floor the device radius so pupils stay a clear dot on tiny-screen heads (matches the bolder eyes).
+  const r = 20 * s < 6 ? 6 / s : 20;
+  const k = r / 20;
   const pupilPath = () => {
     ctx.beginPath();
-    ctx.ellipse(0, 0, 20, 20, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, r, r, 0, 0, Math.PI * 2);
   };
 
   ctx.save();
+  // Dark contrast rim — defines the pupil on bright/gold screens; hidden under the fill on dark heads.
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = "rgba(6,10,12,0.55)";
+  ctx.lineWidth = Math.max(1.6, 3.4 / s);
+  pupilPath();
+  ctx.stroke();
   ctx.shadowColor = glowColor;
   ctx.shadowBlur = 10;
-  ctx.fillStyle = colorAlpha(style.fill || "#9bffcd", 0.82);
+  ctx.fillStyle = colorAlpha(tint || style.fill || "#9bffcd", 0.82);
   pupilPath();
   ctx.fill();
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
   ctx.fillStyle = colorAlpha(style.highlight || "#f5ffee", 0.12);
   ctx.beginPath();
-  ctx.ellipse(-2, -2, 13, 12, -0.16, 0, Math.PI * 2);
+  ctx.ellipse(-2 * k, -2 * k, 13 * k, 12 * k, -0.16, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
   ctx.shadowBlur = 0;
-  ctx.strokeStyle = colorAlpha(style.stroke || "#baffdf", 0.82);
+  ctx.strokeStyle = colorAlpha(tint || style.stroke || "#baffdf", 0.82);
   ctx.lineWidth = 1;
   pupilPath();
   ctx.stroke();
   ctx.strokeStyle = "rgba(255,255,255,0.45)";
   ctx.lineWidth = 0.8;
-  roughLine(ctx, -7, -6, 7, -7, 0.1, 3, 2248);
+  roughLine(ctx, -7 * k, -6 * k, 7 * k, -7 * k, 0.1, 3, 2248);
   ctx.restore();
 }
 
