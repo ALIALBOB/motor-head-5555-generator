@@ -6813,6 +6813,10 @@ function drawFaceStroke(ctx, part) {
   const isMouth = part.facePart === "mouth";
   const half = isMouth ? 78 : 70;
   const lift = isMouth ? 2 : -1;
+  // Expression curve: arc>0 bows the middle down (smile mouth / droopy eyes), arc<0 bows it up
+  // (happy-arched eyes / frown). When unset (0) the stroke renders EXACTLY as before.
+  const arc = Number(part.arc || 0);
+  const mid = lift + arc * (isMouth ? 22 : 20);
 
   ctx.save();
   ctx.shadowColor = glowColor;
@@ -6822,14 +6826,20 @@ function drawFaceStroke(ctx, part) {
   ctx.strokeStyle = strokeColor;
   ctx.lineWidth = isMouth ? 7 : 8.5;
   ctx.beginPath();
-  ctx.moveTo(-half, lift + (isMouth ? 3 : 1));
-  ctx.quadraticCurveTo(-half * 0.35, lift - 4, 0, lift - 2);
-  ctx.quadraticCurveTo(half * 0.4, lift, half, lift - (isMouth ? 5 : 7));
+  if (arc) {
+    ctx.moveTo(-half, lift);
+    ctx.quadraticCurveTo(0, mid, half, lift);
+  } else {
+    ctx.moveTo(-half, lift + (isMouth ? 3 : 1));
+    ctx.quadraticCurveTo(-half * 0.35, lift - 4, 0, lift - 2);
+    ctx.quadraticCurveTo(half * 0.4, lift, half, lift - (isMouth ? 5 : 7));
+  }
   ctx.stroke();
   ctx.shadowBlur = 0;
   ctx.strokeStyle = highlightColor;
   ctx.lineWidth = isMouth ? 1.35 : 1.55;
-  roughLine(ctx, -half + 10, lift - 2, half - 12, lift - (isMouth ? 6 : 8), 0.14, 8, 2230);
+  const hy = arc ? lift + mid * 0.35 : lift - 2;
+  roughLine(ctx, -half + 10, hy, half - 12, arc ? hy : lift - (isMouth ? 6 : 8), 0.14, 8, 2230);
   ctx.restore();
 }
 

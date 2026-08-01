@@ -2051,33 +2051,64 @@ function addButtonRow(place, x, y, count, gap, z, material = "pfpGold") {
   }
 }
 
+const { familyOf } = require("../renderer/expression-families.js");
+
+// Per-family face params for the redesigned expressions. eArc/mArc = eyelid/mouth curve (arc>0 bows
+// down, <0 bows up), eTilt = eyelid rotation, pDy = pupil offset, pScale = pupil size, + flags.
+const EXPR_FACE = {
+  Neutral:   {},
+  Happy:     { eArc: -0.55, pDy: -3, mArc: 0.7 },
+  Smirk:     { eArc: -0.4, mArc: 0.45, mTilt: -0.16 },
+  Angry:     { eTilt: 0.2, pDy: 3, mArc: -0.5, brows: true },
+  Sad:       { eArc: 0.55, pDy: 3, mArc: -0.5 },
+  Sleepy:    { closed: true, mScale: 0.5 },
+  Surprised: { eArc: -0.3, pDy: -3, pScale: 1.3, oMouth: true },
+  Focus:     { eArc: -0.22, pScale: 0.72 },
+  Glitch:    { glitch: true },
+  Dead:      { xEyes: true },
+};
+
 function addScreenExpression(place, expression, cx = 488, cy = 328, scale = 1, z = 70) {
-  const warning = expression.includes("Warning") || expression.includes("Glitch") || expression.includes("Pressure") || expression.includes("Battery");
+  const cfg = EXPR_FACE[familyOf(expression)] || {};
   const mat = "pfpFace";
-  const smile = expression.includes("Happy") || expression.includes("Smirk") || expression.includes("Dial Smile");
-  const tired = expression.includes("Sleep") || expression.includes("Bored") || expression.includes("Dead") || expression.includes("No Answer");
-  const eyeTilt = smile ? -0.18 : tired ? -0.08 : 0.04;
-  const mouthTilt = smile ? -0.18 : warning ? 0.08 : -0.1;
   const faceBase = { role: "expression", expression: true };
   const eyelid = { ...faceBase, material: mat, shadeStyle: "terminalGlow", opacity: 1, blink: "eyeLine" };
-  const pupil = { ...faceBase, material: mat, shadeStyle: "terminalGlow", opacity: 0.98, blink: "eyePupil" };
-  place("face.stroke", cx - 50 * scale, cy - 12 * scale, eyeTilt, 0.38 * scale, 0.14 * scale, z, { ...eyelid, facePart: "leftEyeLine" });
-  place("face.stroke", cx + 44 * scale, cy - 22 * scale, eyeTilt, 0.38 * scale, 0.14 * scale, z, { ...eyelid, facePart: "rightEyeLine" });
-  place("face.pupil", cx - 44 * scale, cy + 7 * scale, 0, 0.39 * scale, 0.39 * scale, z + 2, { ...pupil, facePart: "leftEyePupil" });
-  place("face.pupil", cx + 50 * scale, cy - 3 * scale, 0, 0.39 * scale, 0.39 * scale, z + 2, { ...pupil, facePart: "rightEyePupil" });
-  place("face.stroke", cx, cy + 54 * scale, mouthTilt, smile ? 0.38 * scale : 0.34 * scale, 0.11 * scale, z + 1, {
-    ...faceBase,
-    material: mat,
-    shadeStyle: "terminalGlow",
-    opacity: 1,
-    facePart: "mouth"
-  });
-  if (warning) {
-    place("arc.lightning", cx + 62 * scale, cy + 18 * scale, 0.35, 0.42 * scale, 0.42 * scale, z + 3, {
-      ...faceBase,
-      material: "copper",
-      shadeStyle: "terminalGlow",
-      facePart: "warningSpark"
+  const pupilOpt = { ...faceBase, material: mat, shadeStyle: "terminalGlow", opacity: 0.98, blink: "eyePupil" };
+  const eyeW = 0.4 * scale, eyeH = 0.14 * scale;
+  const pupR = 0.39 * scale * (cfg.pScale || 1);
+  const eY = cy - 16 * scale, pY = cy + 2 * scale + (cfg.pDy || 0) * scale, mY = cy + 52 * scale;
+  const eL = cx - 46 * scale, eR = cx + 46 * scale;
+  const eTilt = cfg.eTilt || 0, eArc = cfg.eArc || 0;
+
+  if (cfg.xEyes) {
+    for (const [i, ex] of [eL, eR].entries()) {
+      place("face.stroke", ex, eY + 6 * scale, 0.7, 0.24 * scale, 0.09 * scale, z, { ...eyelid, facePart: i ? "rightEyeLine" : "leftEyeLine" });
+      place("face.stroke", ex, eY + 6 * scale, -0.7, 0.24 * scale, 0.09 * scale, z, { ...faceBase, material: mat, shadeStyle: "terminalGlow", opacity: 1, facePart: i ? "rightEyePupil" : "leftEyePupil" });
+    }
+  } else if (cfg.closed) {
+    place("face.stroke", eL, eY + 8 * scale, 0, eyeW, eyeH, z, { ...eyelid, facePart: "leftEyeLine", arc: 0.12 });
+    place("face.stroke", eR, eY + 8 * scale, 0, eyeW, eyeH, z, { ...eyelid, facePart: "rightEyeLine", arc: 0.12 });
+  } else if (cfg.glitch) {
+    place("face.stroke", eL, eY - 4 * scale, 0, eyeW, eyeH, z, { ...eyelid, facePart: "leftEyeLine" });
+    place("face.stroke", eR, eY + 5 * scale, 0, eyeW, eyeH, z, { ...eyelid, facePart: "rightEyeLine" });
+    place("face.pupil", eL, pY - 3 * scale, 0, pupR, pupR, z + 2, { ...pupilOpt, facePart: "leftEyePupil" });
+    place("face.pupil", eR, pY + 4 * scale, 0, pupR, pupR, z + 2, { ...pupilOpt, facePart: "rightEyePupil" });
+  } else {
+    if (cfg.brows) {
+      place("face.stroke", eL, eY - 16 * scale, 0.17, 0.28 * scale, 0.08 * scale, z, { ...faceBase, material: mat, shadeStyle: "terminalGlow", opacity: 0.95, facePart: "leftEyeLine", arc: -0.3 });
+      place("face.stroke", eR, eY - 16 * scale, -0.17, 0.28 * scale, 0.08 * scale, z, { ...faceBase, material: mat, shadeStyle: "terminalGlow", opacity: 0.95, facePart: "rightEyeLine", arc: -0.3 });
+    }
+    place("face.stroke", eL, eY, eTilt, eyeW, eyeH, z, { ...eyelid, facePart: "leftEyeLine", arc: eArc });
+    place("face.stroke", eR, eY, -eTilt, eyeW, eyeH, z, { ...eyelid, facePart: "rightEyeLine", arc: eArc });
+    place("face.pupil", eL, pY, 0, pupR, pupR, z + 2, { ...pupilOpt, facePart: "leftEyePupil" });
+    place("face.pupil", eR, pY, 0, pupR, pupR, z + 2, { ...pupilOpt, facePart: "rightEyePupil" });
+  }
+
+  if (cfg.oMouth) {
+    place("face.pupil", cx, mY, 0, 0.15 * scale, 0.2 * scale, z + 1, { ...faceBase, material: mat, shadeStyle: "terminalGlow", opacity: 0.92, facePart: "mouth" });
+  } else {
+    place("face.stroke", cx, mY, cfg.mTilt || 0, 0.36 * scale * (cfg.mScale || 1), 0.11 * scale, z + 1, {
+      ...faceBase, material: mat, shadeStyle: "terminalGlow", opacity: 1, facePart: "mouth", arc: cfg.mArc || 0,
     });
   }
 }
