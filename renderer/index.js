@@ -13,7 +13,7 @@
 import { createPublicClient, http } from "viem";
 import metadataMod from "./build-metadata.js";
 
-const { overlayMetadata, decodeParts } = metadataMod;
+const { curateMetadata, decodeParts } = metadataMod;
 
 const PARTS_ABI = [
   {
@@ -79,17 +79,13 @@ export default {
     if ((m = url.pathname.match(/^\/meta\/(\d+)\.json$/))) {
       const id = Number(m[1]);
       const [{ parts, revision }, originalText] = await Promise.all([readLayout(env, id), originalMetaText(env, id)]);
+      if (originalText == null) return json({ ok: false, error: "metadata source unavailable" }, 502);
 
-      if (parts.length === 0) {
-        // UNEDITED -> return the pinned metadata's raw bytes, unchanged (byte-identical to live).
-        if (originalText != null) return new Response(originalText, { status: 200, headers: jsonHeaders({ "cache-control": "public, max-age=60" }) });
-        return json({ ok: false, error: "metadata source unavailable" }, 502);
-      }
-      // EDITED -> overlay onto the original.
-      let original = {};
-      try { original = originalText ? JSON.parse(originalText) : {}; } catch { original = {}; }
-      const meta = overlayMetadata(original, { tokenId: id, parts, buildRevision: revision, config: { imageBaseUrl: `${base}/img`, animationBaseUrl: `${base}/anim` } });
-      return json(meta, 200, { "cache-control": "public, max-age=30" });
+      let original;
+      try { original = JSON.parse(originalText); } catch { return json({ ok: false, error: "bad source metadata" }, 502); }
+      // Curate traits (drop clutter + fix Background) always; overlay image/animation when edited.
+      const meta = curateMetadata(original, { tokenId: id, parts, buildRevision: revision, config: { imageBaseUrl: `${base}/img`, animationBaseUrl: `${base}/anim` } });
+      return json(meta, 200, { "cache-control": parts.length ? "public, max-age=30" : "public, max-age=300" });
     }
 
     if ((m = url.pathname.match(/^\/img\/(\d+)\.png$/))) {
