@@ -1,18 +1,19 @@
 // MotorHeads renderer worker (standalone — NOT the prod backend).
 //
 //   GET  /health            -> ok
-//   GET  /meta/:id.json     -> dynamic ERC-721 metadata (reads the companion's on-chain parts)
+//   GET  /meta/:id.json     -> metadata. UNEDITED = the pinned original, byte-identical. EDITED =
+//                              original + image/animation pointed here + parts attributes.
 //   GET  /img/:id.png       -> the customized image snapshot (from R2)
 //   PUT  /img/:id.png        -> store a snapshot (client capture at save; dev-open, gated in prod)
 //   GET  /anim/:id          -> animation page (reuses the site's render; stub for now)
 //
-// Chain reads use viem against RENDER_RPC_URL + PARTS_CONTRACT. A failed/empty read still yields
-// clean base metadata, so an unedited token never breaks.
+// SAFETY: when a token has no on-chain parts, we fetch the pinned metadata and return its RAW
+// bytes unchanged, so pointing tokenURI here changes nothing for the collection until someone edits.
 
 import { createPublicClient, http } from "viem";
 import metadataMod from "./build-metadata.js";
 
-const { buildTokenMetadata, decodeParts } = metadataMod;
+const { overlayMetadata, decodeParts } = metadataMod;
 
 const PARTS_ABI = [
   {
@@ -29,8 +30,8 @@ const PARTS_ABI = [
   { type: "function", name: "buildRevision", stateMutability: "view", inputs: [{ name: "tokenId", type: "uint256" }], outputs: [{ type: "uint32" }] },
 ];
 
-const json = (obj, status = 200, extra = {}) =>
-  new Response(JSON.stringify(obj), { status, headers: { "content-type": "application/json; charset=utf-8", "access-control-allow-origin": "*", ...extra } });
+const jsonHeaders = (extra = {}) => ({ "content-type": "application/json; charset=utf-8", "access-control-allow-origin": "*", ...extra });
+const json = (obj, status = 200, extra = {}) => new Response(JSON.stringify(obj), { status, headers: jsonHeaders(extra) });
 
 function client(env) {
   const url = String(env.RENDER_RPC_URL || "").trim();
@@ -48,7 +49,22 @@ async function readLayout(env, tokenId) {
     ]);
     return { parts: decodeParts(raw), revision: Number(rev) };
   } catch {
-    return { parts: [], revision: 0 }; // never break metadata on a read failure
+    return { parts: [], revision: 0 }; // read failure -> treat as unedited (safe: shows the original)
+  }
+}
+
+// Fetch the raw text of the token's pinned metadata (immutable -> long cache). Null on failure.
+async function originalMetaText(env, tokenId) {
+  const base = String(env.SOURCE_META_BASE || "").replace(/\/$/, "");
+  if (!base) return null;
+  try {
+    const res = await fetch(`${base}/${tokenId}.json`, {
+      headers: { accept: "application/json" },
+      cf: { cacheTtl: 86400, cacheEverything: true },
+    });
+    return res.ok ? await res.text() : null;
+  } catch {
+    return null;
   }
 }
 
@@ -62,11 +78,18 @@ export default {
     let m;
     if ((m = url.pathname.match(/^\/meta\/(\d+)\.json$/))) {
       const id = Number(m[1]);
-      const { parts, revision } = await readLayout(env, id);
-      return json(buildTokenMetadata({
-        tokenId: id, parts, buildRevision: revision,
-        config: { name: env.COLLECTION_NAME || "MotorHead", imageBaseUrl: `${base}/img`, animationBaseUrl: `${base}/anim` },
-      }), 200, { "cache-control": "public, max-age=30" });
+      const [{ parts, revision }, originalText] = await Promise.all([readLayout(env, id), originalMetaText(env, id)]);
+
+      if (parts.length === 0) {
+        // UNEDITED -> return the pinned metadata's raw bytes, unchanged (byte-identical to live).
+        if (originalText != null) return new Response(originalText, { status: 200, headers: jsonHeaders({ "cache-control": "public, max-age=60" }) });
+        return json({ ok: false, error: "metadata source unavailable" }, 502);
+      }
+      // EDITED -> overlay onto the original.
+      let original = {};
+      try { original = originalText ? JSON.parse(originalText) : {}; } catch { original = {}; }
+      const meta = overlayMetadata(original, { tokenId: id, parts, buildRevision: revision, config: { imageBaseUrl: `${base}/img`, animationBaseUrl: `${base}/anim` } });
+      return json(meta, 200, { "cache-control": "public, max-age=30" });
     }
 
     if ((m = url.pathname.match(/^\/img\/(\d+)\.png$/))) {
@@ -82,7 +105,6 @@ export default {
 
     if ((m = url.pathname.match(/^\/anim\/(\d+)/))) {
       const id = Number(m[1]);
-      // Stub: reuses the site render in the real build; for now confirm the pipeline.
       return new Response(
         `<!doctype html><meta charset=utf-8><title>MotorHead #${id}</title><body style="margin:0;background:#0b0f0e;color:#eafffb;font-family:system-ui;display:grid;place-items:center;height:100vh"><div>MotorHead #${id} — animation renders here (site drawPart)</div></body>`,
         { headers: { "content-type": "text/html; charset=utf-8", "access-control-allow-origin": "*" } }

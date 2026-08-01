@@ -1,0 +1,296 @@
+{
+  "name": "Motorhead #1",
+  "description": "A living machine-headed Motorhead. Its base identity is fixed, while owner customization, time, holding, transfers, sale history, and the chain write history onto it as overlays.",
+  "image": "ipfs://bafybeihodojvhdsjn6d2romph3jo2u5yexzqidiitnlwshej3u4oaqklxq/1.jpg",
+  "animation_url": "ipfs://bafybeif6hwm5lfl7cmmw2leit5t76t57k5olsx6lrxso22ojbkoh2xcyyq/1.html",
+  "external_url": "https://opensea.io/assets/ethereum/0x0A5008550Fc1402BB567a3BA38D9433e6199CEb1/1",
+  "attributes": [
+    {
+      "trait_type": "Chassis",
+      "value": "Dark Mech Chassis"
+    },
+    {
+      "trait_type": "Head",
+      "value": "CRT TV"
+    },
+    {
+      "trait_type": "Expression",
+      "value": "Bored Signal"
+    },
+    {
+      "trait_type": "Clothes",
+      "value": "Transparent Pinstripe Shirt"
+    },
+    {
+      "trait_type": "Back Accessory",
+      "value": "Skate Wheel Pack"
+    },
+    {
+      "trait_type": "Neck Trait",
+      "value": "Wire Scarf"
+    },
+    {
+      "trait_type": "Hat",
+      "value": "Black Beanie"
+    },
+    {
+      "trait_type": "Chest Accessory",
+      "value": "Gear Pendant"
+    },
+    {
+      "trait_type": "Arm Item",
+      "value": "Signal Tracker"
+    },
+    {
+      "trait_type": "Background",
+      "value": "Teal Archive"
+    },
+    {
+      "trait_type": "Core",
+      "value": "Cyan Core"
+    },
+    {
+      "trait_type": "Liquid",
+      "value": "Gold Resin"
+    },
+    {
+      "trait_type": "Liquid Texture",
+      "value": "Metallic"
+    },
+    {
+      "trait_type": "Evolution Type",
+      "value": "Live Chain History"
+    },
+    {
+      "trait_type": "Assembly Mode",
+      "value": "Browser Local"
+    },
+    {
+      "trait_type": "Assembly Source",
+      "value": "Mechanical Canvas Builder Parts"
+    },
+    {
+      "trait_type": "Customization",
+      "value": "Enabled"
+    },
+    {
+      "trait_type": "Awakenable",
+      "value": "Yes"
+    },
+    {
+      "trait_type": "Awakened",
+      "value": "Not Yet"
+    },
+    {
+      "trait_type": "Alive Protocol",
+      "value": "LAM_ALIVE_V1"
+    },
+    {
+      "trait_type": "Burn Required",
+      "value": "No"
+    },
+    {
+      "trait_type": "Base DNA Locked",
+      "value": "Yes"
+    },
+    {
+      "trait_type": "Renderer Version",
+      "value": "LAM_RENDER_V1"
+    },
+    {
+      "trait_type": "Visual Edition",
+      "value": "Full Gold Edition"
+    },
+    {
+      "trait_type": "Golden Lucky Mint",
+      "value": "Yes"
+    },
+    {
+      "trait_type": "Visual Palette",
+      "value": "GOLDEN EDITION"
+    },
+    {
+      "trait_type": "Palette Surface",
+      "value": "royalGold"
+    },
+    {
+      "trait_type": "Sale Counter Style",
+      "value": "vaultSeal"
+    },
+    {
+      "trait_type": "Block Counter Style",
+      "value": "brassGearbox"
+    }
+  ],
+  "properties": {
+    "schemaVersion": 1,
+    "token_id": 1,
+    "renderer_version": "LAM_RENDER_V1",
+    "customization_enabled": true,
+    "customization_state_version": "LAM_CUSTOM_STATE_V1",
+    "base_traits_mutable": false,
+    "locked_base_trait_hash": "4fc2656b46b3717095c19730",
+    "base_dna": {
+      "schemaVersion": 1,
+      "tokenId": 1,
+      "traitHash": "4fc2656b46b3717095c19730",
+      "indexes": {
+        "chassis": 1,
+        "head": 0,
+        "expression": 0,
+        "clothes": 7,
+        "hat": 1,
+        "backAccessory": 1,
+        "neckTrait": 2,
+        "chestAccessory": 1,
+        "armItem": 1,
+        "background": 0,
+        "core": 0
+      },
+      "traits": {
+        "Chassis": "Dark Mech Chassis",
+        "Head": "CRT TV",
+        "Expression": "Bored Signal",
+        "Clothes": "Transparent Pinstripe Shirt",
+        "Hat": "Black Beanie",
+        "Back Accessory": "Skate Wheel Pack",
+        "Neck Trait": "Wire Scarf",
+        "Chest Accessory": "Gear Pendant",
+        "Arm Item": "Signal Tracker",
+        "Background": "Teal Archive",
+        "Core": "Cyan Core"
+      }
+    },
+    "visual_modifiers": {
+      "schemaVersion": 1,
+      "rendererVersion": "LAM_RENDER_V1",
+      "edition": "Full Gold Edition",
+      "palette": {
+        "id": "goldenEdition",
+        "label": "GOLDEN EDITION",
+        "surface": "royalGold",
+        "background": "#4b2a08",
+        "primary": "#e6a42f",
+        "secondary": "#3a2107",
+        "accent": "#fff0a6",
+        "edge": "#ffc43f",
+        "glow": "rgba(255,207,82,0.62)",
+        "liquidType": "Gold Resin",
+        "liquidTexture": "Metallic",
+        "rarity": "Special Edition"
+      },
+      "slots": {
+        "backgroundColor": "#4b2a08",
+        "bodyMaterial": "fullGold",
+        "headMaterial": "fullGold",
+        "clothesColor": "#e6a42f",
+        "bagColor": "#3a2107",
+        "eyeColor": "#fff0a6",
+        "coreColor": "#ffc43f",
+        "metalTrim": "#ffc43f",
+        "glowColor": "rgba(255,207,82,0.62)",
+        "liquidType": "Gold Resin",
+        "liquidTexture": "Metallic",
+        "saleCounterStyle": "vaultSeal",
+        "blockCounterStyle": "brassGearbox",
+        "saleDigitColor": "#fff0a6",
+        "blockDigitColor": "#fff0a6"
+      }
+    },
+    "alive": {
+      "schemaVersion": 1,
+      "protocol": "LAM_ALIVE_V1",
+      "tokenId": 1,
+      "awakenable": true,
+      "awakened": false,
+      "burnRequired": false,
+      "baseTraitsMutable": false,
+      "ownerCanCustomizeVisuals": true,
+      "registryAddress": "0x0000000000000000000000000000000000000000",
+      "tokenBoundAccountStandard": "ERC-6551-ready",
+      "tokenBoundAccount": null,
+      "agentIdentityStandard": "ERC-8004-ready",
+      "agentId": null,
+      "aliveStateUri": "https://opensea.io/assets/ethereum/0x0A5008550Fc1402BB567a3BA38D9433e6199CEb1/1/alive",
+      "agentCardUri": "https://opensea.io/assets/ethereum/0x0A5008550Fc1402BB567a3BA38D9433e6199CEb1/1/agent-card",
+      "evolutionDrivers": [
+        "archiveAge",
+        "holderBond",
+        "transferScars",
+        "verifiedSales",
+        "blockHeartbeat",
+        "ownerCustomization"
+      ]
+    },
+    "editable_slots": [
+      "backgroundColor",
+      "bodyMaterial",
+      "headMaterial",
+      "clothesColor",
+      "bagColor",
+      "eyeColor",
+      "coreColor",
+      "metalTrim",
+      "extraParts",
+      "saleCounterStyle",
+      "blockCounterStyle",
+      "saleDigitColor",
+      "blockDigitColor"
+    ],
+    "custom_state_uri": "https://opensea.io/assets/ethereum/0x0A5008550Fc1402BB567a3BA38D9433e6199CEb1/1/state",
+    "part_manifest_uri": "ipfs://bafybeicgckcmtjt63iwxgbkr3jouzcabpxncs5qcp4vunlfiirlgeb344a/part-manifest.json",
+    "palette_manifest_uri": "ipfs://bafybeicgckcmtjt63iwxgbkr3jouzcabpxncs5qcp4vunlfiirlgeb344a/palette-manifest.json",
+    "default_custom_state": {
+      "schemaVersion": 1,
+      "tokenId": 1,
+      "lockedBaseTraitHash": "4fc2656b46b3717095c19730",
+      "baseTraitsMutable": false,
+      "overrides": {},
+      "extraParts": [],
+      "stateVersion": "LAM_CUSTOM_STATE_V1",
+      "rendererVersion": "LAM_RENDER_V1",
+      "defaultVisualSlots": {
+        "backgroundColor": "#4b2a08",
+        "bodyMaterial": "fullGold",
+        "headMaterial": "fullGold",
+        "clothesColor": "#e6a42f",
+        "bagColor": "#3a2107",
+        "eyeColor": "#fff0a6",
+        "coreColor": "#ffc43f",
+        "metalTrim": "#ffc43f",
+        "glowColor": "rgba(255,207,82,0.62)",
+        "liquidType": "Gold Resin",
+        "liquidTexture": "Metallic",
+        "saleCounterStyle": "vaultSeal",
+        "blockCounterStyle": "brassGearbox",
+        "saleDigitColor": "#fff0a6",
+        "blockDigitColor": "#fff0a6"
+      },
+      "alive": {
+        "schemaVersion": 1,
+        "protocol": "LAM_ALIVE_V1",
+        "tokenId": 1,
+        "awakenable": true,
+        "awakened": false,
+        "burnRequired": false,
+        "baseTraitsMutable": false,
+        "ownerCanCustomizeVisuals": true,
+        "registryAddress": "0x0000000000000000000000000000000000000000",
+        "tokenBoundAccountStandard": "ERC-6551-ready",
+        "tokenBoundAccount": null,
+        "agentIdentityStandard": "ERC-8004-ready",
+        "agentId": null,
+        "aliveStateUri": "https://opensea.io/assets/ethereum/0x0A5008550Fc1402BB567a3BA38D9433e6199CEb1/1/alive",
+        "agentCardUri": "https://opensea.io/assets/ethereum/0x0A5008550Fc1402BB567a3BA38D9433e6199CEb1/1/agent-card",
+        "evolutionDrivers": [
+          "archiveAge",
+          "holderBond",
+          "transferScars",
+          "verifiedSales",
+          "blockHeartbeat",
+          "ownerCustomization"
+        ]
+      }
+    }
+  }
+}

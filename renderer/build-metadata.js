@@ -1,16 +1,13 @@
-// Renderer — dynamic metadata assembly for the on-chain-parts MotorHeads.
+// Renderer metadata — overlays on-chain edits onto the token's ORIGINAL pinned metadata.
 //
-// The renderer worker reads a token's parts from the MotorHeadsParts companion contract
-// (partsOf + buildRevision), then calls buildTokenMetadata() to produce the ERC-721 /
-// OpenSea metadata JSON served at tokenURI. Kept as pure functions (no chain / no worker
-// runtime) so the whole read->metadata pipeline is trivially testable against the real
-// contract on a local Hardhat chain.
-//
-// image + animation_url carry ?rev=<buildRevision> so every on-chain save cache-busts the
-// marketplace's copy; OpenSea re-crawls on the MetadataUpdate signal and fetches the new art.
+//   • UNEDITED token (no on-chain parts) -> the original metadata, UNCHANGED. The worker actually
+//     returns the pinned file's raw bytes verbatim, so it is byte-identical to what's live today.
+//     This is what makes flipping tokenURI safe: the whole collection looks exactly the same until
+//     a holder actually edits.
+//   • EDITED token -> the original, but with image + animation_url pointed at the renderer (which
+//     composites the parts) and a couple of parts attributes appended. Everything else (name,
+//     description, external_url, base traits, properties) is preserved from the original.
 
-// Normalize the raw struct array returned by partsOf() (ethers/viem give BigInts) into
-// plain numbers the renderer + metadata can use.
 function decodeParts(raw) {
   if (!Array.isArray(raw)) return [];
   return raw.map((p) => ({
@@ -24,32 +21,24 @@ function decodeParts(raw) {
   }));
 }
 
-function buildTokenMetadata({ tokenId, parts = [], buildRevision = 0, config = {} }) {
+function overlayMetadata(original, { tokenId, parts = [], buildRevision = 0, config = {} } = {}) {
+  const base = original && typeof original === "object" ? original : {};
+  const list = Array.isArray(parts) ? parts : [];
+  if (list.length === 0) return base; // unedited — original untouched
+
   const id = Number(tokenId);
   const rev = Number(buildRevision);
-  const list = Array.isArray(parts) ? parts : [];
-
-  const {
-    name = "MotorHead",
-    description = "A MotorHead customized on-chain by its holder on the Owner Canvas.",
-    imageBaseUrl,
-    animationBaseUrl,
-    externalUrl,
-  } = config;
-
-  const meta = {
-    name: `${name} #${id}`,
-    description,
-    image: `${imageBaseUrl}/${id}.png?rev=${rev}`,
-    animation_url: `${animationBaseUrl}/${id}.html?rev=${rev}`,
+  const attrs = Array.isArray(base.attributes) ? base.attributes.slice() : [];
+  return {
+    ...base,
+    image: `${config.imageBaseUrl}/${id}.png?rev=${rev}`,
+    animation_url: `${config.animationBaseUrl}/${id}.html?rev=${rev}`,
     attributes: [
-      { trait_type: "Parts", value: list.length },
+      ...attrs,
+      { trait_type: "Custom Parts", value: list.length },
       { trait_type: "Build Revision", value: rev },
-      ...list.map((p, i) => ({ trait_type: `Item ${i + 1}`, value: `#${Number(p.itemId)}` })),
     ],
   };
-  if (externalUrl) meta.external_url = `${externalUrl}/${id}`;
-  return meta;
 }
 
-module.exports = { decodeParts, buildTokenMetadata };
+module.exports = { decodeParts, overlayMetadata };
