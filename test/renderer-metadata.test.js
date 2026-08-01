@@ -27,6 +27,13 @@ describe("renderer/curateMetadata", function () {
     expect(meta.attributes.find((a) => a.trait_type === "Background").value).to.equal("Brown");
   });
 
+  it("serves Expression as its family — clean 10-value filter", function () {
+    // token 1's raw Expression is "Bored Signal" -> family "Sad"
+    const meta = curateMetadata(ORIGINAL, { tokenId: 1, parts: [] });
+    expect(meta.attributes.find((a) => a.trait_type === "Expression").value).to.equal("Sad");
+    expect(ORIGINAL.attributes.find((a) => a.trait_type === "Expression").value).to.equal("Bored Signal"); // original untouched
+  });
+
   it("preserves name/description/image/animation/properties for unedited tokens", function () {
     const meta = curateMetadata(ORIGINAL, { tokenId: 1, parts: [] });
     expect(meta.name).to.equal(ORIGINAL.name);

@@ -11,6 +11,8 @@
 // Reversible: this only shapes what the renderer serves; the pinned originals are untouched, and
 // setBaseURI back to the IPFS CID restores the old (cluttered) traits exactly.
 
+const { familyOf } = require("./expression-families.js");
+
 // Kept traits, in display order. Everything else is dropped from the OpenSea attributes panel.
 const KEEP_TRAITS = [
   "Head", "Chassis", "Expression", "Hat", "Clothes", "Neck Trait",
@@ -47,6 +49,7 @@ function curateAttributes(meta) {
   const out = [];
   for (const t of KEEP_TRAITS) {
     if (t === "Background") { if (bgName) out.push({ trait_type: "Background", value: bgName }); }
+    else if (t === "Expression") { if (byType[t]) out.push({ trait_type: "Expression", value: familyOf(byType[t].value) }); }
     else if (byType[t]) out.push(byType[t]);
   }
   return out;
