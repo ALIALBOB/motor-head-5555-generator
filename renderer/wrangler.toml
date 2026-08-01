@@ -12,9 +12,10 @@ bucket_name = "motorheads-renders"
 
 [vars]
 COLLECTION_NAME = "MotorHead"
-RENDER_BASE_URL = "http://127.0.0.1:8789"
-# Set per environment (local/testnet/mainnet):
-#   PARTS_CONTRACT   = "0x…"  (the MotorHeadsParts companion)
-#   RENDER_RPC_URL   = "http://127.0.0.1:8545" | Sepolia | mainnet RPC
+# Reliable source of the ORIGINAL pinned metadata (Cloudflare Pages, byte-identical to the IPFS CID).
+SOURCE_META_BASE = "https://motorheads-metadata.pages.dev"
+# RENDER_BASE_URL defaults to the worker's own origin (used only for edited tokens' image/anim URLs).
+# Empty until saves go live -> every token is "unedited" -> pure byte-identical passthrough (safe flip):
+#   PARTS_CONTRACT = "0x…" (mainnet companion), RENDER_RPC_URL = "<mainnet RPC>"
 PARTS_CONTRACT = ""
 RENDER_RPC_URL = ""
