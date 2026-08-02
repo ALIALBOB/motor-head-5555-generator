@@ -419,7 +419,12 @@ function staticPartCacheKey(part, state = {}, shadeStyle = "pencilSketch", width
     usesLiquidState ? state.liquidAccent ?? "" : "",
     usesLiquidState ? state.liquidGlow ?? "" : "",
     usesLiquidState ? state.texture ?? "" : "",
-    skinKey
+    skinKey,
+    // Face parts share the keys "face.stroke"/"face.pupil" and differ only by these — include them so a
+    // paused/still face can never reuse a sibling's cached bitmap (e.g. a donut "O-mouth" vs an eye pupil).
+    part.arc ?? "",
+    part.facePart || "",
+    part.faceGlow || ""
   ].join("|");
 }
 function rememberStaticPartCanvas(cacheKey, canvas2) {
@@ -8592,8 +8597,9 @@ function marketplaceBaseCacheKey(layout, chainState2, width, height) {
     pressureLevel(chainState2),
     Math.round(Number(chainState2?.gasPressure ?? chainState2?.baseFeeGwei ?? 0) || 0),
     Number(chainState2?.saleCount || 0),
-    Number(chainState2?.transferCount || 0),
-    Number(chainState2?.blockNumber || 0)
+    Number(chainState2?.transferCount || 0)
+    // blockNumber intentionally omitted: it increments every block and is only drawn by the LIVE
+    // counter (a `counter.` part, never baked), so including it needlessly re-baked the static layer each poll.
   ].join("|");
 }
 function createStaticSegmentLayer(width, height, parts, staticState) {
@@ -8692,7 +8698,6 @@ function dragFrameCacheKey(layout, chainState2, width, height, placements, selec
     Math.round(Number(chainState2?.gasPressure ?? chainState2?.baseFeeGwei ?? 0) || 0),
     Number(chainState2?.saleCount || 0),
     Number(chainState2?.transferCount || 0),
-    Number(chainState2?.blockNumber || 0),
     staticSignature
   ].join("|");
 }

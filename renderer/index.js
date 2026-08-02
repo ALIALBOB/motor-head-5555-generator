@@ -34,6 +34,7 @@ const PARTS_ABI = [
 ];
 
 const BACKEND = "https://motorheads-backend.zacbosugame.workers.dev";
+const COLLECTION_SIZE = 5555; // token ids are 1..5555; out-of-range -> 404, not a source 502
 
 const jsonHeaders = (extra = {}) => ({ "content-type": "application/json; charset=utf-8", "access-control-allow-origin": "*", ...extra });
 const json = (obj, status = 200, extra = {}) => new Response(JSON.stringify(obj), { status, headers: jsonHeaders(extra) });
@@ -61,16 +62,37 @@ async function readLayout(env, tokenId) {
   }
 }
 
-// Fetch the raw text of the token's pinned metadata (immutable -> long cache). Null on failure.
-async function originalMetaText(env, tokenId) {
-  const base = String(env.SOURCE_META_BASE || "").replace(/\/$/, "");
-  if (!base) return null;
+// The pinned metadata CID (also the setBaseURI revert target) — an automatic fallback so a Pages
+// outage/bad-deploy can't 502 the whole collection's traits. Files exist at both /<id> and /<id>.json.
+const SOURCE_META_CID = "bafybeieu7bnbl7tiuim6x6gz7pcdfhkq6bh4eas3jteea7sx7kowobe6jy";
+const IPFS_META_GATEWAYS = ["https://ipfs.io/ipfs", `https://${SOURCE_META_CID}.ipfs.dweb.link`];
+
+// One fetch that only accepts a real JSON body — guards against a Pages SPA/catch-all serving 200 HTML.
+async function fetchMetaText(url) {
   try {
-    const res = await fetch(`${base}/${tokenId}.json`, { headers: { accept: "application/json" }, cf: { cacheTtl: 86400, cacheEverything: true } });
-    return res.ok ? await res.text() : null;
+    const res = await fetch(url, { headers: { accept: "application/json" }, cf: { cacheTtl: 86400, cacheEverything: true } });
+    if (!res.ok) return null;
+    const text = await res.text();
+    return text.trimStart().startsWith("{") ? text : null;
   } catch {
     return null;
   }
+}
+
+// Raw pinned metadata text. Primary = the Pages source; fallback = the immutable IPFS CID so a Pages
+// outage self-heals. Null only if BOTH the source and every gateway fail (a genuine source outage).
+async function originalMetaText(env, tokenId) {
+  const base = String(env.SOURCE_META_BASE || "").replace(/\/$/, "");
+  if (base) {
+    const primary = await fetchMetaText(`${base}/${tokenId}.json`);
+    if (primary != null) return primary;
+  }
+  for (const gw of IPFS_META_GATEWAYS) {
+    const url = gw.includes(".ipfs.") ? `${gw}/${tokenId}.json` : `${gw}/${SOURCE_META_CID}/${tokenId}.json`;
+    const alt = await fetchMetaText(url);
+    if (alt != null) return alt;
+  }
+  return null;
 }
 
 // Merge holder on-chain parts into the base layout's placements. Empty today (PARTS_CONTRACT unset).
@@ -87,9 +109,10 @@ function mergeParts(layout, parts) {
 // + chain-reactive telemetry), reused verbatim. Inlines the token layout (new faces) as a global; one
 // bundled app (/anim/runtime.js = drawMachine + the animation logic) runs it. Same engine as the image.
 function animPage(id, base, layout) {
-  const name = String((layout && layout.name) || ("MotorHead #" + id)).replace(/</g, "\\u003c");
-  const W = (layout && layout.canvas && layout.canvas.width) || 1024;
-  const H = (layout && layout.canvas && layout.canvas.height) || 1024;
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const name = esc((layout && layout.name) || ("MotorHead #" + id)); // used in <title> text AND aria-label attr
+  const W = Math.max(1, Math.min(4096, Math.round(Number(layout && layout.canvas && layout.canvas.width) || 1024)));
+  const H = Math.max(1, Math.min(4096, Math.round(Number(layout && layout.canvas && layout.canvas.height) || 1024)));
   const layoutLiteral = JSON.stringify(layout).replace(/</g, "\\u003c"); // JSON is valid JS; escape </script
   return `<!doctype html>
 <html lang="en">
@@ -135,6 +158,7 @@ export default {
     let m;
     if ((m = url.pathname.match(/^\/meta\/(\d+)(?:\.json)?$/))) { // deployed contract tokenURI = base+id (no .json)
       const id = Number(m[1]);
+      if (!Number.isInteger(id) || id < 1 || id > COLLECTION_SIZE) return json({ ok: false, error: "token does not exist" }, 404);
       const [{ parts, revision }, originalText] = await Promise.all([readLayout(env, id), originalMetaText(env, id)]);
       if (originalText == null) return json({ ok: false, error: "metadata source unavailable" }, 502);
       let original;

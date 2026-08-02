@@ -66,7 +66,12 @@ function staticPartCacheKey(part, state = {}, shadeStyle = "pencilSketch", width
     usesLiquidState ? state.liquidAccent ?? "" : "",
     usesLiquidState ? state.liquidGlow ?? "" : "",
     usesLiquidState ? state.texture ?? "" : "",
-    skinKey
+    skinKey,
+    // Face parts share the keys "face.stroke"/"face.pupil" and differ only by these — include them so a
+    // paused/still face can never reuse a sibling's cached bitmap (e.g. a donut "O-mouth" vs an eye pupil).
+    part.arc ?? "",
+    part.facePart || "",
+    part.faceGlow || ""
   ].join("|");
 }
 

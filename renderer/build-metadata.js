@@ -52,6 +52,16 @@ function curateAttributes(meta) {
     else if (t === "Expression") { if (byType[t]) out.push({ trait_type: "Expression", value: familyOf(byType[t].value) }); }
     else if (byType[t]) out.push(byType[t]);
   }
+  // Ledger heads: surface a clean currency filter + whether the ticker is live-scrolling ("Awake") or a
+  // static "Vault". Read from the RAW Head + Expression values BEFORE the Expression->family collapse above
+  // (both "BTC Awake"/"ETH Awake" fold into "Surprised", which would otherwise lose the live-ticker signal).
+  const ledger = /^Ledger\s+(BTC|ETH)/i.exec(byType["Head"]?.value || "");
+  if (ledger) {
+    const cur = ledger[1].toUpperCase();
+    const exprRaw = String(byType["Expression"]?.value || "").trim().toLowerCase();
+    out.push({ trait_type: "Ledger Currency", value: cur });
+    out.push({ trait_type: "Ticker", value: exprRaw === `${cur.toLowerCase()} awake` ? "Live" : "Vault" });
+  }
   return out;
 }
 
@@ -77,12 +87,14 @@ function curateMetadata(original, { tokenId, parts = [], buildRevision = 0, conf
   // Point BOTH media at the renderer for EVERY token — the redesigned faces/colors live in the shared
   // layout, which the image (R2 snapshot) and the animation (live /anim) both render from.
   if (config.imageBaseUrl) base.image = `${config.imageBaseUrl}/${id}.png`;
-  if (config.animationBaseUrl) base.animation_url = `${config.animationBaseUrl}/${id}.html`;
+  // ?start=assembled -> the interactive view opens as the built, gently-animating machine (collectors can
+  // still press D to dismantle); the static image above is the OpenSea card, so both read as finished art.
+  if (config.animationBaseUrl) base.animation_url = `${config.animationBaseUrl}/${id}.html?start=assembled`;
 
   if (list.length > 0) {
     const rev = Number(buildRevision);
     base.image = `${config.imageBaseUrl}/${id}.png?rev=${rev}`;
-    base.animation_url = `${config.animationBaseUrl}/${id}.html?rev=${rev}`;
+    base.animation_url = `${config.animationBaseUrl}/${id}.html?start=assembled&rev=${rev}`;
     attributes = [...attributes, { trait_type: "Custom Parts", value: list.length }, { trait_type: "Build Revision", value: rev }];
   }
   base.attributes = attributes;

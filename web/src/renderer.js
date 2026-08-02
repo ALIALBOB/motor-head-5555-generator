@@ -174,8 +174,9 @@ function marketplaceBaseCacheKey(layout, chainState, width, height) {
     pressureLevel(chainState),
     Math.round(Number(chainState?.gasPressure ?? chainState?.baseFeeGwei ?? 0) || 0),
     Number(chainState?.saleCount || 0),
-    Number(chainState?.transferCount || 0),
-    Number(chainState?.blockNumber || 0)
+    Number(chainState?.transferCount || 0)
+    // blockNumber intentionally omitted: it increments every block and is only drawn by the LIVE
+    // counter (a `counter.` part, never baked), so including it needlessly re-baked the static layer each poll.
   ].join("|");
 }
 
@@ -286,7 +287,6 @@ function dragFrameCacheKey(layout, chainState, width, height, placements, select
     Math.round(Number(chainState?.gasPressure ?? chainState?.baseFeeGwei ?? 0) || 0),
     Number(chainState?.saleCount || 0),
     Number(chainState?.transferCount || 0),
-    Number(chainState?.blockNumber || 0),
     staticSignature
   ].join("|");
 }
