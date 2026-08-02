@@ -83,53 +83,46 @@ function mergeParts(layout, parts) {
   return layout;
 }
 
-// The live animation page: inlines the token layout (with the new faces) + renders via the shared engine,
-// and polls the backend for live chain telemetry (gas/sales/holder-age) mapped the SAME way the old
-// pinned animation did (applyBackendChainState), so the machine stays chain-reactive.
+// The live animation page: the ORIGINAL interactive animation (D/A/S buttons + drag/dismantle/reassemble
+// + chain-reactive telemetry), reused verbatim. Inlines the token layout (new faces) as a global; one
+// bundled app (/anim/runtime.js = drawMachine + the animation logic) runs it. Same engine as the image.
 function animPage(id, base, layout) {
+  const name = String((layout && layout.name) || ("MotorHead #" + id)).replace(/</g, "\\u003c");
   const W = (layout && layout.canvas && layout.canvas.width) || 1024;
   const H = (layout && layout.canvas && layout.canvas.height) || 1024;
   const layoutLiteral = JSON.stringify(layout).replace(/</g, "\\u003c"); // JSON is valid JS; escape </script
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MotorHead #${id}</title>
-<style>html,body{margin:0;height:100%;background:#0b0f0e;overflow:hidden}#c{display:block;width:100vmin;height:100vmin;margin:auto}</style>
-</head><body><canvas id="c" width="${W}" height="${H}"></canvas>
-<script type="module">
-import { drawMachine } from "${base}/anim/runtime.js";
-const LAYOUT = ${layoutLiteral};
-const TOKEN = ${id};
-const chainState = {
-  liveMode: true, showLiveEffects: true, gasPressure: 0, baseFeeGwei: 0,
-  blockNumber: 25000000 + ((Math.abs(TOKEN) * 137) % 900000),
-  heartbeatPulse: 0.18, archiveAgeSeconds: 0, holderBondSeconds: 0,
-  transferCount: 0, saleCount: 0, saleTier: "", globalPhase: "Archive Awakening", source: "fallback",
-};
-function numOr(v, f){ const n = Number(v); return Number.isFinite(n) ? n : f; }
-function gasFromLevel(lv, f){ const v = String(lv||"").toLowerCase(); return v==="extreme"?160:v==="high"?90:v==="medium"?42:v==="low"?9:f; }
-function applyChain(payload){
-  const c = payload && payload.chainState; if (!c) return;
-  const g = numOr(c.gasGwei, null); const ng = g == null ? gasFromLevel(c.gasLevel, chainState.gasPressure) : Math.max(0, g);
-  const sales = Math.max(0, Math.floor(numOr(c.saleCount, chainState.saleCount)));
-  chainState.backendOnline = true; chainState.source = c.source || "indexer";
-  chainState.gasPressure = ng; chainState.baseFeeGwei = ng; chainState.gasLevel = c.gasLevel || "";
-  chainState.blockNumber = Math.floor(numOr(c.latestBlock, chainState.blockNumber));
-  chainState.transferCount = Math.max(0, Math.floor(numOr(c.transferCount, chainState.transferCount)));
-  chainState.saleCount = sales; chainState.sellCount = sales;
-  chainState.highestVerifiedSaleWei = c.lastSalePriceWei || chainState.highestVerifiedSaleWei || "";
-  chainState.saleTier = sales > 0 ? (c.lastSalePriceWei || "verified") : "";
-  chainState.evolutionTier = c.evolutionTier || "";
-  const age = numOr(c.holderAgeDays, null);
-  if (age != null){ const s = Math.max(0, Math.floor(age * 86400)); chainState.archiveAgeSeconds = s; chainState.holderBondSeconds = s; }
-}
-const ctx = document.getElementById("c").getContext("2d");
-function frame(){ drawMachine(ctx, LAYOUT, chainState, { performanceMode: "marketplace", editMode: false, previewMotion: true }); requestAnimationFrame(frame); }
-requestAnimationFrame(frame);
-async function poll(){
-  try { const r = await fetch("${BACKEND}/v1/tokens/" + TOKEN + "/chain-state", { cache: "no-store", headers: { accept: "application/json" } }); if (r.ok) applyChain(await r.json()); }
-  catch (e){ chainState.backendOnline = false; chainState.source = "fallback"; }
-}
-poll(); setInterval(poll, 60000);
-</script></body></html>`;
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${name}</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #fbfaf5; }
+  body { display: grid; place-items: center; }
+  .stage { position: relative; width: min(100vw, 100vh); aspect-ratio: 1; overflow: hidden; background: #fbfaf5; }
+  canvas { width: 100%; height: 100%; display: block; cursor: default; touch-action: manipulation; }
+  .stage.is-over-part canvas { cursor: grab; touch-action: none; }
+  .stage.is-dragging canvas { cursor: grabbing; }
+  .controls { position: absolute; top: 13px; right: 13px; display: grid; grid-auto-flow: column; gap: 4px; z-index: 5; }
+  .controls button { width: 20px; height: 20px; padding: 0; border: 1px solid rgba(235,211,121,.48); background: linear-gradient(135deg, rgba(255,242,160,.96), rgba(49,89,82,.78) 58%, rgba(8,20,20,.86)); color: rgba(5,13,13,.96); font: 900 9px/1 ui-monospace, Menlo, Consolas, monospace; cursor: pointer; text-shadow: 0 1px 0 rgba(255,255,255,.28); box-shadow: 1px 1px 0 rgba(16,38,37,.36), 0 0 10px rgba(236,178,53,.18), inset 0 1px 0 rgba(255,255,255,.35); }
+  .controls button:hover, .controls button.is-active { border-color: rgba(122,245,220,.82); background: linear-gradient(135deg, rgba(127,255,229,.98), rgba(18,128,117,.9) 62%, rgba(5,18,20,.92)); color: rgba(3,16,16,.98); box-shadow: 1px 1px 0 rgba(16,38,37,.28), 0 0 14px rgba(122,245,220,.28), inset 0 1px 0 rgba(255,255,255,.4); }
+</style>
+</head>
+<body>
+<main class="stage" aria-label="${name} assembly viewer">
+  <canvas id="render" width="${W}" height="${H}"></canvas>
+  <div class="controls" aria-label="Machine controls">
+    <button id="dismantle" type="button" title="Dismantle">D</button>
+    <button id="assemble" type="button" title="Assemble">A</button>
+    <button id="stopMotion" type="button" title="Stop animation">S</button>
+  </div>
+</main>
+<script>window.__LAM_BASE_LAYOUT__ = ${layoutLiteral};</script>
+<script type="module" src="${base}/anim/app.js"></script>
+</body>
+</html>`;
 }
 
 export default {
@@ -182,6 +175,19 @@ export default {
       }
       const obj = await env.RENDERS.get("anim/runtime.js");
       if (!obj) return json({ ok: false, error: "runtime not uploaded" }, 404);
+      return new Response(obj.body, { headers: { "content-type": "text/javascript; charset=utf-8", "access-control-allow-origin": "*", "cache-control": "public, max-age=31536000, immutable" } });
+    }
+
+    // The full interactive animation app (engine + D/A/S + drag + chain poll). New URL so it never
+    // collides with the OLD immutable /anim/runtime.js still cached in clients from before this deploy.
+    if (url.pathname === "/anim/app.js") {
+      if (request.method === "PUT") {
+        if (!authorized(request, env)) return json({ ok: false, error: "unauthorized" }, 401);
+        await env.RENDERS.put("anim/app.js", request.body, { httpMetadata: { contentType: "text/javascript" } });
+        return json({ ok: true, key: "anim/app.js" });
+      }
+      const obj = await env.RENDERS.get("anim/app.js");
+      if (!obj) return json({ ok: false, error: "app not uploaded" }, 404);
       return new Response(obj.body, { headers: { "content-type": "text/javascript; charset=utf-8", "access-control-allow-origin": "*", "cache-control": "public, max-age=31536000, immutable" } });
     }
 
