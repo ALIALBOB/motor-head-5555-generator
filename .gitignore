@@ -13,6 +13,9 @@ typechain-types/
 coverage/
 coverage.json
 
+# Cloudflare Wrangler local dev cache — never commit
+.wrangler/
+
 # Generated collection/output payloads
 build/
 dist/

@@ -71,10 +71,16 @@ function decodeParts(raw) {
 function curateMetadata(original, { tokenId, parts = [], buildRevision = 0, config = {} } = {}) {
   const base = original && typeof original === "object" ? { ...original } : {};
   const list = Array.isArray(parts) ? parts : [];
+  const id = Number(tokenId);
   let attributes = curateAttributes(base);
 
+  // Point BOTH media at the renderer for EVERY token — the redesigned faces/colors live in the shared
+  // layout, which the image (R2 snapshot) and the animation (live /anim) both render from.
+  if (config.imageBaseUrl) base.image = `${config.imageBaseUrl}/${id}.png`;
+  if (config.animationBaseUrl) base.animation_url = `${config.animationBaseUrl}/${id}.html`;
+
   if (list.length > 0) {
-    const id = Number(tokenId), rev = Number(buildRevision);
+    const rev = Number(buildRevision);
     base.image = `${config.imageBaseUrl}/${id}.png?rev=${rev}`;
     base.animation_url = `${config.animationBaseUrl}/${id}.html?rev=${rev}`;
     attributes = [...attributes, { trait_type: "Custom Parts", value: list.length }, { trait_type: "Build Revision", value: rev }];
