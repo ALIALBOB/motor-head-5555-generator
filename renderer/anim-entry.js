@@ -34,6 +34,22 @@ let backendOnline = false;
 let livePulseStartedAt = 0;
 let renderRevision = 0;
 
+// Holder on-chain parts, pre-flattened by the site into a transparent parts-layer PNG (parts at their
+// resting placement, no machine). Drawn at (0,0,W,H) INSIDE drawMachine's body transform (drawOverlay
+// hook) — identical to compositing each part inside that transform, so the add-ons ride the machine's
+// bounce + lean. overlayAlpha follows assembly so dismantled/dragged states don't show floating add-ons.
+const partsUrl = window.__LAM_PARTS_URL__ || "";
+let partsImg = null;
+if (partsUrl) { partsImg = new Image(); partsImg.crossOrigin = "anonymous"; partsImg.decoding = "async"; partsImg.src = partsUrl; }
+let overlayAlpha = 0;
+function drawPartsOverlay(c, info) {
+  if (!partsImg || !partsImg.complete || !partsImg.naturalWidth || overlayAlpha < 0.01) return;
+  c.save();
+  c.globalAlpha = Math.min(1, overlayAlpha);
+  c.drawImage(partsImg, 0, 0, info.width, info.height);
+  c.restore();
+}
+
 const BACKEND_BASE_URL = String(params.get("backend") || "https://motorheads-backend.zacbosugame.workers.dev").replace(/\/+$/, "");
 const backendEnabled = params.get("backend") !== "0" && params.get("liveBackend") !== "0" && !captureMode;
 const backendPollMs = Math.max(15000, Number(params.get("pollMs") || 45000));
@@ -489,7 +505,9 @@ function render(now = performance.now()) {
   updateTransition();
   updateDragMotion();
   const performanceMode = selected ? "drag" : (!fullMotion && previewMotion ? "marketplace" : "normal");
-  drawMachine(ctx, renderLayout, chainState, { previewMotion, editMode: false, selected, mouseLook, performanceMode, motionTime: motionClock });
+  const overlayTarget = (partsImg && mode === "assembled" && !selected && !transition) ? 1 : 0;
+  overlayAlpha += (overlayTarget - overlayAlpha) * 0.14;
+  drawMachine(ctx, renderLayout, chainState, { previewMotion, editMode: false, selected, mouseLook, performanceMode, motionTime: motionClock, drawOverlay: partsImg ? drawPartsOverlay : undefined });
   drawCursorRings();
   drawSnapHints();
   document.body.dataset.ready = "true";
@@ -621,6 +639,7 @@ if (forcedStart === "assembled") {
   previewMotion = false;
 }
 
+overlayAlpha = mode === "assembled" ? 1 : 0; // instant on first paint; D/A toggles ease it after
 setActiveButton();
 void pollBackendChainState(true);
 render();

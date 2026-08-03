@@ -8839,6 +8839,7 @@ function drawMachine(ctx2, layout, chainState2 = {}, options = {}) {
   if (!dragFastPath && !marketplaceFastPath) {
     drawHistoryEvolution(ctx2, width, height, layout, placements, chainState2, time, look);
   }
+  if (typeof options.drawOverlay === "function") options.drawOverlay(ctx2, { width, height, mouseLook: mouseLook2, time });
   if (machineLean || marketplaceBodyBounce) ctx2.restore();
   if (editMode && options.selected) {
     const selected2 = { ...options.selected };
@@ -10361,6 +10362,22 @@ var backendBusy = false;
 var backendOnline = false;
 var livePulseStartedAt = 0;
 var renderRevision = 0;
+var partsUrl = window.__LAM_PARTS_URL__ || "";
+var partsImg = null;
+if (partsUrl) {
+  partsImg = new Image();
+  partsImg.crossOrigin = "anonymous";
+  partsImg.decoding = "async";
+  partsImg.src = partsUrl;
+}
+var overlayAlpha = 0;
+function drawPartsOverlay(c, info) {
+  if (!partsImg || !partsImg.complete || !partsImg.naturalWidth || overlayAlpha < 0.01) return;
+  c.save();
+  c.globalAlpha = Math.min(1, overlayAlpha);
+  c.drawImage(partsImg, 0, 0, info.width, info.height);
+  c.restore();
+}
 var BACKEND_BASE_URL = String(params.get("backend") || "https://motorheads-backend.zacbosugame.workers.dev").replace(/\/+$/, "");
 var backendEnabled = params.get("backend") !== "0" && params.get("liveBackend") !== "0" && !captureMode;
 var backendPollMs = Math.max(15e3, Number(params.get("pollMs") || 45e3));
@@ -10772,7 +10789,9 @@ function render(now = performance.now()) {
   updateTransition();
   updateDragMotion();
   const performanceMode = selected ? "drag" : !fullMotion && previewMotion ? "marketplace" : "normal";
-  drawMachine(ctx, renderLayout, chainState, { previewMotion, editMode: false, selected, mouseLook, performanceMode, motionTime: motionClock });
+  const overlayTarget = partsImg && mode === "assembled" && !selected && !transition ? 1 : 0;
+  overlayAlpha += (overlayTarget - overlayAlpha) * 0.14;
+  drawMachine(ctx, renderLayout, chainState, { previewMotion, editMode: false, selected, mouseLook, performanceMode, motionTime: motionClock, drawOverlay: partsImg ? drawPartsOverlay : void 0 });
   drawCursorRings();
   drawSnapHints();
   document.body.dataset.ready = "true";
@@ -10896,6 +10915,7 @@ if (forcedStart === "assembled") {
   mode = "dismantled";
   previewMotion = false;
 }
+overlayAlpha = mode === "assembled" ? 1 : 0;
 setActiveButton();
 void pollBackendChainState(true);
 render();

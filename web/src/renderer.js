@@ -457,6 +457,9 @@ export function drawMachine(ctx, layout, chainState = {}, options = {}) {
     drawHistoryEvolution(ctx, width, height, layout, placements, chainState, time, look);
   }
 
+  // Hook: draw caller-supplied extras (e.g. holder parts) INSIDE the body transform so they follow the
+  // machine's lean + bounce (move WITH the machine), then the transform closes.
+  if (typeof options.drawOverlay === "function") options.drawOverlay(ctx, { width, height, mouseLook, time });
   if (machineLean || marketplaceBodyBounce) ctx.restore();
 
   if (editMode && options.selected) {

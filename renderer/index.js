@@ -113,7 +113,7 @@ function mergeParts(layout, parts) {
 // The live animation page: the ORIGINAL interactive animation (D/A/S buttons + drag/dismantle/reassemble
 // + chain-reactive telemetry), reused verbatim. Inlines the token layout (new faces) as a global; one
 // bundled app (/anim/runtime.js = drawMachine + the animation logic) runs it. Same engine as the image.
-function animPage(id, base, layout) {
+function animPage(id, base, layout, partsUrl) {
   const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   const name = esc((layout && layout.name) || ("MotorHead #" + id)); // used in <title> text AND aria-label attr
   const W = Math.max(1, Math.min(4096, Math.round(Number(layout && layout.canvas && layout.canvas.width) || 1024)));
@@ -147,7 +147,7 @@ function animPage(id, base, layout) {
     <button id="stopMotion" type="button" title="Stop animation">S</button>
   </div>
 </main>
-<script>window.__LAM_BASE_LAYOUT__ = ${layoutLiteral};</script>
+<script>window.__LAM_BASE_LAYOUT__ = ${layoutLiteral};${partsUrl ? `window.__LAM_PARTS_URL__ = ${JSON.stringify(partsUrl)};` : ""}</script>
 <script type="module" src="${base}/anim/app.js"></script>
 </body>
 </html>`;
@@ -184,12 +184,22 @@ export default {
       return new Response(obj.body, { headers: { "content-type": "image/png", "access-control-allow-origin": "*", "cache-control": "public, max-age=60" } });
     }
 
-    // Ownership-gated composite-image upload (holders, NO shared secret in the browser): the holder
-    // signs a message; we recover the signer and require it OWNS the token AND the on-chain revision
-    // matches, then store the composite PNG that /img/:id.png serves.
+    // The flattened parts-layer PNG (transparent; the added on-chain parts at rest). Written by the
+    // ownership-gated /save-image with x-kind:parts; consumed by the animation as a drawOverlay image.
+    if ((m = url.pathname.match(/^\/parts\/(\d+)\.png$/))) {
+      const obj = await env.RENDERS.get(`${m[1]}.parts.png`);
+      if (!obj) return json({ ok: false, error: "not found" }, 404);
+      return new Response(obj.body, { headers: { "content-type": "image/png", "access-control-allow-origin": "*", "cache-control": "public, max-age=60" } });
+    }
+
+    // Ownership-gated render upload (holders, NO shared secret in the browser): the holder signs ONE
+    // message; we recover the signer and require it OWNS the token AND the on-chain revision matches,
+    // then store the PNG. x-kind selects which artifact: "image" -> the flattened card /img/:id.png;
+    // "parts" -> the transparent parts-layer /parts/:id.png the animation composites over the machine.
+    // One signature authorizes both (image + parts) uploads for the same token+revision.
     if ((m = url.pathname.match(/^\/save-image\/(\d+)$/))) {
       const id = Number(m[1]);
-      if (request.method === "OPTIONS") return new Response(null, { headers: { "access-control-allow-origin": "*", "access-control-allow-methods": "POST, OPTIONS", "access-control-allow-headers": "content-type, x-signature, x-revision" } });
+      if (request.method === "OPTIONS") return new Response(null, { headers: { "access-control-allow-origin": "*", "access-control-allow-methods": "POST, OPTIONS", "access-control-allow-headers": "content-type, x-signature, x-revision, x-kind" } });
       if (request.method !== "POST") return json({ ok: false, error: "method not allowed" }, 405);
       if (!Number.isInteger(id) || id < 1 || id > COLLECTION_SIZE) return json({ ok: false, error: "token does not exist" }, 404);
       const c = client(env);
@@ -198,13 +208,13 @@ export default {
       const signature = request.headers.get("x-signature");
       const revHeader = request.headers.get("x-revision");
       if (!signature || revHeader == null) return json({ ok: false, error: "missing x-signature / x-revision" }, 400);
-      // The image must reflect the CURRENT saved parts — on-chain revision has to match.
+      // The render must reflect the CURRENT saved parts — on-chain revision has to match.
       let onchainRev;
       try { onchainRev = Number(await c.readContract({ address: env.PARTS_CONTRACT, abi: PARTS_ABI, functionName: "buildRevision", args: [BigInt(id)] })); }
       catch { return json({ ok: false, error: "revision read failed" }, 502); }
       if (String(onchainRev) !== String(revHeader)) return json({ ok: false, error: "stale revision", onchainRev }, 409);
       // Recover the signer and require it to own the token.
-      const message = `MotorHeads save-image\ntoken:${id}\nrevision:${onchainRev}`;
+      const message = `MotorHeads render save\ntoken:${id}\nrevision:${onchainRev}`;
       let signer;
       try { signer = await recoverMessageAddress({ message, signature }); }
       catch { return json({ ok: false, error: "bad signature" }, 400); }
@@ -212,8 +222,10 @@ export default {
       try { owner = await c.readContract({ address: collection, abi: COLLECTION_ABI, functionName: "ownerOf", args: [BigInt(id)] }); }
       catch { return json({ ok: false, error: "ownerOf read failed" }, 502); }
       if (String(signer).toLowerCase() !== String(owner).toLowerCase()) return json({ ok: false, error: "not token owner" }, 403);
-      await env.RENDERS.put(`${id}.png`, request.body, { httpMetadata: { contentType: "image/png" } });
-      return json({ ok: true, id, revision: onchainRev }, 200, { "access-control-allow-origin": "*" });
+      const kind = request.headers.get("x-kind") === "parts" ? "parts" : "image";
+      const key = kind === "parts" ? `${id}.parts.png` : `${id}.png`;
+      await env.RENDERS.put(key, request.body, { httpMetadata: { contentType: "image/png" } });
+      return json({ ok: true, id, revision: onchainRev, kind }, 200, { "access-control-allow-origin": "*" });
     }
 
     if ((m = url.pathname.match(/^\/layout\/(\d+)\.json$/))) {
@@ -258,9 +270,10 @@ export default {
       if (!obj) return new Response(`<!doctype html><meta charset=utf-8><body style="margin:0;background:#0b0f0e;color:#eafffb;font-family:system-ui;display:grid;place-items:center;height:100vh"><div>MotorHead #${id} — layout not uploaded yet</div>`, { status: 404, headers: { "content-type": "text/html; charset=utf-8", "access-control-allow-origin": "*" } });
       let layout;
       try { layout = JSON.parse(await obj.text()); } catch { return json({ ok: false, error: "bad layout" }, 502); }
-      const { parts } = await readLayout(env, id);
+      const { parts, revision } = await readLayout(env, id);
       layout = mergeParts(layout, parts);
-      return new Response(animPage(id, base, layout), { headers: { "content-type": "text/html; charset=utf-8", "access-control-allow-origin": "*", "cache-control": "public, max-age=60" } });
+      const partsUrl = (parts && parts.length) ? `${base}/parts/${id}.png?rev=${revision}` : "";
+      return new Response(animPage(id, base, layout, partsUrl), { headers: { "content-type": "text/html; charset=utf-8", "access-control-allow-origin": "*", "cache-control": "public, max-age=60" } });
     }
 
     return json({ ok: false, error: "no route" }, 404);
