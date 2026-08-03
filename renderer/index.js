@@ -13,8 +13,13 @@
 // SAFETY: nothing changes for the collection until the owner flips setBaseURI to this worker's /meta.
 // One render engine (web/src drawMachine) feeds BOTH the image and the animation — no second impl.
 
-import { createPublicClient, http } from "viem";
+import { createPublicClient, http, recoverMessageAddress } from "viem";
 import metadataMod from "./build-metadata.js";
+
+// Minimal ownerOf read on the live collection — the /save-image gate proves the caller owns the token.
+const COLLECTION_ABI = [
+  { type: "function", name: "ownerOf", stateMutability: "view", inputs: [{ name: "tokenId", type: "uint256" }], outputs: [{ type: "address" }] },
+];
 
 const { curateMetadata, decodeParts } = metadataMod;
 
@@ -177,6 +182,38 @@ export default {
       const obj = await env.RENDERS.get(key);
       if (!obj) return json({ ok: false, error: "not found" }, 404);
       return new Response(obj.body, { headers: { "content-type": "image/png", "access-control-allow-origin": "*", "cache-control": "public, max-age=60" } });
+    }
+
+    // Ownership-gated composite-image upload (holders, NO shared secret in the browser): the holder
+    // signs a message; we recover the signer and require it OWNS the token AND the on-chain revision
+    // matches, then store the composite PNG that /img/:id.png serves.
+    if ((m = url.pathname.match(/^\/save-image\/(\d+)$/))) {
+      const id = Number(m[1]);
+      if (request.method === "OPTIONS") return new Response(null, { headers: { "access-control-allow-origin": "*", "access-control-allow-methods": "POST, OPTIONS", "access-control-allow-headers": "content-type, x-signature, x-revision" } });
+      if (request.method !== "POST") return json({ ok: false, error: "method not allowed" }, 405);
+      if (!Number.isInteger(id) || id < 1 || id > COLLECTION_SIZE) return json({ ok: false, error: "token does not exist" }, 404);
+      const c = client(env);
+      const collection = env.COLLECTION_ADDRESS;
+      if (!c || !collection || !env.PARTS_CONTRACT) return json({ ok: false, error: "chain not configured" }, 503);
+      const signature = request.headers.get("x-signature");
+      const revHeader = request.headers.get("x-revision");
+      if (!signature || revHeader == null) return json({ ok: false, error: "missing x-signature / x-revision" }, 400);
+      // The image must reflect the CURRENT saved parts — on-chain revision has to match.
+      let onchainRev;
+      try { onchainRev = Number(await c.readContract({ address: env.PARTS_CONTRACT, abi: PARTS_ABI, functionName: "buildRevision", args: [BigInt(id)] })); }
+      catch { return json({ ok: false, error: "revision read failed" }, 502); }
+      if (String(onchainRev) !== String(revHeader)) return json({ ok: false, error: "stale revision", onchainRev }, 409);
+      // Recover the signer and require it to own the token.
+      const message = `MotorHeads save-image\ntoken:${id}\nrevision:${onchainRev}`;
+      let signer;
+      try { signer = await recoverMessageAddress({ message, signature }); }
+      catch { return json({ ok: false, error: "bad signature" }, 400); }
+      let owner;
+      try { owner = await c.readContract({ address: collection, abi: COLLECTION_ABI, functionName: "ownerOf", args: [BigInt(id)] }); }
+      catch { return json({ ok: false, error: "ownerOf read failed" }, 502); }
+      if (String(signer).toLowerCase() !== String(owner).toLowerCase()) return json({ ok: false, error: "not token owner" }, 403);
+      await env.RENDERS.put(`${id}.png`, request.body, { httpMetadata: { contentType: "image/png" } });
+      return json({ ok: true, id, revision: onchainRev }, 200, { "access-control-allow-origin": "*" });
     }
 
     if ((m = url.pathname.match(/^\/layout\/(\d+)\.json$/))) {
