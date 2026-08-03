@@ -16,5 +16,13 @@
     "PARTS_CONTRACT": "0xb3776eECb1b750B321C0Bb15F04641ae83b034b7",
     "RENDER_RPC_URL": "https://ethereum-sepolia-rpc.publicnode.com",
     "COLLECTION_ADDRESS": "0xdAA0976e9027E9CF761A8fE1Bf7c7bB4aaaeFA5B"
+  },
+  "rendererTestnet": {
+    "url": "https://motorheads-renderer-testnet.zacbosugame.workers.dev",
+    "r2Bucket": "motorheads-renders-testnet",
+    "wranglerConfig": "renderer/wrangler.testnet.toml",
+    "setBaseURIValue": "https://motorheads-renderer-testnet.zacbosugame.workers.dev/meta/",
+    "setBaseURIScript": "npx hardhat run scripts/set-testnet-baseuri.js --network sepolia",
+    "note": "SEPARATE worker (own R2 bucket) — prod motorheads-renderer untouched. Base renders + layouts for tokens #1/#2 copied from prod; token #1 /img + /parts populate on the first save-from-site (window.__RENDERER_BASE__ pointed here)."
   }
 }

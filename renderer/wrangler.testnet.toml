@@ -1,0 +1,19 @@
+# MotorHeads renderer — SEPARATE Sepolia testnet worker. Does NOT touch prod (motorheads-renderer):
+# distinct name + its OWN R2 bucket, so test renders can never overwrite prod token snapshots.
+# Points at the Sepolia companion (parts) + test collection (ownerOf). Prod flip stays independent.
+name = "motorheads-renderer-testnet"
+main = "index.js"
+compatibility_date = "2026-06-08"
+compatibility_flags = ["nodejs_compat"]
+
+[[r2_buckets]]
+binding = "RENDERS"
+bucket_name = "motorheads-renders-testnet"
+
+[vars]
+COLLECTION_NAME = "MotorHead"
+SOURCE_META_BASE = "https://motorheads-metadata.pages.dev"
+PARTS_CONTRACT = "0xb3776eECb1b750B321C0Bb15F04641ae83b034b7"        # Sepolia MotorHeadsParts
+RENDER_RPC_URL = "https://ethereum-sepolia-rpc.publicnode.com"
+COLLECTION_ADDRESS = "0xdAA0976e9027E9CF761A8fE1Bf7c7bB4aaaeFA5B"    # Sepolia test collection (ownerOf gate)
+# UPLOAD_SECRET is set as a secret (wrangler secret put), not stored here.
