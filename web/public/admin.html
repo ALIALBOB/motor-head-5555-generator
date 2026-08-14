@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MotorHeads — Gacha Admin</title>
+    <style>
+      :root { --bg:#0d1014; --panel:#141922; --panel2:#1b2230; --line:#28303e; --ink:#e7ecf3; --muted:#8493a8; --accent:#48b98a; --accent2:#7ea2d6; --warn:#e0a63a; --err:#e0685f; --ok:#57c98a; }
+      * { box-sizing:border-box; }
+      body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 ui-sans-serif,system-ui,Segoe UI,Roboto,sans-serif; }
+      .mono { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+      a { color:var(--accent2); text-decoration:none; } a:hover { text-decoration:underline; }
+      header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 24px; border-bottom:1px solid var(--line); background:linear-gradient(180deg,#141922,#0f141b); position:sticky; top:0; z-index:5; }
+      .brand { font-family:ui-monospace,monospace; font-weight:800; letter-spacing:.5px; }
+      .brand b { color:var(--accent); } .brand small { display:block; color:var(--muted); font-weight:500; }
+      nav.tabs { display:flex; gap:4px; margin-left:14px; }
+      nav.tabs a { font-family:ui-monospace,monospace; font-size:13px; font-weight:700; color:var(--muted); padding:7px 13px; border-radius:9px; border:1px solid transparent; }
+      nav.tabs a.on { color:var(--ink); background:var(--panel2); border-color:var(--line); }
+      nav.tabs a:hover { text-decoration:none; color:var(--ink); }
+      nav.tabs a.admin { color:var(--warn); }
+      .net { font-family:ui-monospace,monospace; font-size:12px; color:var(--warn); border:1px solid #4a3d1e; background:#231d0f; padding:3px 8px; border-radius:999px; }
+      .net.live { color:var(--ok); border-color:#1f4a34; background:#0f231a; }
+      button { font:inherit; font-weight:600; color:#08120d; background:var(--accent); border:0; border-radius:9px; padding:9px 14px; cursor:pointer; }
+      button:hover { filter:brightness(1.07); } button:disabled { opacity:.4; cursor:not-allowed; filter:none; }
+      button.warn { background:var(--warn); } button.danger { background:var(--err); color:#fff; } button.sec { background:var(--panel2); color:var(--ink); border:1px solid var(--line); }
+      .hidden { display:none !important; }
+      .who { display:flex; align-items:center; gap:10px; } .dot { width:8px; height:8px; border-radius:50%; background:var(--ok); box-shadow:0 0 8px var(--ok); }
+      main { max-width:980px; margin:0 auto; padding:22px 24px 60px; }
+      .notice { margin:0 0 16px; padding:12px 14px; border-radius:10px; font-size:14px; border:1px solid; }
+      .notice.err { background:#2a1512; border-color:#5a2b26; color:#ffb4ac; } .notice.warn { background:#231d0f; border-color:#4a3d1e; color:#f0c675; } .notice.ok { background:#0f231a; border-color:#1f4a34; color:#8ff0bb; }
+      .notice.hidden, .notice:empty { display:none; }
+      .gate { text-align:center; color:var(--muted); padding:50px 20px; border:1px dashed var(--line); border-radius:14px; }
+      .sec { background:linear-gradient(180deg,var(--panel),#111721); border:1px solid var(--line); border-radius:14px; padding:18px 20px; margin-bottom:16px; }
+      .sec h2 { font-size:15px; margin:0 0 4px; font-family:ui-monospace,monospace; letter-spacing:.5px; color:var(--accent); }
+      .sec .desc { color:var(--muted); font-size:13px; margin:0 0 14px; }
+      .ovgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; }
+      .stat { background:#0e131b; border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
+      .stat .l { color:var(--muted); font-size:11px; font-family:ui-monospace,monospace; text-transform:uppercase; letter-spacing:.5px; }
+      .stat .v { font-family:ui-monospace,monospace; font-size:16px; margin-top:3px; word-break:break-all; }
+      .field { display:flex; flex-direction:column; gap:5px; margin-bottom:10px; }
+      .field label { font-size:12px; color:var(--muted); font-family:ui-monospace,monospace; }
+      input { background:#0a0e13; border:1px solid var(--line); color:var(--ink); border-radius:8px; padding:9px 11px; font:inherit; }
+      .rowflex { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
+      .rowflex .field { flex:1; min-width:120px; margin-bottom:0; }
+      .hint { color:var(--muted); font-size:12px; margin-top:8px; }
+      .actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+      #log { background:#0a0e13; border:1px solid var(--line); border-radius:10px; padding:12px; height:150px; overflow:auto; font-family:ui-monospace,monospace; font-size:12.5px; margin-top:8px; }
+      .logline { padding:2px 0; color:var(--muted); } .logline.ok { color:var(--ok); } .logline.warn { color:var(--warn); } .logline.err { color:var(--err); } .logline b { color:var(--ink); }
+      h3.small { font-size:12px; color:var(--muted); font-family:ui-monospace,monospace; text-transform:uppercase; letter-spacing:1px; margin:0 0 8px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div style="display:flex;align-items:center">
+        <div class="brand">MOTOR<b>HEADS</b><small>Gacha Admin · manage the whole system</small></div>
+        <nav class="tabs">
+          <a href="/machines.html">Garage</a>
+          <a href="/admin.html" class="admin on">Admin</a>
+        </nav>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <span id="netbadge" class="net">…</span>
+        <button id="connect">Connect Wallet</button>
+        <div id="who" class="who hidden"><span class="dot"></span><span id="addr" class="mono"></span></div>
+      </div>
+    </header>
+    <main>
+      <div id="notice" class="notice hidden"></div>
+      <div id="gate" class="gate">Connect the admin wallet to manage crates, loot, rewards, fees, and controls.</div>
+
+      <div id="panel" class="hidden">
+        <div class="sec">
+          <h2>OVERVIEW</h2>
+          <div class="ovgrid">
+            <div class="stat"><div class="l">Reward pool</div><div class="v" id="ov-pool">…</div></div>
+            <div class="stat"><div class="l">Fees accrued</div><div class="v" id="ov-fees">…</div></div>
+            <div class="stat"><div class="l">Activation fee</div><div class="v" id="ov-fee">…</div></div>
+            <div class="stat"><div class="l">Machines minted</div><div class="v" id="ov-minted">…</div></div>
+            <div class="stat"><div class="l">Paused</div><div class="v" id="ov-paused">…</div></div>
+            <div class="stat"><div class="l">Treasury</div><div class="v mono" id="ov-treasury">…</div></div>
+          </div>
+        </div>
+
+        <div class="sec">
+          <h2>LOOT TABLE — what crates drop</h2>
+          <p class="desc">The parts catalog for a crate tier. Weights set the odds (higher = more common). Setting a new table writes a new immutable version; in-flight opens keep the version they snapshotted.</p>
+          <div id="loot-current" class="hint" style="margin-bottom:12px"></div>
+          <div class="rowflex">
+            <div class="field" style="max-width:110px"><label>Crate ID</label><input id="loot-crate" type="number" value="1" min="1" /></div>
+            <div class="field"><label>Part IDs (comma)</label><input id="loot-parts" placeholder="1,2,3,4" /></div>
+            <div class="field"><label>Weights (comma)</label><input id="loot-weights" placeholder="60,25,10,5" /></div>
+          </div>
+          <div class="actions"><button id="loot-set">Set loot table</button></div>
+        </div>
+
+        <div class="sec">
+          <h2>DISTRIBUTE CRATES — the reward</h2>
+          <p class="desc">Mint crates to a holder's wallet (they open them from their Garage). This is how you hand out crate rewards.</p>
+          <div class="rowflex">
+            <div class="field"><label>To wallet</label><input id="crate-to" placeholder="0x…" /></div>
+            <div class="field" style="max-width:110px"><label>Crate ID</label><input id="crate-id" type="number" value="1" min="1" /></div>
+            <div class="field" style="max-width:110px"><label>Amount</label><input id="crate-amt" type="number" value="1" min="1" /></div>
+          </div>
+          <div class="actions"><button id="crate-mint">Mint crates</button><button id="crate-self" class="sec">Mint 1 to me</button></div>
+        </div>
+
+        <div class="sec">
+          <h2>CRATE AIRDROP — Merkle claim (all holders)</h2>
+          <p class="desc">The <b>CrateDistributor</b> lets every holder claim their own crate from the Garage (they pay their own gas), so you don't mint 1,465 times. Two one-time setup taps: grant it MINTER, then publish the snapshot root.</p>
+          <div class="rowflex">
+            <div class="field"><label>Distributor address</label><input id="dist-addr" value="0x463CF2B5F1fD002fCeE4EB0c92803c53B6763534" /></div>
+            <button id="dist-grant">Grant MINTER to distributor</button>
+          </div>
+          <div class="rowflex" style="margin-top:10px">
+            <div class="field"><label>Snapshot Merkle root</label><input id="dist-root" value="0x62aced1b22765f65f4e0a4d64eb62f0c5006f987888c88097c3b0b73f877ebb4" /></div>
+            <button id="dist-setroot">Set root</button>
+          </div>
+          <p class="hint">Do these two once. Re-run the snapshot + Set root again if the holder set changes before public launch.</p>
+        </div>
+
+        <div class="sec">
+          <h2>EFFECT ITEM METADATA</h2>
+          <p class="desc">Sets the ScrapParts base URI so the won effects (Neon / Holo / Teal) show their name + card art in wallets and on the ScrapParts collection page. One-time. The <span class="mono">{id}</span> is required — it's substituted per token.</p>
+          <div class="rowflex">
+            <div class="field"><label>ScrapParts base URI</label><input id="parts-uri" value="https://motorheadsonline.com/parts/{id}.json" /></div>
+            <button id="parts-uri-set">Set parts URI</button>
+          </div>
+        </div>
+
+        <div class="sec">
+          <h2>AIRDROP TO GARAGES — reward each NFT directly</h2>
+          <p class="desc">Every MotorHead owns a wallet (its <b>garage</b>). This sends ETH or an NFT <b>straight into that wallet</b>, so the reward is bound to the specific NFT — separate from the shared pool, and it <b>travels with the NFT when sold</b>. The holder controls it. (All 5,555 garage addresses are saved in <span class="mono">Downloads/motorheads-garages.csv</span>.)</p>
+          <h3 class="small">ETH → garages</h3>
+          <div class="rowflex">
+            <div class="field"><label>Token IDs</label><input id="ad-ids" placeholder="1,2,3  or  1-50  or  all" /></div>
+            <div class="field" style="max-width:150px"><label>ETH each</label><input id="ad-eth" placeholder="0.01" /></div>
+            <button id="ad-eth-btn">Send ETH</button>
+          </div>
+          <p class="hint">⚠️ Sends <b>one transaction per garage</b> (a MetaMask confirm each) — ideal for a handful of winners. For hundreds/all, use the CSV with a disperse tool (one tx, many recipients).</p>
+          <h3 class="small" style="margin-top:16px">NFT → a garage</h3>
+          <div class="rowflex">
+            <div class="field"><label>NFT contract (any ERC-721)</label><input id="adn-contract" placeholder="0x…" /></div>
+            <div class="field" style="max-width:120px"><label>NFT token ID</label><input id="adn-token" placeholder="77" /></div>
+            <div class="field" style="max-width:140px"><label>→ MotorHead #</label><input id="adn-target" type="number" placeholder="4823" /></div>
+            <button id="adn-nft-btn">Send NFT</button>
+          </div>
+          <p class="hint">Sends one NFT you own — from another collection or a MotorHead — into the target MotorHead's garage.</p>
+        </div>
+
+        <div class="sec">
+          <h2>REWARD POOL (ETH split)</h2>
+          <p class="desc">The <b>shared-pool</b> model: deposit ETH and it splits <b>equally across all NFTs</b>; holders pull-claim their share. Different from Airdrop-to-Garages above (which targets specific NFTs). Keep the balance modest — deposit near payout time.</p>
+          <div class="rowflex">
+            <div class="field" style="max-width:200px"><label>Deposit ETH</label><input id="rw-amt" placeholder="0.01" /></div>
+          </div>
+          <div class="actions"><button id="rw-deposit">Deposit to pool</button></div>
+          <p class="hint">🎁 <b>NFT rewards</b> (other collections or MotorHeads): the pool is ETH-only. To reward an NFT, send it directly to the winner's wallet — or their <b>garage</b> address (shown per machine on the Garage page). A raffle/airdrop helper can be added later if you want it on-chain.</p>
+        </div>
+
+        <div class="sec">
+          <h2>FEES & TREASURY</h2>
+          <p class="desc">Activation fees collect here until swept to the treasury. Anyone can trigger the sweep, but funds only ever go to the treasury address.</p>
+          <div class="actions" style="margin-top:0;margin-bottom:14px"><button id="fee-withdraw" class="warn">Withdraw fees → treasury</button></div>
+          <div class="rowflex">
+            <div class="field" style="max-width:200px"><label>New activation fee (ETH)</label><input id="fee-newfee" placeholder="0.003" /></div>
+            <button id="fee-set" class="sec">Set fee</button>
+          </div>
+          <div class="rowflex" style="margin-top:10px">
+            <div class="field"><label>New treasury address</label><input id="fee-treasury" placeholder="0x…" /></div>
+            <button id="fee-settreasury" class="sec">Set treasury</button>
+          </div>
+        </div>
+
+        <div class="sec">
+          <h2>CONTROLS</h2>
+          <p class="desc">Emergency pause halts activate + open. Grant a backend the MINTER role to auto-distribute crates (e.g. for X-post rewards).</p>
+          <div class="actions" style="margin-bottom:14px"><button id="ctl-pause" class="danger">Pause</button></div>
+          <h3 class="small">MINTER role (crate distributor)</h3>
+          <div class="rowflex">
+            <div class="field"><label>Backend / distributor address</label><input id="role-addr" placeholder="0x…" /></div>
+            <button id="role-grant" class="sec">Grant MINTER</button>
+            <button id="role-revoke" class="sec">Revoke</button>
+          </div>
+          <h3 class="small" style="margin-top:16px">CRATE SIGNER (authorizes holder crate-opens)</h3>
+          <div id="signer-current" class="hint" style="margin-bottom:8px"></div>
+          <div class="rowflex">
+            <div class="field"><label>Signer address</label><input id="signer-addr" placeholder="0x…" value="0x0FE3877dC27b20768110bC1dE27AaC5719312697" /></div>
+            <button id="signer-set" class="sec">Set signer</button>
+          </div>
+          <p class="hint">Rotates the key the backend signs crate-opens with (prefilled with the deployed backend signer). Until you set this, your <b>main wallet</b> is the on-chain signer and holders can't open their own crates via the backend.</p>
+        </div>
+
+        <div class="sec">
+          <h3 class="small">Activity</h3>
+          <div id="log"></div>
+        </div>
+      </div>
+    </main>
+    <script type="module" src="/admin.js"></script>
+  </body>
+</html>

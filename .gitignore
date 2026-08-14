@@ -25,6 +25,14 @@ web/public/
 !web/public/
 web/public/*
 !web/public/motorheads-room05-addons-layout.json
+# Approved WebGL art labs (source of truth) + the operational admin tool — keep tracked; rest of web/public stays ignored
+!web/public/fx-lab.html
+!web/public/bg-lab.html
+!web/public/effect-card.html
+!web/public/admin.html
+!web/public/admin.js
+# Regenerable airdrop snapshot output (rebuild via scripts/crate-snapshot.cjs)
+reports/crate-airdrop/
 *.car
 
 # Local logs and editor/OS noise

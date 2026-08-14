@@ -1,0 +1,9 @@
+{
+  "network": "mainnet",
+  "CrateDistributor": "0x463CF2B5F1fD002fCeE4EB0c92803c53B6763534",
+  "crates": "0x50Dc22553988de047a00328963faEe8EC5E19b12",
+  "crateId": 1,
+  "admin": "0x95A6fB3087b3469Ed777120052E0ac3f262c81C1",
+  "root": "0x62aced1b22765f65f4e0a4d64eb62f0c5006f987888c88097c3b0b73f877ebb4",
+  "deployedBy": "0xe6624e3557870D39691927af1a202FFD282a4dcA"
+}

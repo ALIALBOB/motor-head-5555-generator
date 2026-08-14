@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>MotorHeads — Effect Card Render</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body { margin: 0; background: #0a0e15; }
+      canvas { display: block; }
+    </style>
+  </head>
+  <body>
+    <canvas id="c" width="1024" height="1024"></canvas>
+    <script type="module">
+      import { drawMachine } from "/src/renderer.js";
+      import { neonFX, neonOutlineFX, holoFX, tealChromeFX } from "/src/material-fx.js";
+      const FN = { neon: neonFX, "neon-outline": neonOutlineFX, holo: holoFX, teal: tealChromeFX };
+      // Floor-glow accent per effect (cyan / iridescent-violet / teal)
+      const ACCENT = { neon: "#39f6ff", holo: "#b06bff", teal: "#2fd9c4" };
+      const ctx = document.getElementById("c").getContext("2d");
+      const cache = new Map();
+      const hexA = (hex, a) => { const h = hex.replace("#", ""); return `rgba(${parseInt(h.slice(0,2),16)},${parseInt(h.slice(2,4),16)},${parseInt(h.slice(4,6),16)},${a})`; };
+      async function loadLayout(id) { if (cache.has(id)) return cache.get(id); const r = await fetch(`/living-archive/layouts/${id}.json`, { cache: "force-cache" }); if (!r.ok) throw new Error("missing " + id); const l = await r.json(); cache.set(id, l); return l; }
+
+      // Render a clean ITEM card: the machine on a forced-dark stage, the effect applied, then a subtle
+      // accent floor-glow + vignette so all three read on the same premium ground. Returns a promise.
+      window.renderEffectCard = async (id, fx, col) => {
+        try {
+          const base = await loadLayout(id);
+          const layout = JSON.parse(JSON.stringify(base));
+          layout.canvas = layout.canvas || {};
+          layout.canvas.backgroundColor = "#0a0e15"; // consistent dark stage for every card
+          const accent = col || ACCENT[fx] || "#39f6ff";
+          ctx.clearRect(0, 0, 1024, 1024);
+          drawMachine(ctx, layout, {}, { previewMotion: false, editMode: false, mouseLean: false, lifeMotion: false, fastStill: true });
+          const skin = { background: "#0a0e15", accent, edge: accent };
+          if (FN[fx]) FN[fx](ctx, 1024, skin);
+          // bottom accent floor-glow
+          ctx.save();
+          ctx.globalCompositeOperation = "lighter";
+          const fg = ctx.createRadialGradient(512, 990, 30, 512, 990, 640);
+          fg.addColorStop(0, hexA(accent, 0.30)); fg.addColorStop(1, hexA(accent, 0));
+          ctx.fillStyle = fg; ctx.fillRect(0, 0, 1024, 1024);
+          ctx.restore();
+          // vignette for depth
+          const vg = ctx.createRadialGradient(512, 460, 250, 512, 512, 780);
+          vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,0.58)");
+          ctx.fillStyle = vg; ctx.fillRect(0, 0, 1024, 1024);
+          return { ok: true };
+        } catch (e) { return { ok: false, error: String((e && e.message) || e) }; }
+      };
+      window.__cardReady = true;
+    </script>
+  </body>
+</html>

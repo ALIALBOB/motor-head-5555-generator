@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>MotorHeads — FX Lab (WebGL)</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body { margin: 0; background: #05070c; color: #e7ecf3; font: 14px ui-sans-serif, system-ui, sans-serif; }
+      body { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 16px; }
+      .bar { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; justify-content: center; max-width: 820px; }
+      input { background: #0a0e13; border: 1px solid #28303e; color: #e7ecf3; border-radius: 8px; padding: 7px 10px; width: 84px; font: inherit; }
+      button { font: inherit; font-weight: 600; border: 1px solid #28303e; background: #1b2230; color: #e7ecf3; border-radius: 9px; padding: 7px 11px; cursor: pointer; }
+      button.on { background: #48b98a; color: #08120d; border-color: #48b98a; }
+      canvas#gl { width: 720px; height: 720px; max-width: 92vw; max-height: 92vw; border-radius: 14px; border: 1px solid #28303e; display: block; background: #05070c; }
+      canvas#work { display: none; }
+    </style>
+  </head>
+  <body>
+    <div class="bar">
+      <label>Token #</label><input id="tok" type="number" value="2500" min="1" max="5555" />
+      <button data-fx="living" class="on">🌊 Living Chrome</button>
+      <button data-fx="molten">🌋 Molten</button>
+      <button data-fx="gold">🥇 Liquid Gold</button>
+      <button data-fx="plasma">⚡ Plasma</button>
+      <button data-fx="crystal">💎 Crystal</button>
+      <button data-fx="aurora">🌌 Aurora</button>
+      <button data-fx="mercury">🪞 Mercury</button>
+      <button data-fx="toxic">☢️ Toxic</button>
+      <button data-fx="holo">📡 Hologram</button>
+      <button data-fx="plain">Plain</button>
+    </div>
+    <canvas id="gl" width="720" height="720"></canvas>
+    <canvas id="work" width="1024" height="1024"></canvas>
+    <script type="module">
+      import { drawMachine } from "/src/renderer.js";
+      const MODE = { plain: 0, living: 1, molten: 2, gold: 3, plasma: 4, crystal: 5, aurora: 6, mercury: 7, toxic: 8, holo: 9 };
+      const work = document.getElementById("work"), wctx = work.getContext("2d");
+      const glc = document.getElementById("gl");
+      const gl = glc.getContext("webgl", { premultipliedAlpha: false, preserveDrawingBuffer: true });
+      let mode = MODE.living;
+
+      const VS = `attribute vec2 p; varying vec2 vUv; void main(){ vUv = vec2(p.x*0.5+0.5, 0.5-p.y*0.5); gl_Position = vec4(p,0.,1.); }`;
+      const FS = `precision highp float;
+      uniform sampler2D uTex; uniform float uTime; uniform vec2 uRes; uniform int uMode;
+      varying vec2 vUv;
+      float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
+      float noise(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);
+        return mix(mix(hash(i),hash(i+vec2(1,0)),f.x), mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x), f.y); }
+      float fbm(vec2 p){ float v=0.,a=.5; for(int i=0;i<5;i++){ v+=a*noise(p); p=p*2.02+3.1; a*=.5; } return v; }
+      float lum(vec3 c){ return dot(c, vec3(.299,.587,.114)); }
+      vec3 pal(float t, vec3 a, vec3 b, vec3 c, vec3 d){ return a + b*cos(6.28318*(c*t+d)); }
+      void main(){
+        vec2 uv = vUv; float t = uTime; int M = uMode;
+        float warp = 0.0;
+        if(M==1) warp = 0.028; else if(M==3) warp = 0.016; // ONLY Living Chrome + Liquid Gold flow; every other effect keeps the machine exactly as-is
+        vec2 duv = uv;
+        if(warp>0.0){ vec2 w = vec2(fbm(uv*3.2+vec2(0.,t*0.35)), fbm(uv*3.2+vec2(5.2,-t*0.28+1.3))); duv += (w-0.5)*warp; }
+        vec4 col = texture2D(uTex, duv);
+        if(col.a < 0.06){ gl_FragColor = vec4(0.015,0.02,0.035,1.0); return; }
+        vec3 rgb = col.rgb; float L = lum(rgb);
+        float e = 1.6/uRes.x;
+        float lx = lum(texture2D(uTex,duv+vec2(e,0.)).rgb) - lum(texture2D(uTex,duv-vec2(e,0.)).rgb);
+        float ly = lum(texture2D(uTex,duv+vec2(0.,e)).rgb) - lum(texture2D(uTex,duv-vec2(0.,e)).rgb);
+        vec3 n = normalize(vec3(-lx*5.0, -ly*5.0, 1.0));
+        float ang = (M==1||M==5||M==7) ? 0.6 : t*0.9; // Living Chrome / Crystal / Mercury: FIXED light (no sweeping); others sweep
+        vec3 Ld = normalize(vec3(cos(ang), sin(ang)*0.5+0.35, 0.85));
+        float diff = clamp(dot(n,Ld)*0.5+0.5, 0.0, 1.0);
+        float spec = pow(clamp(dot(n, normalize(Ld+vec3(0,0,1))),0.0,1.0), 30.0);
+        float fres = pow(1.0 - clamp(n.z,0.0,1.0), 3.0);
+        vec3 o = rgb;
+        if(M==1){ float ph = n.x*2.2+n.y*2.2+L*3.0+t*0.55; vec3 ir = 0.5+0.5*cos(6.2831853*(ph+vec3(0.,0.33,0.67)));
+          o = mix(rgb*(0.4+0.85*diff)+spec*vec3(1.,.96,.9)*1.3, (rgb*(0.4+0.85*diff))*ir*1.5+ir*0.15, 0.55); o += smoothstep(0.72,1.,L)*0.5*ir; }
+        else if(M==2){ float fl = fbm(duv*4.0+vec2(0.,-t*0.6)); float heat = clamp(L*0.6+fl*0.7,0.,1.);
+          vec3 lava = clamp(pal(heat, vec3(0.5,0.1,0.0), vec3(0.6,0.35,0.1), vec3(1.,1.,1.), vec3(0.,0.15,0.25))*1.4,0.,2.);
+          float crack = smoothstep(0.47,0.5,fl)-smoothstep(0.5,0.53,fl);
+          o = lava*(0.25+0.6*diff) + crack*vec3(1.,0.7,0.2)*2.0 + smoothstep(0.7,1.,heat)*vec3(1.,0.8,0.4)*1.2; }
+        else if(M==3){ float g = clamp(L*1.15,0.,1.);
+          vec3 gold = mix(vec3(0.20,0.12,0.02), vec3(1.0,0.78,0.28), smoothstep(0.0,0.7,g)); // bronze → gold
+          gold = mix(gold, vec3(1.0,0.95,0.72), smoothstep(0.7,1.0,g));                        // → bright highlight
+          o = gold*(0.35+0.9*diff) + spec*vec3(1.0,0.92,0.6)*2.6 + smoothstep(0.82,1.,L+spec*0.5)*vec3(1.0,0.95,0.72)*1.2; }
+        else if(M==4){ float en = fbm(duv*4.0+vec2(t*0.3,-t*0.4));
+          float veins = smoothstep(0.78,0.92,en)*(0.6+0.4*sin(t*4.0+en*10.0)); // crackling energy veins
+          vec3 pl = mix(vec3(0.14,0.05,0.34), vec3(0.30,0.80,1.0), clamp(L*1.2,0.,1.)); // violet shadow → cyan highlight, KEYED to machine luminance so detail survives
+          o = pl*(0.5+0.7*diff) + veins*vec3(0.5,0.95,1.0)*2.2 + spec*vec3(0.8,0.95,1.0)*1.5 + smoothstep(0.7,1.,L)*vec3(0.4,0.8,1.0)*0.5; }
+        else if(M==5){ float ca = 0.005; // subtle chromatic split, NO refraction offset → detail stays sharp
+          vec3 g = vec3(texture2D(uTex,duv+vec2(ca,0.)).r, col.g, texture2D(uTex,duv-vec2(ca,0.)).b);
+          vec3 tint = mix(vec3(0.07,0.12,0.24), vec3(0.80,0.92,1.0), smoothstep(0.05,0.85,L)); // deep-blue shadow → bright glass, keyed to machine luminance
+          vec3 glass = mix(tint, g*vec3(0.82,0.94,1.12), 0.5); // blend the real machine texture so every part reads
+          o = glass*(0.5+0.65*diff) + spec*vec3(0.92,0.97,1.0)*1.6 + fres*vec3(0.45,0.7,1.0)*0.65 + smoothstep(0.8,1.,L)*vec3(0.9,0.97,1.0)*0.8; }
+        else if(M==6){ float au = fbm(duv*3.0+vec2(t*0.15,-t*0.25)); vec3 aur = pal(au+L*0.5+t*0.05, vec3(0.1,0.3,0.3), vec3(0.2,0.4,0.4), vec3(1.,1.,1.), vec3(0.3,0.5,0.8));
+          float stars = step(0.995, hash(floor(duv*400.0)))*(0.5+0.5*sin(t*3.0+duv.x*50.0));
+          o = rgb*0.2 + aur*(0.5+0.7*diff)*1.3 + stars*vec3(1.) + smoothstep(0.7,1.,L)*aur*0.5; }
+        else if(M==7){ float env = clamp(n.y*0.5+0.5 + fbm(duv*2.0)*0.3,0.,1.); vec3 chrome = mix(vec3(0.05,0.06,0.09), vec3(0.9,0.93,1.0), env); // static reflection (no shimmer)
+          o = chrome*(0.4+0.7*diff) + spec*vec3(1.)*2.5 + fres*vec3(0.8,0.85,0.95); o = mix(o, vec3(lum(o)), 0.5); }
+        else if(M==8){ float goo = fbm(duv*4.5+vec2(-t*0.3,t*0.4)); float bub = smoothstep(0.6,0.75,goo); vec3 tox = mix(vec3(0.05,0.2,0.02), vec3(0.5,1.0,0.1), clamp(L+goo*0.4,0.,1.));
+          o = tox*(0.35+0.7*diff) + bub*vec3(0.6,1.,0.3)*1.2 + smoothstep(0.7,1.,goo)*vec3(0.7,1.,0.2)*1.5 + fres*vec3(0.5,1.,0.2)*0.6; }
+        else if(M==9){ float ca = 0.004; vec3 holo = vec3(texture2D(uTex,duv+vec2(ca,0.)).r, col.g, texture2D(uTex,duv-vec2(ca,0.)).b);
+          holo = mix(holo, vec3(0.2,0.9,1.0)*lum(holo)*2.0, 0.7); float scan = 0.7+0.3*sin((duv.y*uRes.y*1.2)-t*8.0); float flick = 0.85+0.15*sin(t*20.0);
+          o = holo*scan*flick*(0.5+0.6*diff) + fres*vec3(0.3,0.9,1.0)*1.5 + smoothstep(0.6,1.,L)*vec3(0.4,1.,1.)*0.6; }
+        gl_FragColor = vec4(o, 1.0);
+      }`;
+      function sh(type, src){ const s=gl.createShader(type); gl.shaderSource(s,src); gl.compileShader(s); if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; }
+      const prog = gl.createProgram();
+      gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(prog);
+      if(!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+      gl.useProgram(prog);
+      const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+      const pLoc = gl.getAttribLocation(prog,"p"); gl.enableVertexAttribArray(pLoc); gl.vertexAttribPointer(pLoc,2,gl.FLOAT,false,0,0);
+      const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      const uTime=gl.getUniformLocation(prog,"uTime"), uRes=gl.getUniformLocation(prog,"uRes"), uMode=gl.getUniformLocation(prog,"uMode");
+      gl.uniform2f(uRes, 1024, 1024);
+
+      const cache = new Map();
+      async function loadLayout(id){ if(cache.has(id))return cache.get(id); const r=await fetch(`/living-archive/layouts/${id}.json`,{cache:"force-cache"}); if(!r.ok)throw new Error("missing "+id); const l=await r.json(); cache.set(id,l); return l; }
+      async function buildTexture(id){
+        const base = await loadLayout(id);
+        const layout = JSON.parse(JSON.stringify(base));
+        layout.special = null; // exclude special-edition atmosphere/backdrop (e.g. #1's royalGold disc) — effect targets the MACHINE only
+        wctx.clearRect(0,0,1024,1024);
+        drawMachine(wctx, layout, {}, { previewMotion:false, editMode:false, mouseLean:false, lifeMotion:false, fastStill:true, transparentBackground:true });
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, work);
+      }
+      function drawAt(t){ gl.viewport(0,0,glc.width,glc.height); gl.uniform1f(uTime,t); gl.uniform1i(uMode,mode); gl.drawArrays(gl.TRIANGLE_STRIP,0,4); gl.finish(); }
+
+      const CAPTURE = new URLSearchParams(location.search).has("capture");
+      let raf=null, lastTexId=-1; const start=performance.now();
+      function loop(){ drawAt((performance.now()-start)/1000); raf=requestAnimationFrame(loop); }
+      async function ensureTex(id){ if(id!==lastTexId){ await buildTexture(id); lastTexId=id; } }
+      async function boot(id){ if(raf){cancelAnimationFrame(raf);raf=null;} await ensureTex(id); if(CAPTURE) drawAt(0); else loop(); }
+      document.querySelectorAll("button[data-fx]").forEach((b)=> b.onclick=()=>{ mode=MODE[b.dataset.fx]; document.querySelectorAll("button[data-fx]").forEach(x=>x.classList.toggle("on",x===b)); });
+      document.getElementById("tok").addEventListener("change", (e)=> boot(Number(e.target.value)||2500));
+      window.renderFxFrame = async (id, fxKey, t) => { if(raf){cancelAnimationFrame(raf);raf=null;} mode = MODE[fxKey] ?? 1; await ensureTex(id); drawAt(t); return { ok:true }; };
+      window.__fxReady = true;
+      boot(2500);
+    </script>
+  </body>
+</html>
