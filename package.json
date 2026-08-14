@@ -10,6 +10,10 @@
     "build:web": "vite build web --outDir ../dist-web",
     "deploy:local": "hardhat run scripts/deploy.js --network localhost",
     "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
+    "gacha:deploy:local": "hardhat run scripts/deploy-gacha.js --network localhost",
+    "gacha:deploy:sepolia": "hardhat run scripts/deploy-gacha.js --network sepolia",
+    "gacha:drive:sepolia": "hardhat run scripts/sepolia-drive.cjs --network sepolia",
+    "gacha:open:sepolia": "hardhat run scripts/sepolia-open.cjs --network sepolia",
     "lam:prototype": "node scripts/render-layers.js && node scripts/generate-animations.js && node scripts/generate-metadata.js",
     "lam:collection": "node scripts/generate-lam-collection.js",
     "lam:layouts": "node scripts/generate-lam-builder-layouts.js",
@@ -42,6 +46,7 @@
     "upgrade:local": "hardhat run scripts/upgrade.js --network localhost"
   },
   "dependencies": {
+    "@chainlink/contracts": "^1.5.0",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@openzeppelin/contracts": "5.0.2",
     "@openzeppelin/contracts-upgradeable": "5.0.2",

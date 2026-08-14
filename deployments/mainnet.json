@@ -1,0 +1,42 @@
+{
+  "network": "mainnet",
+  "chainId": 1,
+  "deployedAt": "2026-08-13T22:37:50.276Z",
+  "admin": "0xe6624e3557870D39691927af1a202FFD282a4dcA",
+  "contracts": {
+    "ScrapParts": "0x3f6ADfe2fA714c28B2c6ec4762D089069675f2a2",
+    "ScrapCrates": "0x50Dc22553988de047a00328963faEe8EC5E19b12",
+    "RewardVault": "0x6AA0c00Ce528A4A15c0c98EcB574df8CF34BF822",
+    "collection": "0x0a5008550fc1402bb567a3ba38d9433e6199ceb1",
+    "collectionIsStandIn": false
+  },
+  "params": {
+    "registry": "0x000000006551c19487814612e58FE06813775758",
+    "accountImplementation": "0x55266d75D1a14E4572138116aF39863Ed6596E7F",
+    "accountSalt": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "signer": "0x95A6fB3087b3469Ed777120052E0ac3f262c81C1",
+    "treasury": "0x95A6fB3087b3469Ed777120052E0ac3f262c81C1",
+    "activationFeeWei": "3000000000000000",
+    "rewardTotalTokens": "5555",
+    "partsBaseURI": "ipfs://REPLACE_ME/parts/{id}.json",
+    "cratesURI": "ipfs://REPLACE_ME/crates/{id}.json",
+    "lootTable": {
+      "crateId": 1,
+      "partIds": [
+        1,
+        2,
+        3
+      ],
+      "weights": [
+        1,
+        1,
+        1
+      ],
+      "placeholder": true
+    }
+  },
+  "followUps": [
+    "Point ScrapCrates.signer at your backend randomness signer (setSigner) if it isn't already.",
+    "Rewrite the loot table with the real parts catalog via setLootTable once metadata is final."
+  ]
+}

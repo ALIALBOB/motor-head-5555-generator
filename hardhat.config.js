@@ -7,6 +7,7 @@
 require("dotenv").config();
 require("@nomicfoundation/hardhat-toolbox");
 require("@openzeppelin/hardhat-upgrades");
+require("solidity-coverage");
 
 const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL || "";
 const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
@@ -28,6 +29,10 @@ module.exports = {
     },
     sepolia: {
       url: SEPOLIA_RPC_URL,
+      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : []
+    },
+    mainnet: {
+      url: process.env.MAINNET_RPC_URL || "https://ethereum-rpc.publicnode.com",
       accounts: PRIVATE_KEY ? [PRIVATE_KEY] : []
     }
   }

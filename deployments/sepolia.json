@@ -1,28 +1,47 @@
 {
   "network": "sepolia",
-  "deployedAt": "2026-08-03",
-  "note": "TESTNET ONLY. On-chain save (MotorHeadsParts companion). Test collection tokens #1 and #2 are owned by the deployer wallet, so it can call applyParts on them. applyParts verified on-chain (token #1, revision 1, 2 parts stored, fee accrued). NOT mainnet — the real collection stays 0x0a5008550fc1402bb567a3ba38d9433e6199ceb1 and is untouched.",
+  "chainId": 11155111,
+  "deployedAt": "2026-08-13T20:26:00.185Z",
+  "admin": "0xe6624e3557870D39691927af1a202FFD282a4dcA",
   "contracts": {
-    "MotorHeadsParts": "0xb3776eECb1b750B321C0Bb15F04641ae83b034b7",
-    "testCollection_LivingArchiveMachines": "0xdAA0976e9027E9CF761A8fE1Bf7c7bB4aaaeFA5B"
+    "ScrapParts": "0x7A8885EcB480063fdDBa6799C8d42179930B68aE",
+    "ScrapCrates": "0x6cb19001A4C577Ceee7244A9441aA32D9fFA703E",
+    "RewardVault": "0xA87f2CDf7183668D3262948C2B5c19880dd6Fcd5",
+    "collection": "0xB44c7350775c10159fCb90120ec5305daC17F693",
+    "collectionIsStandIn": false
   },
-  "config": {
-    "treasury": "0x95A6fB3087b3469Ed777120052E0ac3f262c81C1",
-    "editFeeWei": "400000000000000",
-    "editFeeEth": "0.0004",
-    "deployer": "0x25C30673E37657a183A4ED3626Cdbb9fe1971C60"
+  "params": {
+    "registry": "0x000000006551c19487814612e58FE06813775758",
+    "accountImplementation": "0x55266d75D1a14E4572138116aF39863Ed6596E7F",
+    "accountSalt": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "vrfCoordinator": "0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B",
+    "keyHash": "0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae",
+    "subscriptionId": "1818483217622442578044951493558154124181648828548245587012225473584588773482",
+    "callbackGasLimit": 500000,
+    "requestConfirmations": 3,
+    "treasury": "0xe6624e3557870D39691927af1a202FFD282a4dcA",
+    "activationFeeWei": "3000000000000000",
+    "rewardTotalTokens": "5555",
+    "partsBaseURI": "ipfs://REPLACE_ME/parts/{id}.json",
+    "cratesURI": "ipfs://REPLACE_ME/crates/{id}.json",
+    "lootTable": {
+      "crateId": 1,
+      "partIds": [
+        1,
+        2,
+        3
+      ],
+      "weights": [
+        1,
+        1,
+        1
+      ],
+      "placeholder": true
+    },
+    "linkToken": "0x779877A7B0D9E8603169DdbD7836e478b4624789"
   },
-  "rendererEnvForTestnet": {
-    "PARTS_CONTRACT": "0xb3776eECb1b750B321C0Bb15F04641ae83b034b7",
-    "RENDER_RPC_URL": "https://ethereum-sepolia-rpc.publicnode.com",
-    "COLLECTION_ADDRESS": "0xdAA0976e9027E9CF761A8fE1Bf7c7bB4aaaeFA5B"
-  },
-  "rendererTestnet": {
-    "url": "https://motorheads-renderer-testnet.zacbosugame.workers.dev",
-    "r2Bucket": "motorheads-renders-testnet",
-    "wranglerConfig": "renderer/wrangler.testnet.toml",
-    "setBaseURIValue": "https://motorheads-renderer-testnet.zacbosugame.workers.dev/meta/",
-    "setBaseURIScript": "npx hardhat run scripts/set-testnet-baseuri.js --network sepolia",
-    "note": "SEPARATE worker (own R2 bucket) — prod motorheads-renderer untouched. Base renders + layouts for tokens #1/#2 copied from prod; token #1 /img + /parts populate on the first save-from-site (window.__RENDERER_BASE__ pointed here)."
-  }
+  "followUps": [
+    "Fund the VRF subscription with LINK (requests bill in LINK; nativePayment=false).",
+    "Rewrite the loot table with the real parts catalog via setLootTable once metadata is final."
+  ]
 }

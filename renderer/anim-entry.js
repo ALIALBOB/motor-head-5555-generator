@@ -3,6 +3,9 @@
 // The token layout comes from a global the worker's /anim/:id.html sets, so ONE bundle serves every token.
 import { drawMachine } from "../web/src/renderer.js";
 import { getPartRadius, partBounds } from "../web/src/parts.js";
+import { neonFX, holoFX, tealChromeFX } from "../web/src/material-fx.js";
+const EFFECT_FN = { neon: neonFX, holo: holoFX, teal: tealChromeFX }; // whole-machine effects won from crates
+let fxMachineCanvas = null, fxMachineCtx = null, fxCanvas = null, fxCtx = null; // persistent offscreens for the effect pass
 const BASE_LAYOUT = window.__LAM_BASE_LAYOUT__;
 const canvas = document.getElementById("render");
 const stage = document.querySelector(".stage");
@@ -50,6 +53,18 @@ function drawPartsOverlay(c, info) {
   c.restore();
 }
 
+// Holder's custom full-frame scene background, rendered by the site to a 1024×1024 PNG. Painted BEHIND
+// the machine via drawMachine's drawUnderlay hook (with transparentBackground so the machine's own scene
+// fill is skipped). Unlike the parts overlay it does NOT ride the body transform — it's the static backdrop.
+const bgUrl = window.__LAM_BG_URL__ || "";
+let bgImg = null;
+if (bgUrl) { bgImg = new Image(); bgImg.crossOrigin = "anonymous"; bgImg.decoding = "async"; bgImg.src = bgUrl; }
+const bgReady = () => Boolean(bgImg && bgImg.complete && bgImg.naturalWidth);
+function drawBgUnderlay(c, info) {
+  if (!bgReady()) return;
+  c.drawImage(bgImg, 0, 0, info.width, info.height);
+}
+
 const BACKEND_BASE_URL = String(params.get("backend") || "https://motorheads-backend.zacbosugame.workers.dev").replace(/\/+$/, "");
 const backendEnabled = params.get("backend") !== "0" && params.get("liveBackend") !== "0" && !captureMode;
 const backendPollMs = Math.max(15000, Number(params.get("pollMs") || 45000));
@@ -91,6 +106,7 @@ const chainState = {
   highestVerifiedSaleWei: params.get("highestSaleWei") || params.get("saleWei") || "",
   scarScreenColor: params.get("scarScreenColor") || params.get("scarColor") || "",
   globalPhase: params.get("phase") || "Archive Awakening",
+  effect: params.get("effect") || "", // applied whole-machine effect (?effect=holo to test); backend telemetry sets the real value
   source: "fallback"
 };
 
@@ -154,6 +170,7 @@ function applyBackendChainState(payload) {
   chainState.highestVerifiedSaleWei = chain.lastSalePriceWei || chainState.highestVerifiedSaleWei || "";
   chainState.saleTier = saleCount > 0 ? (chain.lastSalePriceWei || "verified") : "";
   chainState.evolutionTier = chain.evolutionTier || "";
+  chainState.effect = chain.effect || ""; // whole-machine effect from the token's on-chain garage (empty = none)
   if (holderAgeDays != null) {
     const seconds = Math.max(0, Math.floor(holderAgeDays * 86400));
     chainState.archiveAgeSeconds = seconds;
@@ -507,7 +524,32 @@ function render(now = performance.now()) {
   const performanceMode = selected ? "drag" : (!fullMotion && previewMotion ? "marketplace" : "normal");
   const overlayTarget = (partsImg && mode === "assembled" && !selected && !transition) ? 1 : 0;
   overlayAlpha += (overlayTarget - overlayAlpha) * 0.14;
-  drawMachine(ctx, renderLayout, chainState, { previewMotion, editMode: false, selected, mouseLook, performanceMode, motionTime: motionClock, drawOverlay: partsImg ? drawPartsOverlay : undefined });
+  const normalDraw = () => drawMachine(ctx, renderLayout, chainState, { previewMotion, editMode: false, selected, mouseLook, performanceMode, motionTime: motionClock, transparentBackground: bgReady(), drawUnderlay: bgImg ? drawBgUnderlay : undefined, drawOverlay: partsImg ? drawPartsOverlay : undefined });
+  const activeEffect = chainState.effect && EFFECT_FN[chainState.effect] ? chainState.effect : null;
+  if (activeEffect) {
+    // Whole-machine effect: draw the base machine to a TRANSPARENT offscreen (clean alpha silhouette off the
+    // scene), run the FX at half-res, then composite over an opaque dark base — the effect replaces the scene.
+    // Fully guarded: any failure (canvas taint, etc.) falls back to the normal draw so the live loop never dies.
+    try {
+      const S = canvas.width || 1024, H = 512;
+      if (!fxMachineCanvas) {
+        fxMachineCanvas = document.createElement("canvas"); fxMachineCanvas.width = fxMachineCanvas.height = S; fxMachineCtx = fxMachineCanvas.getContext("2d");
+        fxCanvas = document.createElement("canvas"); fxCanvas.width = fxCanvas.height = H; fxCtx = fxCanvas.getContext("2d");
+      }
+      fxMachineCtx.setTransform(1, 0, 0, 1, 0, 0); fxMachineCtx.clearRect(0, 0, S, S);
+      // draw the machine on its OWN flat layout background (no scene underlay/overlay) so the FX keys the
+      // silhouette cleanly against that flat color — the same setup the garage/canvas previews use.
+      drawMachine(fxMachineCtx, renderLayout, chainState, { previewMotion, editMode: false, selected, mouseLook, performanceMode, motionTime: motionClock });
+      fxCtx.setTransform(1, 0, 0, 1, 0, 0); fxCtx.clearRect(0, 0, H, H);
+      fxCtx.drawImage(fxMachineCanvas, 0, 0, S, S, 0, 0, H, H); // downscale the machine
+      const fxBg = (renderLayout.canvas && renderLayout.canvas.backgroundColor) || "#0a0e15";
+      EFFECT_FN[activeEffect](fxCtx, H, { accent: "#39f6ff", background: fxBg });
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = "#05060a"; ctx.fillRect(0, 0, S, S);
+      ctx.drawImage(fxCanvas, 0, 0, S, S); // upscale the FX'd result
+    } catch (fxErr) { normalDraw(); }
+  } else {
+    normalDraw();
+  }
   drawCursorRings();
   drawSnapHints();
   document.body.dataset.ready = "true";

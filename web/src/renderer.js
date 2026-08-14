@@ -348,6 +348,7 @@ export function drawMachine(ctx, layout, chainState = {}, options = {}) {
   const performanceMode = options.performanceMode || "normal";
   const dragFastPath = performanceMode === "drag";
   const marketplaceFastPath = performanceMode === "marketplace";
+  const transparentBackground = options.transparentBackground === true;
   blinkPhaseOffset = (Math.abs(Number(layout?.tokenId) || 1) * 1.371) % 3.25; // desync blink per token
 
   if (ctx.canvas.width !== width) ctx.canvas.width = width;
@@ -367,13 +368,18 @@ export function drawMachine(ctx, layout, chainState = {}, options = {}) {
   let marketplaceRenderCache = null;
 
   ctx.clearRect(0, 0, width, height);
+  // Custom full-frame backdrop (a holder's on-chain scene background) painted BEHIND everything — right
+  // after the clear, before the scene/machine. Gated on drawUnderlay, so every normal render is unchanged.
+  if (typeof options.drawUnderlay === "function") options.drawUnderlay(ctx, { width, height });
   if (useMarketplaceStaticCache) {
     marketplaceRenderCache = getMarketplaceRenderCache(width, height, layout, chainState, look, placements, liquidState, specialMaterialSkin);
-    ctx.drawImage(marketplaceRenderCache.background, 0, 0);
+    // Skip the cached opaque scene layer when a custom backdrop is present (the machine parts still draw
+    // from marketplaceRenderCache.steps below). The cache content is identical either way.
+    if (!transparentBackground) ctx.drawImage(marketplaceRenderCache.background, 0, 0);
   } else if (useDragStaticCache) {
     const dragLayer = getDragFrameLayer(width, height, layout, chainState, look, placements, liquidState, specialMaterialSkin, selectedId);
     ctx.drawImage(dragLayer, 0, 0);
-  } else {
+  } else if (!transparentBackground) {
     drawBackground(ctx, width, height, layout, chainState, time, look);
   }
 

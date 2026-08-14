@@ -1,4 +1,4 @@
-// ../web/src/schema.js
+// web/src/schema.js
 var MATERIALS = {
   graphiteInk: {
     label: "Graphite Ink",
@@ -362,7 +362,7 @@ var LIQUID_GLOWS = [
   "rgba(255,74,210,0.5)"
 ];
 
-// ../web/src/parts.js
+// web/src/parts.js
 var INK = "rgba(18, 22, 25, 0.72)";
 var SOFT_INK = "rgba(18, 22, 25, 0.38)";
 var CLEAN_GEAR_SPOKES = /* @__PURE__ */ new Set(["gear.large", "gear.web", "gear.spoked.large", "ring.sprocket", "gear.crown"]);
@@ -8435,7 +8435,7 @@ function drawLockedHatch(ctx2, part) {
   ctx2.restore();
 }
 
-// ../web/src/renderer.js
+// web/src/renderer.js
 var BASE_BLUEPRINT_URL = "/concepts/base-mechanical-canvas-blueprint.png";
 var baseBlueprintImage;
 var CANVAS_LOOKS = {
@@ -10334,7 +10334,128 @@ function drawSelection(ctx2, part, look = CANVAS_LOOKS.whiteBlueprint) {
   ctx2.restore();
 }
 
-// anim-entry.js
+// web/src/material-fx.js
+var rnd = (s) => {
+  const x = Math.sin(s * 127.1 + 311.7) * 43758.5453;
+  return x - Math.floor(x);
+};
+var hexRgb = (h) => {
+  h = String(h).replace("#", "");
+  return { r: parseInt(h.slice(0, 2), 16), g: parseInt(h.slice(2, 4), 16), b: parseInt(h.slice(4, 6), 16) };
+};
+var HOLO_RAMP = [[255, 90, 214], [176, 107, 255], [90, 134, 255], [56, 214, 255], [79, 245, 192], [255, 226, 122]];
+var TEAL_RAMP = [[0, 30, 30], [0, 49, 47], [1, 72, 72], [0, 89, 88], [1, 103, 100], [79, 214, 192], [200, 250, 244]];
+function rampSample(ramp, p, wrap) {
+  const n = ramp.length;
+  if (wrap) {
+    p = (p % 1 + 1) % 1;
+    const f2 = p * n, i2 = Math.floor(f2), t2 = f2 - i2, a2 = ramp[i2 % n], b2 = ramp[(i2 + 1) % n];
+    return [a2[0] + (b2[0] - a2[0]) * t2, a2[1] + (b2[1] - a2[1]) * t2, a2[2] + (b2[2] - a2[2]) * t2];
+  }
+  p = Math.max(0, Math.min(0.9999, p));
+  const f = p * (n - 1), i = Math.floor(f), t = f - i, a = ramp[i], b = ramp[Math.min(n - 1, i + 1)];
+  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+}
+function neonFX(ctx2, size, skin) {
+  const neon = hexRgb(skin.accent || skin.edge || "#39f6ff");
+  const bg = hexRgb(skin.background || "#000");
+  const src = ctx2.getImageData(0, 0, size, size).data;
+  const oc = document.createElement("canvas");
+  oc.width = size;
+  oc.height = size;
+  const octx = oc.getContext("2d");
+  const out = octx.createImageData(size, size);
+  const o = out.data;
+  for (let i = 0; i < src.length; i += 4) {
+    const dr = src[i] - bg.r, dg = src[i + 1] - bg.g, db = src[i + 2] - bg.b;
+    if (src[i + 3] > 10 && dr * dr + dg * dg + db * db > 1500) {
+      o[i] = neon.r;
+      o[i + 1] = neon.g;
+      o[i + 2] = neon.b;
+      o[i + 3] = 255;
+    }
+  }
+  octx.putImageData(out, 0, 0);
+  ctx2.save();
+  ctx2.fillStyle = "rgba(6,8,22,0.44)";
+  ctx2.fillRect(0, 0, size, size);
+  ctx2.globalCompositeOperation = "lighter";
+  for (const [blur, a] of [[30, 0.42], [15, 0.55], [6, 0.7], [1.5, 0.9]]) {
+    ctx2.filter = `blur(${blur}px)`;
+    ctx2.globalAlpha = a;
+    ctx2.drawImage(oc, 0, 0);
+  }
+  ctx2.filter = "none";
+  ctx2.globalAlpha = 1;
+  for (let i = 0; i < 44; i++) {
+    const x = rnd(i * 7) * size, y = rnd(i * 11) * size;
+    ctx2.fillStyle = `rgba(${neon.r},${neon.g},${neon.b},${0.3 + rnd(i) * 0.5})`;
+    ctx2.beginPath();
+    ctx2.arc(x, y, 0.7 + rnd(i) * 1.7, 0, 7);
+    ctx2.fill();
+  }
+  ctx2.restore();
+}
+function holoFX(ctx2, size, skin = {}) {
+  const bg = hexRgb(skin.background || "#000");
+  const ramp = skin.ramp || HOLO_RAMP;
+  const mono = !!skin.mono;
+  const ground = skin.ground || "#05060a";
+  const src = ctx2.getImageData(0, 0, size, size).data;
+  const oc = document.createElement("canvas");
+  oc.width = size;
+  oc.height = size;
+  const octx = oc.getContext("2d");
+  const out = octx.createImageData(size, size);
+  const o = out.data;
+  for (let i = 0; i < src.length; i += 4) {
+    const dr = src[i] - bg.r, dg = src[i + 1] - bg.g, db = src[i + 2] - bg.b;
+    if (src[i + 3] > 10 && dr * dr + dg * dg + db * db > 1500) {
+      const p = i / 4, x = p % size, y = p / size | 0;
+      const lum = (src[i] * 0.299 + src[i + 1] * 0.587 + src[i + 2] * 0.114) / 255;
+      const phase = mono ? lum : lum * 1.5 + (x * 0.9 + y * 1.4) * 16e-4;
+      let [r, g, b] = rampSample(ramp, phase, !mono);
+      const v = mono ? 1 : 0.1 + Math.pow(lum, 1.5) * 1.02;
+      r = Math.min(255, r * v);
+      g = Math.min(255, g * v);
+      b = Math.min(255, b * v);
+      if (lum > 0.9) {
+        const w = (lum - 0.9) / 0.1;
+        r += (255 - r) * w * 0.85;
+        g += (255 - g) * w * 0.85;
+        b += (255 - b) * w * 0.85;
+      }
+      o[i] = r;
+      o[i + 1] = g;
+      o[i + 2] = b;
+      o[i + 3] = 255;
+    }
+  }
+  octx.putImageData(out, 0, 0);
+  ctx2.save();
+  ctx2.fillStyle = ground;
+  ctx2.fillRect(0, 0, size, size);
+  ctx2.drawImage(oc, 0, 0);
+  ctx2.globalCompositeOperation = "lighter";
+  for (const [blur, a] of [[16, 0.22], [6, 0.32], [2, 0.4]]) {
+    ctx2.filter = `blur(${blur}px)`;
+    ctx2.globalAlpha = a;
+    ctx2.drawImage(oc, 0, 0);
+  }
+  ctx2.filter = "none";
+  ctx2.globalAlpha = 1;
+  ctx2.restore();
+}
+function tealChromeFX(ctx2, size, skin = {}) {
+  holoFX(ctx2, size, { ...skin, ramp: TEAL_RAMP, mono: true, ground: "#001414" });
+}
+
+// renderer/anim-entry.js
+var EFFECT_FN = { neon: neonFX, holo: holoFX, teal: tealChromeFX };
+var fxMachineCanvas = null;
+var fxMachineCtx = null;
+var fxCanvas = null;
+var fxCtx = null;
 var BASE_LAYOUT = window.__LAM_BASE_LAYOUT__;
 var canvas = document.getElementById("render");
 var stage = document.querySelector(".stage");
@@ -10427,6 +10548,8 @@ var chainState = {
   highestVerifiedSaleWei: params.get("highestSaleWei") || params.get("saleWei") || "",
   scarScreenColor: params.get("scarScreenColor") || params.get("scarColor") || "",
   globalPhase: params.get("phase") || "Archive Awakening",
+  effect: params.get("effect") || "",
+  // applied whole-machine effect (?effect=holo to test); backend telemetry sets the real value
   source: "fallback"
 };
 function numberOrFallback(value, fallback) {
@@ -10485,6 +10608,7 @@ function applyBackendChainState(payload) {
   chainState.highestVerifiedSaleWei = chain.lastSalePriceWei || chainState.highestVerifiedSaleWei || "";
   chainState.saleTier = saleCount > 0 ? chain.lastSalePriceWei || "verified" : "";
   chainState.evolutionTier = chain.evolutionTier || "";
+  chainState.effect = chain.effect || "";
   if (holderAgeDays != null) {
     const seconds = Math.max(0, Math.floor(holderAgeDays * 86400));
     chainState.archiveAgeSeconds = seconds;
@@ -10806,7 +10930,37 @@ function render(now = performance.now()) {
   const performanceMode = selected ? "drag" : !fullMotion && previewMotion ? "marketplace" : "normal";
   const overlayTarget = partsImg && mode === "assembled" && !selected && !transition ? 1 : 0;
   overlayAlpha += (overlayTarget - overlayAlpha) * 0.14;
-  drawMachine(ctx, renderLayout, chainState, { previewMotion, editMode: false, selected, mouseLook, performanceMode, motionTime: motionClock, transparentBackground: bgReady(), drawUnderlay: bgImg ? drawBgUnderlay : void 0, drawOverlay: partsImg ? drawPartsOverlay : void 0 });
+  const normalDraw = () => drawMachine(ctx, renderLayout, chainState, { previewMotion, editMode: false, selected, mouseLook, performanceMode, motionTime: motionClock, transparentBackground: bgReady(), drawUnderlay: bgImg ? drawBgUnderlay : void 0, drawOverlay: partsImg ? drawPartsOverlay : void 0 });
+  const activeEffect = chainState.effect && EFFECT_FN[chainState.effect] ? chainState.effect : null;
+  if (activeEffect) {
+    try {
+      const S = canvas.width || 1024, H = 512;
+      if (!fxMachineCanvas) {
+        fxMachineCanvas = document.createElement("canvas");
+        fxMachineCanvas.width = fxMachineCanvas.height = S;
+        fxMachineCtx = fxMachineCanvas.getContext("2d");
+        fxCanvas = document.createElement("canvas");
+        fxCanvas.width = fxCanvas.height = H;
+        fxCtx = fxCanvas.getContext("2d");
+      }
+      fxMachineCtx.setTransform(1, 0, 0, 1, 0, 0);
+      fxMachineCtx.clearRect(0, 0, S, S);
+      drawMachine(fxMachineCtx, renderLayout, chainState, { previewMotion, editMode: false, selected, mouseLook, performanceMode, motionTime: motionClock });
+      fxCtx.setTransform(1, 0, 0, 1, 0, 0);
+      fxCtx.clearRect(0, 0, H, H);
+      fxCtx.drawImage(fxMachineCanvas, 0, 0, S, S, 0, 0, H, H);
+      const fxBg = renderLayout.canvas && renderLayout.canvas.backgroundColor || "#0a0e15";
+      EFFECT_FN[activeEffect](fxCtx, H, { accent: "#39f6ff", background: fxBg });
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.fillStyle = "#05060a";
+      ctx.fillRect(0, 0, S, S);
+      ctx.drawImage(fxCanvas, 0, 0, S, S);
+    } catch (fxErr) {
+      normalDraw();
+    }
+  } else {
+    normalDraw();
+  }
   drawCursorRings();
   drawSnapHints();
   document.body.dataset.ready = "true";

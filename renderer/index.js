@@ -113,7 +113,7 @@ function mergeParts(layout, parts) {
 // The live animation page: the ORIGINAL interactive animation (D/A/S buttons + drag/dismantle/reassemble
 // + chain-reactive telemetry), reused verbatim. Inlines the token layout (new faces) as a global; one
 // bundled app (/anim/runtime.js = drawMachine + the animation logic) runs it. Same engine as the image.
-function animPage(id, base, layout, partsUrl) {
+function animPage(id, base, layout, partsUrl, bgUrl) {
   const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   const name = esc((layout && layout.name) || ("MotorHead #" + id)); // used in <title> text AND aria-label attr
   const W = Math.max(1, Math.min(4096, Math.round(Number(layout && layout.canvas && layout.canvas.width) || 1024)));
@@ -147,8 +147,8 @@ function animPage(id, base, layout, partsUrl) {
     <button id="stopMotion" type="button" title="Stop animation">S</button>
   </div>
 </main>
-<script>window.__LAM_BASE_LAYOUT__ = ${layoutLiteral};${partsUrl ? `window.__LAM_PARTS_URL__ = ${JSON.stringify(partsUrl)};` : ""}</script>
-<script type="module" src="${base}/anim/app.js"></script>
+<script>window.__LAM_BASE_LAYOUT__ = ${layoutLiteral};${partsUrl ? `window.__LAM_PARTS_URL__ = ${JSON.stringify(partsUrl)};` : ""}${bgUrl ? `window.__LAM_BG_URL__ = ${JSON.stringify(bgUrl)};` : ""}</script>
+<script type="module" src="${base}/anim/app.js?v=3"></script>
 </body>
 </html>`;
 }
@@ -169,6 +169,15 @@ export default {
       let original;
       try { original = JSON.parse(originalText); } catch { return json({ ok: false, error: "bad source metadata" }, 502); }
       const meta = curateMetadata(original, { tokenId: id, parts, buildRevision: revision, config: { imageBaseUrl: `${base}/img`, animationBaseUrl: `${base}/anim` } });
+      // Bust OpenSea's cached thumbnail on a FREE republish: buildRevision (the ?rev key) doesn't change
+      // when a holder just re-renders, so OpenSea keeps serving the stale image. Key the image URL to the
+      // R2 snapshot's upload time — a changed URL forces OpenSea to re-pull the (already-updated) render.
+      if (parts.length && meta && typeof meta.image === "string" && meta.image.includes("/img/")) {
+        try {
+          const imgHead = await env.RENDERS.head(`${id}.png`);
+          if (imgHead?.uploaded) meta.image += `${meta.image.includes("?") ? "&" : "?"}t=${imgHead.uploaded.getTime()}`;
+        } catch (_) { /* no snapshot yet */ }
+      }
       return json(meta, 200, { "cache-control": parts.length ? "public, max-age=30" : "public, max-age=300" });
     }
 
@@ -188,6 +197,14 @@ export default {
     // ownership-gated /save-image with x-kind:parts; consumed by the animation as a drawOverlay image.
     if ((m = url.pathname.match(/^\/parts\/(\d+)\.png$/))) {
       const obj = await env.RENDERS.get(`${m[1]}.parts.png`);
+      if (!obj) return json({ ok: false, error: "not found" }, 404);
+      return new Response(obj.body, { headers: { "content-type": "image/png", "access-control-allow-origin": "*", "cache-control": "public, max-age=60" } });
+    }
+
+    // The full-frame scene-background layer (opaque). Written by /save-image with x-kind:background; the
+    // animation paints it BEHIND the machine via drawMachine's drawUnderlay hook.
+    if ((m = url.pathname.match(/^\/bg\/(\d+)\.png$/))) {
+      const obj = await env.RENDERS.get(`${m[1]}.bg.png`);
       if (!obj) return json({ ok: false, error: "not found" }, 404);
       return new Response(obj.body, { headers: { "content-type": "image/png", "access-control-allow-origin": "*", "cache-control": "public, max-age=60" } });
     }
@@ -222,9 +239,15 @@ export default {
       try { owner = await c.readContract({ address: collection, abi: COLLECTION_ABI, functionName: "ownerOf", args: [BigInt(id)] }); }
       catch { return json({ ok: false, error: "ownerOf read failed" }, 502); }
       if (String(signer).toLowerCase() !== String(owner).toLowerCase()) return json({ ok: false, error: "not token owner" }, 403);
-      const kind = request.headers.get("x-kind") === "parts" ? "parts" : "image";
-      const key = kind === "parts" ? `${id}.parts.png` : `${id}.png`;
-      await env.RENDERS.put(key, request.body, { httpMetadata: { contentType: "image/png" } });
+      const kindHeader = request.headers.get("x-kind");
+      const kind = kindHeader === "parts" ? "parts" : kindHeader === "background" ? "background" : "image";
+      const key = kind === "parts" ? `${id}.parts.png` : kind === "background" ? `${id}.bg.png` : `${id}.png`;
+      const putOpts = { httpMetadata: { contentType: "image/png" } };
+      // Stamp the background AND parts overlay with the revision they were rendered for, so the animation can
+      // tell a CURRENT layer from a stale one left behind after a later save changed the layout but didn't
+      // re-upload that layer. Without this, a stale parts.png kept getting composited ("traits from nowhere").
+      if (kind === "background" || kind === "parts") putOpts.customMetadata = { revision: String(onchainRev) };
+      await env.RENDERS.put(key, request.body, putOpts);
       return json({ ok: true, id, revision: onchainRev, kind }, 200, { "access-control-allow-origin": "*" });
     }
 
@@ -272,8 +295,31 @@ export default {
       try { layout = JSON.parse(await obj.text()); } catch { return json({ ok: false, error: "bad layout" }, 502); }
       const { parts, revision } = await readLayout(env, id);
       layout = mergeParts(layout, parts);
-      const partsUrl = (parts && parts.length) ? `${base}/parts/${id}.png?rev=${revision}` : "";
-      return new Response(animPage(id, base, layout, partsUrl), { headers: { "content-type": "text/html; charset=utf-8", "access-control-allow-origin": "*", "cache-control": "public, max-age=60" } });
+      // Serve the parts overlay ONLY when it matches the token's current build — the same staleness guard the
+      // bg layer uses (above). A newer save that changed the layout but didn't re-upload a matching parts.png
+      // must NOT have its OLD overlay composited over the new machine. Forward rule: the stored parts.png must
+      // be stamped with the current revision. Legacy fallback (tokens saved before parts got stamped): trust an
+      // UNSTAMPED overlay only when every on-chain part is a real catalog item (itemId>0); a phantom itemId-0
+      // part (an uncatalogued item that never rendered) is the tell-tale of a stale overlay, so drop it. New
+      // saves are always stamped, so this legacy branch only ever applies to the few pre-stamp tokens.
+      let partsUrl = "";
+      if (parts && parts.length) {
+        try {
+          const ph = await env.RENDERS.head(`${id}.parts.png`);
+          const stamp = ph && ph.customMetadata ? ph.customMetadata.revision : undefined;
+          const stampedMatch = stamp != null && String(stamp) === String(revision);
+          const legacyTrust = stamp == null && parts.every((p) => Number(p.itemId) > 0);
+          if (ph && (stampedMatch || legacyTrust)) partsUrl = `${base}/parts/${id}.png?rev=${revision}`;
+        } catch (_) { /* no overlay object -> no parts layer */ }
+      }
+      // Serve the custom background layer ONLY if it was rendered for the current revision — a stale bg
+      // (holder removed their background on a later save) is ignored so the default scene returns.
+      let bgUrl = "";
+      try {
+        const bgHead = await env.RENDERS.head(`${id}.bg.png`);
+        if (bgHead && String(bgHead.customMetadata?.revision) === String(revision)) bgUrl = `${base}/bg/${id}.png?rev=${revision}`;
+      } catch (_) { /* no bg layer */ }
+      return new Response(animPage(id, base, layout, partsUrl, bgUrl), { headers: { "content-type": "text/html; charset=utf-8", "access-control-allow-origin": "*", "cache-control": "public, max-age=60" } });
     }
 
     return json({ ok: false, error: "no route" }, 404);
