@@ -537,9 +537,10 @@ function render(now = performance.now()) {
         fxCanvas = document.createElement("canvas"); fxCanvas.width = fxCanvas.height = H; fxCtx = fxCanvas.getContext("2d");
       }
       fxMachineCtx.setTransform(1, 0, 0, 1, 0, 0); fxMachineCtx.clearRect(0, 0, S, S);
-      // draw the machine on its OWN flat layout background (no scene underlay/overlay) so the FX keys the
-      // silhouette cleanly against that flat color — the same setup the garage/canvas previews use.
-      drawMachine(fxMachineCtx, renderLayout, chainState, { previewMotion, editMode: false, selected, mouseLook, performanceMode, motionTime: motionClock });
+      // draw the machine + its PLACED-PARTS overlay (helmet/wings/laser/etc.) on the OWN flat layout background
+      // (no scene bg underlay) so the FX keys the WHOLE silhouette — machine AND the holder's saved items —
+      // matching the static image. (Previously the overlay was dropped here, so effected machines lost their parts.)
+      drawMachine(fxMachineCtx, renderLayout, chainState, { previewMotion, editMode: false, selected, mouseLook, performanceMode, motionTime: motionClock, drawOverlay: partsImg ? drawPartsOverlay : undefined });
       fxCtx.setTransform(1, 0, 0, 1, 0, 0); fxCtx.clearRect(0, 0, H, H);
       fxCtx.drawImage(fxMachineCanvas, 0, 0, S, S, 0, 0, H, H); // downscale the machine
       const fxBg = (renderLayout.canvas && renderLayout.canvas.backgroundColor) || "#0a0e15";

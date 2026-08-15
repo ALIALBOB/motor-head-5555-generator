@@ -10945,7 +10945,7 @@ function render(now = performance.now()) {
       }
       fxMachineCtx.setTransform(1, 0, 0, 1, 0, 0);
       fxMachineCtx.clearRect(0, 0, S, S);
-      drawMachine(fxMachineCtx, renderLayout, chainState, { previewMotion, editMode: false, selected, mouseLook, performanceMode, motionTime: motionClock });
+      drawMachine(fxMachineCtx, renderLayout, chainState, { previewMotion, editMode: false, selected, mouseLook, performanceMode, motionTime: motionClock, drawOverlay: partsImg ? drawPartsOverlay : void 0 });
       fxCtx.setTransform(1, 0, 0, 1, 0, 0);
       fxCtx.clearRect(0, 0, H, H);
       fxCtx.drawImage(fxMachineCanvas, 0, 0, S, S, 0, 0, H, H);

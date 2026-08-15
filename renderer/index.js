@@ -148,7 +148,7 @@ function animPage(id, base, layout, partsUrl, bgUrl) {
   </div>
 </main>
 <script>window.__LAM_BASE_LAYOUT__ = ${layoutLiteral};${partsUrl ? `window.__LAM_PARTS_URL__ = ${JSON.stringify(partsUrl)};` : ""}${bgUrl ? `window.__LAM_BG_URL__ = ${JSON.stringify(bgUrl)};` : ""}</script>
-<script type="module" src="${base}/anim/app.js?v=3"></script>
+<script type="module" src="${base}/anim/app.js?v=4"></script>
 </body>
 </html>`;
 }
