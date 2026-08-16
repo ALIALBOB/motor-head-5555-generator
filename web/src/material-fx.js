@@ -120,7 +120,8 @@ export function neonFX(ctx, size, skin) {
   }
   octx.putImageData(out, 0, 0);
   ctx.save();
-  ctx.fillStyle = "rgba(6,8,22,0.44)"; ctx.fillRect(0, 0, size, size); // dim the frame (night)
+  // transparentBg: an animated background is behind the machine — don't dim the whole frame over it.
+  if (!skin.transparentBg) { ctx.fillStyle = "rgba(6,8,22,0.44)"; ctx.fillRect(0, 0, size, size); } // dim the frame (night)
   ctx.globalCompositeOperation = "lighter";
   for (const [blur, a] of [[30, 0.42], [15, 0.55], [6, 0.7], [1.5, 0.9]]) { ctx.filter = `blur(${blur}px)`; ctx.globalAlpha = a; ctx.drawImage(oc, 0, 0); }
   ctx.filter = "none"; ctx.globalAlpha = 1;
@@ -155,7 +156,9 @@ export function holoFX(ctx, size, skin = {}) {
   }
   octx.putImageData(out, 0, 0);
   ctx.save();
-  ctx.fillStyle = ground; ctx.fillRect(0, 0, size, size); // dark chrome ground
+  // transparentBg: skip the full-canvas chrome ground so the animated background behind the machine shows through
+  // (the recolored machine draws over the transparent-backed machine; non-machine pixels stay clear).
+  if (!skin.transparentBg) { ctx.fillStyle = ground; ctx.fillRect(0, 0, size, size); } // dark chrome ground
   ctx.drawImage(oc, 0, 0);
   ctx.globalCompositeOperation = "lighter"; // glossy chrome bloom (screen-style, softened — the research's blur+screen)
   for (const [blur, a] of [[16, 0.22], [6, 0.32], [2, 0.4]]) { ctx.filter = `blur(${blur}px)`; ctx.globalAlpha = a; ctx.drawImage(oc, 0, 0); }

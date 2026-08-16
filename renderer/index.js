@@ -113,7 +113,7 @@ function mergeParts(layout, parts) {
 // The live animation page: the ORIGINAL interactive animation (D/A/S buttons + drag/dismantle/reassemble
 // + chain-reactive telemetry), reused verbatim. Inlines the token layout (new faces) as a global; one
 // bundled app (/anim/runtime.js = drawMachine + the animation logic) runs it. Same engine as the image.
-function animPage(id, base, layout, partsUrl, bgUrl) {
+function animPage(id, base, layout, partsUrl, bgUrl, behindUrl) {
   const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   const name = esc((layout && layout.name) || ("MotorHead #" + id)); // used in <title> text AND aria-label attr
   const W = Math.max(1, Math.min(4096, Math.round(Number(layout && layout.canvas && layout.canvas.width) || 1024)));
@@ -147,8 +147,8 @@ function animPage(id, base, layout, partsUrl, bgUrl) {
     <button id="stopMotion" type="button" title="Stop animation">S</button>
   </div>
 </main>
-<script>window.__LAM_BASE_LAYOUT__ = ${layoutLiteral};${partsUrl ? `window.__LAM_PARTS_URL__ = ${JSON.stringify(partsUrl)};` : ""}${bgUrl ? `window.__LAM_BG_URL__ = ${JSON.stringify(bgUrl)};` : ""}</script>
-<script type="module" src="${base}/anim/app.js?v=4"></script>
+<script>window.__LAM_BASE_LAYOUT__ = ${layoutLiteral};${partsUrl ? `window.__LAM_PARTS_URL__ = ${JSON.stringify(partsUrl)};` : ""}${bgUrl ? `window.__LAM_BG_URL__ = ${JSON.stringify(bgUrl)};` : ""}${behindUrl ? `window.__LAM_BEHIND_URL__ = ${JSON.stringify(behindUrl)};` : ""}</script>
+<script type="module" src="${base}/anim/app.js?v=9"></script>
 </body>
 </html>`;
 }
@@ -209,6 +209,15 @@ export default {
       return new Response(obj.body, { headers: { "content-type": "image/png", "access-control-allow-origin": "*", "cache-control": "public, max-age=60" } });
     }
 
+    // The behind-body items layer (transparent). Written by /save-image with x-kind:behind; the animation
+    // paints it BEHIND the machine but fades it WITH assembly (unlike the constant bg), so dismantle animates
+    // these items like the front parts.
+    if ((m = url.pathname.match(/^\/behind\/(\d+)\.png$/))) {
+      const obj = await env.RENDERS.get(`${m[1]}.behind.png`);
+      if (!obj) return json({ ok: false, error: "not found" }, 404);
+      return new Response(obj.body, { headers: { "content-type": "image/png", "access-control-allow-origin": "*", "cache-control": "public, max-age=60" } });
+    }
+
     // Ownership-gated render upload (holders, NO shared secret in the browser): the holder signs ONE
     // message; we recover the signer and require it OWNS the token AND the on-chain revision matches,
     // then store the PNG. x-kind selects which artifact: "image" -> the flattened card /img/:id.png;
@@ -240,13 +249,13 @@ export default {
       catch { return json({ ok: false, error: "ownerOf read failed" }, 502); }
       if (String(signer).toLowerCase() !== String(owner).toLowerCase()) return json({ ok: false, error: "not token owner" }, 403);
       const kindHeader = request.headers.get("x-kind");
-      const kind = kindHeader === "parts" ? "parts" : kindHeader === "background" ? "background" : "image";
-      const key = kind === "parts" ? `${id}.parts.png` : kind === "background" ? `${id}.bg.png` : `${id}.png`;
+      const kind = kindHeader === "parts" ? "parts" : kindHeader === "background" ? "background" : kindHeader === "behind" ? "behind" : "image";
+      const key = kind === "parts" ? `${id}.parts.png` : kind === "background" ? `${id}.bg.png` : kind === "behind" ? `${id}.behind.png` : `${id}.png`;
       const putOpts = { httpMetadata: { contentType: "image/png" } };
-      // Stamp the background AND parts overlay with the revision they were rendered for, so the animation can
-      // tell a CURRENT layer from a stale one left behind after a later save changed the layout but didn't
-      // re-upload that layer. Without this, a stale parts.png kept getting composited ("traits from nowhere").
-      if (kind === "background" || kind === "parts") putOpts.customMetadata = { revision: String(onchainRev) };
+      // Stamp the background, parts AND behind overlays with the revision they were rendered for, so the
+      // animation can tell a CURRENT layer from a stale one left behind after a later save changed the layout
+      // but didn't re-upload that layer. Without this, a stale overlay kept getting composited.
+      if (kind === "background" || kind === "parts" || kind === "behind") putOpts.customMetadata = { revision: String(onchainRev) };
       await env.RENDERS.put(key, request.body, putOpts);
       return json({ ok: true, id, revision: onchainRev, kind }, 200, { "access-control-allow-origin": "*" });
     }
@@ -319,7 +328,14 @@ export default {
         const bgHead = await env.RENDERS.head(`${id}.bg.png`);
         if (bgHead && String(bgHead.customMetadata?.revision) === String(revision)) bgUrl = `${base}/bg/${id}.png?rev=${revision}`;
       } catch (_) { /* no bg layer */ }
-      return new Response(animPage(id, base, layout, partsUrl, bgUrl), { headers: { "content-type": "text/html; charset=utf-8", "access-control-allow-origin": "*", "cache-control": "public, max-age=60" } });
+      // Serve the behind-items layer ONLY if rendered for the current revision (same staleness guard). Faded
+      // with assembly by the animation, so dismantle animates these items like the front parts.
+      let behindUrl = "";
+      try {
+        const behindHead = await env.RENDERS.head(`${id}.behind.png`);
+        if (behindHead && String(behindHead.customMetadata?.revision) === String(revision)) behindUrl = `${base}/behind/${id}.png?rev=${revision}`;
+      } catch (_) { /* no behind layer */ }
+      return new Response(animPage(id, base, layout, partsUrl, bgUrl, behindUrl), { headers: { "content-type": "text/html; charset=utf-8", "access-control-allow-origin": "*", "cache-control": "public, max-age=60" } });
     }
 
     return json({ ok: false, error: "no route" }, 404);

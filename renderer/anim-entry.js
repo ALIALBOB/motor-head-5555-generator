@@ -4,7 +4,9 @@
 import { drawMachine } from "../web/src/renderer.js";
 import { getPartRadius, partBounds } from "../web/src/parts.js";
 import { neonFX, holoFX, tealChromeFX } from "../web/src/material-fx.js";
-const EFFECT_FN = { neon: neonFX, holo: holoFX, teal: tealChromeFX }; // whole-machine effects won from crates
+import { applyWebglEffect, isPremiumEffect } from "../web/src/webgl-fx.js";
+import { renderBackground, isBackground } from "../web/src/webgl-bg.js";
+const EFFECT_FN = { neon: neonFX, holo: holoFX, teal: tealChromeFX }; // legacy 2D whole-machine effects won from crates
 let fxMachineCanvas = null, fxMachineCtx = null, fxCanvas = null, fxCtx = null; // persistent offscreens for the effect pass
 const BASE_LAYOUT = window.__LAM_BASE_LAYOUT__;
 const canvas = document.getElementById("render");
@@ -60,9 +62,31 @@ const bgUrl = window.__LAM_BG_URL__ || "";
 let bgImg = null;
 if (bgUrl) { bgImg = new Image(); bgImg.crossOrigin = "anonymous"; bgImg.decoding = "async"; bgImg.src = bgUrl; }
 const bgReady = () => Boolean(bgImg && bgImg.complete && bgImg.naturalWidth);
+
+// Holder's behind-body items, flattened by the site to a transparent 1024×1024 PNG. Painted BEHIND the
+// machine like the bg, but its alpha follows assembly (behindAlpha) so a dismantle fades these items away
+// exactly like the front parts — instead of staying frozen in the backdrop. (The scene bg above stays put.)
+const behindUrl = window.__LAM_BEHIND_URL__ || "";
+let behindImg = null;
+if (behindUrl) { behindImg = new Image(); behindImg.crossOrigin = "anonymous"; behindImg.decoding = "async"; behindImg.src = behindUrl; }
+const behindReady = () => Boolean(behindImg && behindImg.complete && behindImg.naturalWidth);
+let behindAlpha = 0;
 function drawBgUnderlay(c, info) {
-  if (!bgReady()) return;
-  c.drawImage(bgImg, 0, 0, info.width, info.height);
+  // Animated crate background (Tier-3) takes precedence over a static custom bg; renders the live scene per frame.
+  const bgKey = chainState.background;
+  if (bgKey && isBackground(bgKey)) {
+    const scene = renderBackground(info.width, bgKey, motionClock);
+    if (scene) c.drawImage(scene, 0, 0, info.width, info.height);
+    else if (bgReady()) c.drawImage(bgImg, 0, 0, info.width, info.height);
+  } else if (bgReady()) {
+    c.drawImage(bgImg, 0, 0, info.width, info.height);
+  }
+  if (behindReady() && behindAlpha > 0.01) {
+    c.save();
+    c.globalAlpha = Math.min(1, behindAlpha);
+    c.drawImage(behindImg, 0, 0, info.width, info.height);
+    c.restore();
+  }
 }
 
 const BACKEND_BASE_URL = String(params.get("backend") || "https://motorheads-backend.zacbosugame.workers.dev").replace(/\/+$/, "");
@@ -107,6 +131,7 @@ const chainState = {
   scarScreenColor: params.get("scarScreenColor") || params.get("scarColor") || "",
   globalPhase: params.get("phase") || "Archive Awakening",
   effect: params.get("effect") || "", // applied whole-machine effect (?effect=holo to test); backend telemetry sets the real value
+  background: params.get("bg") || "", // animated crate background behind the machine (?bg=nebula to test); backend sets the real value
   source: "fallback"
 };
 
@@ -171,6 +196,7 @@ function applyBackendChainState(payload) {
   chainState.saleTier = saleCount > 0 ? (chain.lastSalePriceWei || "verified") : "";
   chainState.evolutionTier = chain.evolutionTier || "";
   chainState.effect = chain.effect || ""; // whole-machine effect from the token's on-chain garage (empty = none)
+  chainState.background = chain.background || ""; // animated background from the token's on-chain garage (empty = none)
   if (holderAgeDays != null) {
     const seconds = Math.max(0, Math.floor(holderAgeDays * 86400));
     chainState.archiveAgeSeconds = seconds;
@@ -524,8 +550,14 @@ function render(now = performance.now()) {
   const performanceMode = selected ? "drag" : (!fullMotion && previewMotion ? "marketplace" : "normal");
   const overlayTarget = (partsImg && mode === "assembled" && !selected && !transition) ? 1 : 0;
   overlayAlpha += (overlayTarget - overlayAlpha) * 0.14;
-  const normalDraw = () => drawMachine(ctx, renderLayout, chainState, { previewMotion, editMode: false, selected, mouseLook, performanceMode, motionTime: motionClock, transparentBackground: bgReady(), drawUnderlay: bgImg ? drawBgUnderlay : undefined, drawOverlay: partsImg ? drawPartsOverlay : undefined });
-  const activeEffect = chainState.effect && EFFECT_FN[chainState.effect] ? chainState.effect : null;
+  // Behind items fade with assembly exactly like the front parts, so a dismantle animates them away too.
+  const behindTarget = (behindImg && mode === "assembled" && !selected && !transition) ? 1 : 0;
+  behindAlpha += (behindTarget - behindAlpha) * 0.14;
+  const hasAnimBg = Boolean(chainState.background && isBackground(chainState.background));
+  // Anything behind the machine that an effect must NOT paint over: animated scene, custom color bg, or behind items.
+  const hasBackdrop = hasAnimBg || bgReady() || behindReady();
+  const normalDraw = () => drawMachine(ctx, renderLayout, chainState, { previewMotion, editMode: false, selected, mouseLook, performanceMode, motionTime: motionClock, transparentBackground: hasBackdrop, drawUnderlay: (bgImg || behindImg || hasAnimBg) ? drawBgUnderlay : undefined, drawOverlay: partsImg ? drawPartsOverlay : undefined });
+  const activeEffect = chainState.effect && (EFFECT_FN[chainState.effect] || isPremiumEffect(chainState.effect)) ? chainState.effect : null;
   if (activeEffect) {
     // Whole-machine effect: draw the base machine to a TRANSPARENT offscreen (clean alpha silhouette off the
     // scene), run the FX at half-res, then composite over an opaque dark base — the effect replaces the scene.
@@ -536,17 +568,36 @@ function render(now = performance.now()) {
         fxMachineCanvas = document.createElement("canvas"); fxMachineCanvas.width = fxMachineCanvas.height = S; fxMachineCtx = fxMachineCanvas.getContext("2d");
         fxCanvas = document.createElement("canvas"); fxCanvas.width = fxCanvas.height = H; fxCtx = fxCanvas.getContext("2d");
       }
+      const premium = isPremiumEffect(activeEffect);
       fxMachineCtx.setTransform(1, 0, 0, 1, 0, 0); fxMachineCtx.clearRect(0, 0, S, S);
-      // draw the machine + its PLACED-PARTS overlay (helmet/wings/laser/etc.) on the OWN flat layout background
-      // (no scene bg underlay) so the FX keys the WHOLE silhouette — machine AND the holder's saved items —
-      // matching the static image. (Previously the overlay was dropped here, so effected machines lost their parts.)
-      drawMachine(fxMachineCtx, renderLayout, chainState, { previewMotion, editMode: false, selected, mouseLook, performanceMode, motionTime: motionClock, drawOverlay: partsImg ? drawPartsOverlay : undefined });
+      // Draw the machine + its PLACED-PARTS overlay so the FX keys the WHOLE silhouette (machine + saved items).
+      // Premium (WebGL) effects want a TRANSPARENT machine — the shader masks on alpha and fills the backdrop
+      // itself; the legacy 2D effects key the flat layout background instead.
+      drawMachine(fxMachineCtx, renderLayout, chainState, { previewMotion, editMode: false, selected, mouseLook, performanceMode, motionTime: motionClock, transparentBackground: premium || hasBackdrop, drawOverlay: partsImg ? drawPartsOverlay : undefined });
       fxCtx.setTransform(1, 0, 0, 1, 0, 0); fxCtx.clearRect(0, 0, H, H);
       fxCtx.drawImage(fxMachineCanvas, 0, 0, S, S, 0, 0, H, H); // downscale the machine
       const fxBg = (renderLayout.canvas && renderLayout.canvas.backgroundColor) || "#0a0e15";
-      EFFECT_FN[activeEffect](fxCtx, H, { accent: "#39f6ff", background: fxBg });
-      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = "#05060a"; ctx.fillRect(0, 0, S, S);
-      ctx.drawImage(fxCanvas, 0, 0, S, S); // upscale the FX'd result
+      const applied = premium
+        ? applyWebglEffect(fxCtx, H, activeEffect, motionClock, hasBackdrop)             // transparentBg when stacking over ANY backdrop
+        : (EFFECT_FN[activeEffect](fxCtx, H, { accent: "#39f6ff", background: fxBg, transparentBg: hasBackdrop }), true); // legacy 2D pass (transparent over a backdrop)
+      if (!applied) { normalDraw(); } // WebGL unavailable → clean fallback to the normal render
+      else {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        if (hasBackdrop) { // effect (premium OR legacy) over an animated scene, a custom color bg, or behind items
+          // STACK: backdrop → behind items → effected machine (transparent) on top
+          if (hasAnimBg) {
+            const scene = renderBackground(S, chainState.background, motionClock);
+            if (scene) ctx.drawImage(scene, 0, 0, S, S); else { ctx.fillStyle = "#05060a"; ctx.fillRect(0, 0, S, S); }
+          } else if (bgReady()) {
+            ctx.drawImage(bgImg, 0, 0, S, S); // custom color / scene background layer
+          } else { ctx.fillStyle = "#05060a"; ctx.fillRect(0, 0, S, S); }
+          if (behindReady() && behindAlpha > 0.01) { ctx.save(); ctx.globalAlpha = Math.min(1, behindAlpha); ctx.drawImage(behindImg, 0, 0, S, S); ctx.restore(); }
+          ctx.drawImage(fxCanvas, 0, 0, S, S);
+        } else {
+          ctx.fillStyle = "#05060a"; ctx.fillRect(0, 0, S, S);
+          ctx.drawImage(fxCanvas, 0, 0, S, S); // effect replaces the scene (no background)
+        }
+      }
     } catch (fxErr) { normalDraw(); }
   } else {
     normalDraw();
@@ -683,6 +734,7 @@ if (forcedStart === "assembled") {
 }
 
 overlayAlpha = mode === "assembled" ? 1 : 0; // instant on first paint; D/A toggles ease it after
+behindAlpha = mode === "assembled" ? 1 : 0;   // same: behind items start settled, ease with D/A
 setActiveButton();
 void pollBackendChainState(true);
 render();
