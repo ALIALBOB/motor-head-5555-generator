@@ -43,3 +43,6 @@ Thumbs.db
 
 # renderer local dev env
 renderer/.dev.vars
+
+# One-time deploy migration scan output (regenerable via scripts/equip-migration-list.cjs)
+reports/equip-migration.json
