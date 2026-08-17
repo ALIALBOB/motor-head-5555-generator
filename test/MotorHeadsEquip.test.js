@@ -160,4 +160,26 @@ describe("MotorHeadsEquip", function () {
     expect(await equip.treasury()).to.equal(alice.address);
     await expect(equip.connect(alice).setEquipFee(1)).to.be.reverted; // non-admin
   });
+
+  it("accepts a Vol.2 background id (25-36) out of the box — the v1 wall at 24 is gone", async function () {
+    const { equip, parts, admin, alice, garage1 } = await deployFixture();
+    expect(await equip.backgroundMax()).to.equal(36n);
+    await parts.connect(admin).mint(garage1, 30, 1); // jellyfish (Vol.2)
+    await expect(equip.connect(alice).equip(1, EFFECT, 30, { value: FEE }))
+      .to.emit(equip, "Equipped").withArgs(1, alice.address, EFFECT, 30, 1, FEE);
+    expect(await equip.equippedBackground(1)).to.equal(30n);
+  });
+
+  it("setPartRanges widens the window; ids beyond the max revert until it's raised; non-admin blocked; bad ranges revert", async function () {
+    const { equip, parts, admin, alice, garage1 } = await deployFixture();
+    await parts.connect(admin).mint(garage1, 40, 1); // a future background id, above the default max (36)
+    await expect(equip.connect(alice).equip(1, 0, 40, { value: FEE })).to.be.revertedWith("bad background");
+    await expect(equip.connect(alice).setPartRanges(1, 12, 13, 48)).to.be.reverted; // non-admin
+    await expect(equip.connect(admin).setPartRanges(1, 12, 13, 48))
+      .to.emit(equip, "PartRangesSet").withArgs(1, 12, 13, 48);
+    expect(await equip.backgroundMax()).to.equal(48n);
+    await expect(equip.connect(alice).equip(1, 0, 40, { value: FEE })).to.emit(equip, "Equipped"); // now in range
+    await expect(equip.connect(admin).setPartRanges(0, 12, 13, 48)).to.be.revertedWith("bad effect range"); // effMin < 1
+    await expect(equip.connect(admin).setPartRanges(1, 12, 12, 48)).to.be.revertedWith("bad bg range");     // bgMin <= effMax (overlap)
+  });
 });

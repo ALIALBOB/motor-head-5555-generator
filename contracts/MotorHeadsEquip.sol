@@ -38,11 +38,13 @@ interface IGarageRegistry {
 contract MotorHeadsEquip is AccessControl, Pausable, ReentrancyGuard {
     bytes32 public constant CONFIG_ROLE = keccak256("CONFIG_ROLE");
 
-    // Part-id ranges (MUST match the crate loot tables + the site): effects 1..12, backgrounds 13..24.
-    uint256 public constant EFFECT_MIN = 1;
-    uint256 public constant EFFECT_MAX = 12;
-    uint256 public constant BACKGROUND_MIN = 13;
-    uint256 public constant BACKGROUND_MAX = 24;
+    // Part-id ranges (MUST match the crate loot tables + the site): effects 1..12, backgrounds 13..36
+    // (Vol.1 = 13-24, Vol.2 = 25-36). Settable by CONFIG_ROLE so new effect/background waves never need a
+    // redeploy — the v1 contract hard-coded these as `constant` and hit a wall at 24; v2 widens + un-freezes them.
+    uint256 public effectMin = 1;
+    uint256 public effectMax = 12;
+    uint256 public backgroundMin = 13;
+    uint256 public backgroundMax = 36;
 
     /// The live MotorHeads collection whose ownership gates every equip.
     IERC721 public immutable collection;
@@ -72,6 +74,7 @@ contract MotorHeadsEquip is AccessControl, Pausable, ReentrancyGuard {
     );
     event MetadataUpdate(uint256 _tokenId);
     event EquipFeeSet(uint256 feeWei);
+    event PartRangesSet(uint256 effectMin, uint256 effectMax, uint256 backgroundMin, uint256 backgroundMax);
     event TreasurySet(address indexed treasury);
     event Swept(address indexed treasury, uint256 amount);
 
@@ -115,11 +118,11 @@ contract MotorHeadsEquip is AccessControl, Pausable, ReentrancyGuard {
             address garage = crates.garageOf(tokenId);
             require(garage != address(0), "no garage");
             if (effectId != 0) {
-                require(effectId >= EFFECT_MIN && effectId <= EFFECT_MAX, "bad effect");
+                require(effectId >= effectMin && effectId <= effectMax, "bad effect");
                 require(parts.balanceOf(garage, effectId) > 0, "effect not owned");
             }
             if (backgroundId != 0) {
-                require(backgroundId >= BACKGROUND_MIN && backgroundId <= BACKGROUND_MAX, "bad background");
+                require(backgroundId >= backgroundMin && backgroundId <= backgroundMax, "bad background");
                 require(parts.balanceOf(garage, backgroundId) > 0, "background not owned");
             }
         }
@@ -171,6 +174,21 @@ contract MotorHeadsEquip is AccessControl, Pausable, ReentrancyGuard {
     function setEquipFee(uint256 feeWei) external onlyRole(CONFIG_ROLE) {
         equipFeeWei = feeWei;
         emit EquipFeeSet(feeWei);
+    }
+
+    /// Widen (or adjust) the valid part-id ranges as new effect/background waves ship. Ranges must be
+    /// well-formed and non-overlapping so an id can only ever be one slot type.
+    function setPartRanges(uint256 effMin, uint256 effMax, uint256 bgMin, uint256 bgMax)
+        external
+        onlyRole(CONFIG_ROLE)
+    {
+        require(effMin >= 1 && effMin <= effMax, "bad effect range");
+        require(bgMin > effMax && bgMin <= bgMax, "bad bg range");
+        effectMin = effMin;
+        effectMax = effMax;
+        backgroundMin = bgMin;
+        backgroundMax = bgMax;
+        emit PartRangesSet(effMin, effMax, bgMin, bgMax);
     }
 
     function setTreasury(address treasury_) external onlyRole(CONFIG_ROLE) {
