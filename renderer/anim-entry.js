@@ -6,6 +6,7 @@ import { getPartRadius, partBounds } from "../web/src/parts.js";
 import { neonFX, holoFX, tealChromeFX } from "../web/src/material-fx.js";
 import { applyWebglEffect, isPremiumEffect } from "../web/src/webgl-fx.js";
 import { renderBackground, isBackground } from "../web/src/webgl-bg.js";
+import { drawNormiesBoatScene, isNormiesBoatBg } from "../web/src/normies-boat-scene.js";
 const EFFECT_FN = { neon: neonFX, holo: holoFX, teal: tealChromeFX }; // legacy 2D whole-machine effects won from crates
 let fxMachineCanvas = null, fxMachineCtx = null, fxCanvas = null, fxCtx = null; // persistent offscreens for the effect pass
 const BASE_LAYOUT = window.__LAM_BASE_LAYOUT__;
@@ -63,6 +64,11 @@ let bgImg = null;
 if (bgUrl) { bgImg = new Image(); bgImg.crossOrigin = "anonymous"; bgImg.decoding = "async"; bgImg.src = bgUrl; }
 const bgReady = () => Boolean(bgImg && bgImg.complete && bgImg.naturalWidth);
 
+// Normies boat seascape: a client-side-only animated scene (no on-chain bg part) the site signals via a scene
+// key. Drawn LIVE here each frame so the boat drifts + birds flap, instead of the static bg.png snapshot.
+const bgScene = window.__LAM_BG_SCENE__ || "";
+const hasSceneBg = Boolean(bgScene && isNormiesBoatBg(bgScene));
+
 // Holder's behind-body items, flattened by the site to a transparent 1024×1024 PNG. Painted BEHIND the
 // machine like the bg, but its alpha follows assembly (behindAlpha) so a dismantle fades these items away
 // exactly like the front parts — instead of staying frozen in the backdrop. (The scene bg above stays put.)
@@ -78,6 +84,8 @@ function drawBgUnderlay(c, info) {
     const scene = renderBackground(info.width, bgKey, motionClock);
     if (scene) c.drawImage(scene, 0, 0, info.width, info.height);
     else if (bgReady()) c.drawImage(bgImg, 0, 0, info.width, info.height);
+  } else if (hasSceneBg) {
+    drawNormiesBoatScene(c, info.width, info.height, bgScene, motionClock); // live drifting seascape
   } else if (bgReady()) {
     c.drawImage(bgImg, 0, 0, info.width, info.height);
   }
@@ -555,8 +563,8 @@ function render(now = performance.now()) {
   behindAlpha += (behindTarget - behindAlpha) * 0.14;
   const hasAnimBg = Boolean(chainState.background && isBackground(chainState.background));
   // Anything behind the machine that an effect must NOT paint over: animated scene, custom color bg, or behind items.
-  const hasBackdrop = hasAnimBg || bgReady() || behindReady();
-  const normalDraw = () => drawMachine(ctx, renderLayout, chainState, { previewMotion, editMode: false, selected, mouseLook, performanceMode, motionTime: motionClock, transparentBackground: hasBackdrop, drawUnderlay: (bgImg || behindImg || hasAnimBg) ? drawBgUnderlay : undefined, drawOverlay: partsImg ? drawPartsOverlay : undefined });
+  const hasBackdrop = hasAnimBg || hasSceneBg || bgReady() || behindReady();
+  const normalDraw = () => drawMachine(ctx, renderLayout, chainState, { previewMotion, editMode: false, selected, mouseLook, performanceMode, motionTime: motionClock, transparentBackground: hasBackdrop, drawUnderlay: (bgImg || behindImg || hasAnimBg || hasSceneBg) ? drawBgUnderlay : undefined, drawOverlay: partsImg ? drawPartsOverlay : undefined });
   const activeEffect = chainState.effect && (EFFECT_FN[chainState.effect] || isPremiumEffect(chainState.effect)) ? chainState.effect : null;
   if (activeEffect) {
     // Whole-machine effect: draw the base machine to a TRANSPARENT offscreen (clean alpha silhouette off the
@@ -588,6 +596,8 @@ function render(now = performance.now()) {
           if (hasAnimBg) {
             const scene = renderBackground(S, chainState.background, motionClock);
             if (scene) ctx.drawImage(scene, 0, 0, S, S); else { ctx.fillStyle = "#05060a"; ctx.fillRect(0, 0, S, S); }
+          } else if (hasSceneBg) {
+            drawNormiesBoatScene(ctx, S, S, bgScene, motionClock); // live seascape behind the effect
           } else if (bgReady()) {
             ctx.drawImage(bgImg, 0, 0, S, S); // custom color / scene background layer
           } else { ctx.fillStyle = "#05060a"; ctx.fillRect(0, 0, S, S); }

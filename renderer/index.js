@@ -113,7 +113,7 @@ function mergeParts(layout, parts) {
 // The live animation page: the ORIGINAL interactive animation (D/A/S buttons + drag/dismantle/reassemble
 // + chain-reactive telemetry), reused verbatim. Inlines the token layout (new faces) as a global; one
 // bundled app (/anim/runtime.js = drawMachine + the animation logic) runs it. Same engine as the image.
-function animPage(id, base, layout, partsUrl, bgUrl, behindUrl) {
+function animPage(id, base, layout, partsUrl, bgUrl, behindUrl, bgScene) {
   const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   const name = esc((layout && layout.name) || ("MotorHead #" + id)); // used in <title> text AND aria-label attr
   const W = Math.max(1, Math.min(4096, Math.round(Number(layout && layout.canvas && layout.canvas.width) || 1024)));
@@ -147,8 +147,8 @@ function animPage(id, base, layout, partsUrl, bgUrl, behindUrl) {
     <button id="stopMotion" type="button" title="Stop animation">S</button>
   </div>
 </main>
-<script>window.__LAM_BASE_LAYOUT__ = ${layoutLiteral};${partsUrl ? `window.__LAM_PARTS_URL__ = ${JSON.stringify(partsUrl)};` : ""}${bgUrl ? `window.__LAM_BG_URL__ = ${JSON.stringify(bgUrl)};` : ""}${behindUrl ? `window.__LAM_BEHIND_URL__ = ${JSON.stringify(behindUrl)};` : ""}</script>
-<script type="module" src="${base}/anim/app.js?v=10"></script>
+<script>window.__LAM_BASE_LAYOUT__ = ${layoutLiteral};${partsUrl ? `window.__LAM_PARTS_URL__ = ${JSON.stringify(partsUrl)};` : ""}${bgUrl ? `window.__LAM_BG_URL__ = ${JSON.stringify(bgUrl)};` : ""}${behindUrl ? `window.__LAM_BEHIND_URL__ = ${JSON.stringify(behindUrl)};` : ""}${bgScene ? `window.__LAM_BG_SCENE__ = ${JSON.stringify(bgScene)};` : ""}</script>
+<script type="module" src="${base}/anim/app.js?v=11"></script>
 </body>
 </html>`;
 }
@@ -256,6 +256,9 @@ export default {
       // animation can tell a CURRENT layer from a stale one left behind after a later save changed the layout
       // but didn't re-upload that layer. Without this, a stale overlay kept getting composited.
       if (kind === "background" || kind === "parts" || kind === "behind") putOpts.customMetadata = { revision: String(onchainRev) };
+      // A client-side-only animated scene (Normies boat) has no on-chain bg part — the site tags its bg upload
+      // with the scene key so the animation can draw it LIVE (drifting) instead of pasting the static snapshot.
+      if (kind === "background") { const scene = request.headers.get("x-bg-scene"); if (scene) putOpts.customMetadata.scene = String(scene).slice(0, 24); }
       await env.RENDERS.put(key, request.body, putOpts);
       return json({ ok: true, id, revision: onchainRev, kind }, 200, { "access-control-allow-origin": "*" });
     }
@@ -323,10 +326,13 @@ export default {
       }
       // Serve the custom background layer ONLY if it was rendered for the current revision — a stale bg
       // (holder removed their background on a later save) is ignored so the default scene returns.
-      let bgUrl = "";
+      let bgUrl = "", bgScene = "";
       try {
         const bgHead = await env.RENDERS.head(`${id}.bg.png`);
-        if (bgHead && String(bgHead.customMetadata?.revision) === String(revision)) bgUrl = `${base}/bg/${id}.png?rev=${revision}`;
+        if (bgHead && String(bgHead.customMetadata?.revision) === String(revision)) {
+          bgUrl = `${base}/bg/${id}.png?rev=${revision}`;
+          bgScene = bgHead.customMetadata?.scene || ""; // Normies boat scene key → animation draws it live
+        }
       } catch (_) { /* no bg layer */ }
       // Serve the behind-items layer ONLY if rendered for the current revision (same staleness guard). Faded
       // with assembly by the animation, so dismantle animates these items like the front parts.
@@ -335,7 +341,7 @@ export default {
         const behindHead = await env.RENDERS.head(`${id}.behind.png`);
         if (behindHead && String(behindHead.customMetadata?.revision) === String(revision)) behindUrl = `${base}/behind/${id}.png?rev=${revision}`;
       } catch (_) { /* no behind layer */ }
-      return new Response(animPage(id, base, layout, partsUrl, bgUrl, behindUrl), { headers: { "content-type": "text/html; charset=utf-8", "access-control-allow-origin": "*", "cache-control": "public, max-age=60" } });
+      return new Response(animPage(id, base, layout, partsUrl, bgUrl, behindUrl, bgScene), { headers: { "content-type": "text/html; charset=utf-8", "access-control-allow-origin": "*", "cache-control": "public, max-age=60" } });
     }
 
     return json({ ok: false, error: "no route" }, 404);
