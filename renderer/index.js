@@ -225,7 +225,7 @@ export default {
     // One signature authorizes both (image + parts) uploads for the same token+revision.
     if ((m = url.pathname.match(/^\/save-image\/(\d+)$/))) {
       const id = Number(m[1]);
-      if (request.method === "OPTIONS") return new Response(null, { headers: { "access-control-allow-origin": "*", "access-control-allow-methods": "POST, OPTIONS", "access-control-allow-headers": "content-type, x-signature, x-revision, x-kind" } });
+      if (request.method === "OPTIONS") return new Response(null, { headers: { "access-control-allow-origin": "*", "access-control-allow-methods": "POST, OPTIONS", "access-control-allow-headers": "content-type, x-signature, x-revision, x-kind, x-bg-scene" } });
       if (request.method !== "POST") return json({ ok: false, error: "method not allowed" }, 405);
       if (!Number.isInteger(id) || id < 1 || id > COLLECTION_SIZE) return json({ ok: false, error: "token does not exist" }, 404);
       const c = client(env);
