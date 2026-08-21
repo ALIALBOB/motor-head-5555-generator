@@ -1,4 +1,4 @@
-// ../web/src/schema.js
+// web/src/schema.js
 var MATERIALS = {
   graphiteInk: {
     label: "Graphite Ink",
@@ -362,7 +362,7 @@ var LIQUID_GLOWS = [
   "rgba(255,74,210,0.5)"
 ];
 
-// ../web/src/parts.js
+// web/src/parts.js
 var INK = "rgba(18, 22, 25, 0.72)";
 var SOFT_INK = "rgba(18, 22, 25, 0.38)";
 var CLEAN_GEAR_SPOKES = /* @__PURE__ */ new Set(["gear.large", "gear.web", "gear.spoked.large", "ring.sprocket", "gear.crown"]);
@@ -386,11 +386,60 @@ var SELF_OUTLINED_PARTS = /* @__PURE__ */ new Set([
 ]);
 var STATIC_PART_CACHE = /* @__PURE__ */ new Map();
 var STATIC_PART_CACHE_LIMIT = 360;
+var ANIMATED_PART_KEYS = /* @__PURE__ */ new Set([
+  "ddg.propellerCap",
+  "ddg.sprayCap",
+  "pet.eye.lens",
+  "wheel.belt",
+  "pipe.straight",
+  "pipe.elbow",
+  "tank.fluid",
+  "tank.round",
+  "tank.core",
+  "tank.vials",
+  "tank.head.square",
+  "tube.vial.ornate",
+  "tube.vial.crystal",
+  "tube.vial.column",
+  "tube.loop.ring",
+  "tube.loop.oval",
+  "tube.sealed.u",
+  "tube.sealed.curve",
+  "tube.sealed.straight",
+  "tube.cell.mini",
+  "tube.port.bolted",
+  "gauge.pressure",
+  "gear.bevel",
+  "valve.steam",
+  "tank.mercury",
+  "pipe.ghost",
+  "rig.pulley",
+  "pulley.wheel",
+  "pulley.wheel.large",
+  "pulley.belt",
+  "chain.segment",
+  "gear.spoked.large",
+  "gear.bevel.pair",
+  "pipe.sleeved",
+  "pipe.elbow.segment",
+  "pipe.arc.coupled",
+  "tube.flex",
+  "pipe.curve",
+  "wire.arc",
+  "pack.gas.reader",
+  "battery.charge.head",
+  "magnet.u.head",
+  "drop.liquid",
+  "pack.shoulder.shell",
+  "counter.block",
+  "pack.icon"
+]);
 var staticPartCacheHits = 0;
 var staticPartCacheMisses = 0;
 function staticPartCacheKey(part, state = {}, shadeStyle = "pencilSketch", width = 0, height = 0) {
-  if (state.previewMotion !== false) return null;
-  if (state.mouseLook?.active) return null;
+  const dynamic = ANIMATED_PART_KEYS.has(String(part.key || ""));
+  if (dynamic && state.previewMotion !== false) return null;
+  if (dynamic && state.mouseLook?.active) return null;
   const key = String(part.key || "");
   if (!key || key.startsWith("counter.") || key === "pack.gas.reader") return null;
   const usesLiquidState = key === "drop.liquid" || key.includes("tank") || key.includes("vial") || key.includes("fluid") || part.traitLayer === "fluid" || part.role === "fluid";
@@ -419,12 +468,7 @@ function staticPartCacheKey(part, state = {}, shadeStyle = "pencilSketch", width
     usesLiquidState ? state.liquidAccent ?? "" : "",
     usesLiquidState ? state.liquidGlow ?? "" : "",
     usesLiquidState ? state.texture ?? "" : "",
-    skinKey,
-    // Face parts share the keys "face.stroke"/"face.pupil" and differ only by these — include them so a
-    // paused/still face can never reuse a sibling's cached bitmap (e.g. a donut "O-mouth" vs an eye pupil).
-    part.arc ?? "",
-    part.facePart || "",
-    part.faceGlow || ""
+    skinKey
   ].join("|");
 }
 function rememberStaticPartCanvas(cacheKey, canvas2) {
@@ -489,8 +533,10 @@ function drawFinishLine(ctx2, x1, y1, x2, y2, color, width = 1) {
   ctx2.restore();
 }
 function applyMaterialFinish(ctx2, part, state = {}) {
+  if (part.skipMaterialFinish === true) return;
   if (part.key === "pack.icon" || part.key === "pack.shoulder.shell" || part.key === "pack.shoulder.band") return;
-  if (String(part.key || "").startsWith("counter.") || String(part.key || "").startsWith("face.") || part.key === "pack.gas.reader") return;
+  if (String(part.key || "").startsWith("ddg.")) return;
+  if (String(part.key || "").startsWith("counter.") || part.key === "pack.gas.reader") return;
   const style = styleFor(part);
   const bounds = partBounds({ ...part, scaleX: 1, scaleY: 1 });
   ctx2.save();
@@ -531,7 +577,7 @@ function applyMaterialFinish(ctx2, part, state = {}) {
   }
   ctx2.restore();
   const def = getPart(part.key);
-  const suppressLooseFinishLines = part.key === "ring.bolted" || part.key === "frame.box" || part.key === "pack.shoulder.shell" || SELF_OUTLINED_PARTS.has(part.key) || part.role === "expression" || part.traitLayer === "expression" || ["gear", "wheel", "bevel", "face", "panel"].includes(def?.kind);
+  const suppressLooseFinishLines = part.key === "ring.bolted" || part.key === "frame.box" || part.key === "pack.shoulder.shell" || SELF_OUTLINED_PARTS.has(part.key) || part.role === "expression" || part.traitLayer === "expression" || ["gear", "wheel", "bevel", "face", "panel", "shell"].includes(def?.kind);
   if (!suppressLooseFinishLines && style.highlight) {
     drawFinishLine(ctx2, bounds.x + bounds.w * 0.16, bounds.y + bounds.h * 0.18, bounds.x + bounds.w * 0.76, bounds.y + bounds.h * 0.08, style.highlight, style.glass ? 1.5 : 0.9);
   }
@@ -3009,59 +3055,22 @@ function drawBlockCounter(ctx2, part, state) {
       shadow: 0.015,
       lineWidth: 1.1
     });
-    if (part.tickerScroll) {
-      const time = state.previewMotion === false ? 0 : state.time || 0;
-      ctx2.save();
-      ctx2.beginPath();
-      ctx2.rect(-w / 2 + 12, -h / 2 + 13, w - 24, h - 25);
-      ctx2.clip();
-      ctx2.font = "bold 19px ui-monospace, Menlo, Consolas, monospace";
-      ctx2.textAlign = "left";
-      ctx2.textBaseline = "middle";
-      const symW = ctx2.measureText(label).width;
-      const arrow = 8;
-      const tile = symW + arrow * 2 + 26;
-      const scroll = (time * 26 % tile + tile) % tile;
-      for (let x = -w / 2 - tile + scroll; x < w / 2 + tile; x += tile) {
-        ctx2.save();
-        ctx2.globalCompositeOperation = "lighter";
-        ctx2.shadowColor = colorAlpha(palette.digit, 0.6);
-        ctx2.shadowBlur = 6;
-        ctx2.fillStyle = colorAlpha(palette.digit, 0.95);
-        ctx2.fillText(label, x, 1);
-        ctx2.restore();
-        const ax = x + symW + 9;
-        ctx2.save();
-        ctx2.fillStyle = "#5dffa0";
-        ctx2.shadowColor = "#5dffa0";
-        ctx2.shadowBlur = 5;
-        ctx2.beginPath();
-        ctx2.moveTo(ax, -arrow);
-        ctx2.lineTo(ax + arrow * 0.9, arrow * 0.75);
-        ctx2.lineTo(ax - arrow * 0.9, arrow * 0.75);
-        ctx2.closePath();
-        ctx2.fill();
-        ctx2.restore();
-      }
-      ctx2.restore();
-    } else {
-      ctx2.save();
-      ctx2.globalCompositeOperation = "lighter";
-      ctx2.shadowColor = colorAlpha(palette.digit, 0.62);
-      ctx2.shadowBlur = 7;
-      ctx2.fillStyle = colorAlpha(palette.digit, 0.94);
-      ctx2.font = "bold 22px ui-monospace, Menlo, Consolas, monospace";
-      ctx2.letterSpacing = "0px";
-      ctx2.textAlign = "center";
-      ctx2.textBaseline = "middle";
-      ctx2.fillText(label, 0, 0);
-      ctx2.restore();
-    }
+    ctx2.save();
+    ctx2.globalCompositeOperation = "lighter";
+    ctx2.shadowColor = colorAlpha(palette.digit, 0.62);
+    ctx2.shadowBlur = 7;
+    ctx2.fillStyle = colorAlpha(palette.digit, 0.94);
+    ctx2.font = "bold 22px ui-monospace, Menlo, Consolas, monospace";
+    ctx2.letterSpacing = "0px";
+    ctx2.textAlign = "center";
+    ctx2.textBaseline = "middle";
+    ctx2.fillText(label, 0, 0);
+    ctx2.restore();
     ctx2.fillStyle = colorAlpha(palette.accent, 0.76);
     ctx2.font = "bold 6px ui-monospace, Menlo, Consolas, monospace";
     ctx2.textAlign = "center";
     ctx2.textBaseline = "middle";
-    ctx2.fillText(part.tickerScroll ? "LIVE" : "VAULT", 0, h / 2 - 8);
+    ctx2.fillText("VAULT", 0, h / 2 - 8);
     for (const [x, y2] of [[-w / 2 + 8, -h / 2 + 8], [w / 2 - 8, -h / 2 + 8], [-w / 2 + 8, h / 2 - 8], [w / 2 - 8, h / 2 - 8]]) {
       drawRivet(ctx2, x, y2, 2.5);
     }
@@ -5031,6 +5040,214 @@ function drawGearToothShard(ctx2, part) {
   ctx2.stroke();
   roughLine(ctx2, -18, 18, 22, 18, 0.8, 8, 52);
 }
+function drawGoldenDome(ctx2, part) {
+  const style = setup(ctx2, part, 2.4, 0.82);
+  const dome = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-80, 48);
+    ctx2.bezierCurveTo(-94, -30, -48, -70, 0, -70);
+    ctx2.bezierCurveTo(48, -70, 94, -30, 80, 48);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, dome, 5, 7, 0.05);
+  dome();
+  ctx2.fillStyle = colorAlpha(style.fill || "#d7a13a", 0.86);
+  ctx2.fill();
+  ctx2.stroke();
+  ctx2.strokeStyle = "rgba(38,21,3,0.62)";
+  ctx2.lineWidth = 2.2;
+  ctx2.beginPath();
+  ctx2.moveTo(0, -68);
+  ctx2.lineTo(0, 46);
+  ctx2.moveTo(-44, -54);
+  ctx2.bezierCurveTo(-36, -6, -36, 22, -38, 46);
+  ctx2.moveTo(44, -54);
+  ctx2.bezierCurveTo(36, -6, 36, 22, 38, 46);
+  ctx2.stroke();
+  ctx2.strokeStyle = "rgba(38,21,3,0.5)";
+  ctx2.lineWidth = 1.6;
+  ctx2.beginPath();
+  ctx2.moveTo(-74, 18);
+  ctx2.quadraticCurveTo(0, 28, 74, 18);
+  ctx2.stroke();
+  for (let i = -3; i <= 3; i += 1) {
+    const rx = i * 22;
+    const ry = 22 + Math.abs(rx) * 0.05;
+    ctx2.fillStyle = "rgba(28,16,2,0.74)";
+    ctx2.beginPath();
+    ctx2.arc(rx, ry, 2.6, 0, Math.PI * 2);
+    ctx2.fill();
+    ctx2.fillStyle = "rgba(255,244,190,0.5)";
+    ctx2.beginPath();
+    ctx2.arc(rx - 0.7, ry - 0.7, 1.1, 0, Math.PI * 2);
+    ctx2.fill();
+  }
+  ctx2.fillStyle = "rgba(255,246,206,0.5)";
+  ctx2.beginPath();
+  ctx2.ellipse(-22, -36, 22, 13, -0.5, 0, Math.PI * 2);
+  ctx2.fill();
+}
+function drawGoldenSpike(ctx2, part) {
+  const style = setup(ctx2, part, 1.8, 0.82);
+  const spike = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-17, 54);
+    ctx2.quadraticCurveTo(-9, 2, 0, -56);
+    ctx2.quadraticCurveTo(9, 2, 17, 54);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, spike, 3, 4, 0.05);
+  spike();
+  ctx2.fillStyle = colorAlpha(style.fill || "#d7a13a", 0.88);
+  ctx2.fill();
+  ctx2.stroke();
+  ctx2.strokeStyle = "rgba(255,244,183,0.6)";
+  ctx2.lineWidth = 1.6;
+  ctx2.beginPath();
+  ctx2.moveTo(-3, 46);
+  ctx2.lineTo(0, -50);
+  ctx2.stroke();
+}
+function drawGoldenArmorPlate(ctx2, part) {
+  const style = setup(ctx2, part, 2.6, 0.82);
+  const W = 70, H = 40, R = 15;
+  const plate = () => {
+    ctx2.beginPath();
+    ctx2.roundRect(-W, -H, W * 2, H * 2, R);
+  };
+  drawCastShadow(ctx2, plate, 3, 6, 0.07);
+  plate();
+  ctx2.fillStyle = "#8a5a12";
+  ctx2.fill();
+  plate();
+  ctx2.fillStyle = colorAlpha(style.fill || "#d7a13a", 0.94);
+  ctx2.fill();
+  ctx2.stroke();
+  ctx2.strokeStyle = "rgba(255,248,206,0.62)";
+  ctx2.lineWidth = 3;
+  ctx2.beginPath();
+  ctx2.moveTo(-W + R, -H + 3);
+  ctx2.lineTo(W - R, -H + 3);
+  ctx2.stroke();
+  ctx2.strokeStyle = "rgba(36,20,3,0.66)";
+  ctx2.lineWidth = 4.5;
+  ctx2.beginPath();
+  ctx2.moveTo(-W + R, H - 3);
+  ctx2.lineTo(W - R, H - 3);
+  ctx2.stroke();
+  ctx2.strokeStyle = "rgba(255,240,180,0.24)";
+  ctx2.lineWidth = 7;
+  ctx2.beginPath();
+  ctx2.moveTo(-W * 0.66, -4);
+  ctx2.lineTo(W * 0.66, -4);
+  ctx2.stroke();
+  ctx2.strokeStyle = "rgba(58,32,4,0.32)";
+  ctx2.lineWidth = 1.3;
+  [-H * 0.42, H * 0.2].forEach((gy) => {
+    ctx2.beginPath();
+    ctx2.moveTo(-W + R, gy);
+    ctx2.lineTo(W - R, gy);
+    ctx2.stroke();
+  });
+  [[-W * 0.76, -H * 0.52], [W * 0.76, -H * 0.52], [-W * 0.76, H * 0.52], [W * 0.76, H * 0.52]].forEach(([x, y]) => {
+    ctx2.fillStyle = "rgba(30,17,3,0.72)";
+    ctx2.beginPath();
+    ctx2.arc(x, y, 2.6, 0, Math.PI * 2);
+    ctx2.fill();
+    ctx2.fillStyle = "rgba(255,242,188,0.55)";
+    ctx2.beginPath();
+    ctx2.arc(x - 0.7, y - 0.7, 1.2, 0, Math.PI * 2);
+    ctx2.fill();
+  });
+}
+function drawGoldenHeart(ctx2, part) {
+  const style = setup(ctx2, part, 3, 0.82);
+  const heart = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(0, -92);
+    ctx2.bezierCurveTo(-35, -143, -117, -128, -121, -58);
+    ctx2.bezierCurveTo(-126, 13, -77, 58, -28, 84);
+    ctx2.quadraticCurveTo(-12, 94, 0, 105);
+    ctx2.quadraticCurveTo(12, 94, 28, 84);
+    ctx2.bezierCurveTo(77, 58, 126, 13, 121, -58);
+    ctx2.bezierCurveTo(117, -128, 35, -143, 0, -92);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, heart, 5, 7, 0.05);
+  heart();
+  ctx2.fillStyle = colorAlpha(style.fill || "#d7a13a", 0.9);
+  ctx2.fill();
+  ctx2.stroke();
+  ctx2.save();
+  ctx2.globalAlpha *= 0.32;
+  ctx2.beginPath();
+  ctx2.moveTo(0, -88);
+  ctx2.bezierCurveTo(-5, -40, -5, 20, 0, 72);
+  ctx2.stroke();
+  ctx2.restore();
+  ctx2.fillStyle = "rgba(255,246,206,0.42)";
+  ctx2.beginPath();
+  ctx2.ellipse(-54, -72, 26, 16, -0.5, 0, Math.PI * 2);
+  ctx2.fill();
+}
+function drawGoldenBat(ctx2, part) {
+  const style = setup(ctx2, part, 2.6, 0.82);
+  const bat = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(0, -40);
+    ctx2.lineTo(-20, -78);
+    ctx2.lineTo(-34, -44);
+    ctx2.quadraticCurveTo(-54, -52, -78, -44);
+    ctx2.quadraticCurveTo(-120, -40, -148, -6);
+    ctx2.quadraticCurveTo(-120, -12, -110, -30);
+    ctx2.quadraticCurveTo(-104, -8, -86, -22);
+    ctx2.quadraticCurveTo(-80, -2, -62, -14);
+    ctx2.quadraticCurveTo(-52, 30, 0, 52);
+    ctx2.quadraticCurveTo(52, 30, 62, -14);
+    ctx2.quadraticCurveTo(80, -2, 86, -22);
+    ctx2.quadraticCurveTo(104, -8, 110, -30);
+    ctx2.quadraticCurveTo(120, -12, 148, -6);
+    ctx2.quadraticCurveTo(120, -40, 78, -44);
+    ctx2.quadraticCurveTo(54, -52, 34, -44);
+    ctx2.lineTo(20, -78);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, bat, 5, 7, 0.05);
+  bat();
+  ctx2.fillStyle = colorAlpha(style.fill || "#d7a13a", 0.9);
+  ctx2.fill();
+  ctx2.stroke();
+  ctx2.save();
+  ctx2.strokeStyle = "rgba(60,34,4,0.5)";
+  ctx2.lineWidth = 2;
+  [-1, 1].forEach((s) => {
+    ctx2.beginPath();
+    ctx2.moveTo(s * 58, -20);
+    ctx2.lineTo(s * 138, -12);
+    ctx2.stroke();
+    ctx2.beginPath();
+    ctx2.moveTo(s * 58, -12);
+    ctx2.lineTo(s * 104, -22);
+    ctx2.stroke();
+    ctx2.beginPath();
+    ctx2.moveTo(s * 58, -4);
+    ctx2.lineTo(s * 84, -16);
+    ctx2.stroke();
+    ctx2.beginPath();
+    ctx2.moveTo(s * 22, -70);
+    ctx2.lineTo(s * 28, -46);
+    ctx2.stroke();
+  });
+  ctx2.beginPath();
+  ctx2.moveTo(0, -38);
+  ctx2.lineTo(0, 46);
+  ctx2.stroke();
+  ctx2.restore();
+  ctx2.fillStyle = "rgba(255,246,206,0.4)";
+  ctx2.beginPath();
+  ctx2.ellipse(-30, -20, 20, 12, -0.4, 0, Math.PI * 2);
+  ctx2.fill();
+}
 function drawGraphiteMark(ctx2, part) {
   setup(ctx2, part, 1.2, 0.42);
   ctx2.strokeStyle = "rgba(18,22,25,0.26)";
@@ -6607,113 +6824,60 @@ function drawAxleRod(ctx2, part) {
   drawRivet(ctx2, 108, 0, 2.4);
   ctx2.restore();
 }
-function drawFaceStroke(ctx2, part, state = {}) {
+function drawFaceStroke(ctx2, part) {
   const style = setup(ctx2, part, 1.45, 0.96);
-  const tint = isGoldenEditionSkin(state.specialMaterialSkin || state.materialSkin) ? "#ffd257" : part.faceGlow;
-  const strokeColor = colorAlpha(tint || style.stroke || "#baffdf", 0.96);
-  const glowColor = colorAlpha(tint || style.dim || style.stroke || "#76ffc4", 0.5);
+  const strokeColor = colorAlpha(style.stroke || "#baffdf", 0.96);
+  const glowColor = colorAlpha(style.dim || style.stroke || "#76ffc4", 0.5);
   const highlightColor = colorAlpha(style.highlight || "#f5ffee", 0.76);
   const isMouth = part.facePart === "mouth";
   const half = isMouth ? 78 : 70;
   const lift = isMouth ? 2 : -1;
-  const arc = Number(part.arc || 0);
-  const mid = lift + arc * (isMouth ? 22 : 20);
   ctx2.save();
-  ctx2.lineCap = "round";
-  ctx2.lineJoin = "round";
-  const tf = ctx2.getTransform();
-  const sx = Math.hypot(tf.a, tf.b) || 1;
-  const sy = Math.hypot(tf.c, tf.d) || 1;
-  const weightPx = Math.max(isMouth ? 2.8 : 3, sx * (isMouth ? 6 : 6.5));
-  const tracePath = () => {
-    ctx2.beginPath();
-    if (arc) {
-      ctx2.moveTo(-half, lift);
-      ctx2.quadraticCurveTo(0, mid, half, lift);
-    } else {
-      ctx2.moveTo(-half, lift + (isMouth ? 3 : 1));
-      ctx2.quadraticCurveTo(-half * 0.35, lift - 4, 0, lift - 2);
-      ctx2.quadraticCurveTo(half * 0.4, lift, half, lift - (isMouth ? 5 : 7));
-    }
-  };
-  ctx2.strokeStyle = "rgba(6,10,12,0.6)";
-  ctx2.lineWidth = (weightPx + 2.8) / sy;
-  tracePath();
-  ctx2.stroke();
   ctx2.shadowColor = glowColor;
   ctx2.shadowBlur = 10;
+  ctx2.lineCap = "round";
+  ctx2.lineJoin = "round";
   ctx2.strokeStyle = strokeColor;
-  ctx2.lineWidth = weightPx / sy;
-  tracePath();
+  ctx2.lineWidth = isMouth ? 7 : 8.5;
+  ctx2.beginPath();
+  ctx2.moveTo(-half, lift + (isMouth ? 3 : 1));
+  ctx2.quadraticCurveTo(-half * 0.35, lift - 4, 0, lift - 2);
+  ctx2.quadraticCurveTo(half * 0.4, lift, half, lift - (isMouth ? 5 : 7));
   ctx2.stroke();
   ctx2.shadowBlur = 0;
   ctx2.strokeStyle = highlightColor;
-  ctx2.lineWidth = Math.max(0.85, weightPx * 0.3) / sy;
-  const hy = arc ? lift + mid * 0.35 : lift - 2;
-  roughLine(ctx2, -half + 10, hy, half - 12, arc ? hy : lift - (isMouth ? 6 : 8), 0.14, 8, 2230);
+  ctx2.lineWidth = isMouth ? 1.35 : 1.55;
+  roughLine(ctx2, -half + 10, lift - 2, half - 12, lift - (isMouth ? 6 : 8), 0.14, 8, 2230);
   ctx2.restore();
 }
 function drawFacePupil(ctx2, part, state = {}) {
   const style = setup(ctx2, part, 1.25, 0.96);
-  const tint = isGoldenEditionSkin(state.specialMaterialSkin || state.materialSkin) ? "#ffd257" : part.faceGlow;
-  const glowColor = colorAlpha(tint || style.dim || style.stroke || "#76ffc4", 0.58);
-  const tf = ctx2.getTransform();
-  const s = Math.hypot(tf.a, tf.b) || 1;
-  if (part.facePart === "mouth") {
-    const rr = 15 * s < 12 ? 12 / s : 15;
-    const lw = rr * 0.42;
-    const ring = () => {
-      ctx2.beginPath();
-      ctx2.ellipse(0, 0, rr, rr, 0, 0, Math.PI * 2);
-    };
-    ctx2.save();
-    ctx2.lineCap = "round";
-    ctx2.shadowBlur = 0;
-    ctx2.strokeStyle = "rgba(6,10,12,0.55)";
-    ctx2.lineWidth = lw + 3 / s;
-    ring();
-    ctx2.stroke();
-    ctx2.shadowColor = glowColor;
-    ctx2.shadowBlur = 10;
-    ctx2.strokeStyle = colorAlpha(tint || style.stroke || "#baffdf", 0.96);
-    ctx2.lineWidth = lw;
-    ring();
-    ctx2.stroke();
-    ctx2.restore();
-    return;
-  }
-  const r = 20 * s < 6 ? 6 / s : 20;
-  const k = r / 20;
+  const glowColor = colorAlpha(style.dim || style.stroke || "#76ffc4", 0.58);
   const pupilPath = () => {
     ctx2.beginPath();
-    ctx2.ellipse(0, 0, r, r, 0, 0, Math.PI * 2);
+    ctx2.ellipse(0, 0, 20, 20, 0, 0, Math.PI * 2);
   };
   ctx2.save();
-  ctx2.shadowBlur = 0;
-  ctx2.strokeStyle = "rgba(6,10,12,0.55)";
-  ctx2.lineWidth = Math.max(1.6, 3.4 / s);
-  pupilPath();
-  ctx2.stroke();
   ctx2.shadowColor = glowColor;
   ctx2.shadowBlur = 10;
-  ctx2.fillStyle = colorAlpha(tint || style.fill || "#9bffcd", 0.82);
+  ctx2.fillStyle = colorAlpha(style.fill || "#9bffcd", 0.82);
   pupilPath();
   ctx2.fill();
   ctx2.save();
   ctx2.globalCompositeOperation = "lighter";
   ctx2.fillStyle = colorAlpha(style.highlight || "#f5ffee", 0.12);
   ctx2.beginPath();
-  ctx2.ellipse(-2 * k, -2 * k, 13 * k, 12 * k, -0.16, 0, Math.PI * 2);
+  ctx2.ellipse(-2, -2, 13, 12, -0.16, 0, Math.PI * 2);
   ctx2.fill();
   ctx2.restore();
   ctx2.shadowBlur = 0;
-  ctx2.strokeStyle = colorAlpha(tint || style.stroke || "#baffdf", 0.82);
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#baffdf", 0.82);
   ctx2.lineWidth = 1;
   pupilPath();
   ctx2.stroke();
   ctx2.strokeStyle = "rgba(255,255,255,0.45)";
   ctx2.lineWidth = 0.8;
-  roughLine(ctx2, -7 * k, -6 * k, 7 * k, -7 * k, 0.1, 3, 2248);
+  roughLine(ctx2, -7, -6, 7, -7, 0.1, 3, 2248);
   ctx2.restore();
 }
 function drawFastenerKit(ctx2, part) {
@@ -7149,7 +7313,4791 @@ function drawBallJoint(ctx2, part) {
   drawPencilRect(ctx2, -14, -18, 28, 36, 6, { wash: 0.12, hatch: 0.06, cross: 0.018, spacing: 5, shadow: 0.025 });
   drawRivet(ctx2, 0, 0, 3.8);
 }
+function drawPetPencilShape(ctx2, drawPath, bounds, style, options = {}) {
+  drawCastShadow(ctx2, drawPath, options.shadowX ?? 4, options.shadowY ?? 6, options.shadow ?? 0.065);
+  drawPath();
+  const petFill = style.fill || "rgba(255,255,255,0.22)";
+  ctx2.fillStyle = typeof petFill === "string" && petFill.startsWith("rgba(") ? petFill.replace(/,\s*[\d.]+\s*\)$/, ", 0.96)") : petFill;
+  ctx2.fill();
+  pencilShade(ctx2, drawPath, bounds, {
+    wash: options.wash ?? 0.115,
+    hatch: options.hatch ?? 0.065,
+    cross: options.cross ?? 0.026,
+    spacing: options.spacing ?? 7,
+    texture: options.texture ?? 0.065
+  });
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.9);
+  ctx2.lineWidth = options.lineWidth ?? 2.25;
+  drawPath();
+  ctx2.stroke();
+  sketchStroke(ctx2, drawPath, options.sketch ?? 0.2, 0.8);
+}
+function drawPetRoundShell(ctx2, part) {
+  const style = setup(ctx2, part, 2.4, 0.94);
+  const shell = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(0, -86);
+    ctx2.bezierCurveTo(58, -88, 78, -49, 78, 8);
+    ctx2.bezierCurveTo(78, 68, 48, 91, 0, 91);
+    ctx2.bezierCurveTo(-48, 91, -78, 68, -78, 8);
+    ctx2.bezierCurveTo(-78, -49, -58, -88, 0, -86);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, shell, { x: -80, y: -90, w: 160, h: 184 }, style, { wash: 0.13, hatch: 0.075 });
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.42);
+  ctx2.lineWidth = 1.25;
+  roughLine(ctx2, -65, 12, 65, 12, 0.65, 16, 1701);
+  roughLine(ctx2, 0, -74, 0, 75, 0.5, 18, 1702);
+  ctx2.strokeStyle = colorAlpha(style.highlight || "#ffffff", 0.5);
+  roughLine(ctx2, -43, -61, 24, -72, 0.55, 10, 1703);
+  for (const point of [[-54, -48], [54, -48], [-62, 20], [62, 20], [-42, 68], [42, 68]]) {
+    drawRivet(ctx2, point[0], point[1], 3.6);
+  }
+}
+function drawPetHeadShell(ctx2, part) {
+  const style = setup(ctx2, part, 2.3, 0.94);
+  const shell = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-61, -48);
+    ctx2.quadraticCurveTo(-61, -67, -41, -71);
+    ctx2.quadraticCurveTo(0, -80, 41, -71);
+    ctx2.quadraticCurveTo(61, -67, 61, -48);
+    ctx2.lineTo(64, 27);
+    ctx2.quadraticCurveTo(62, 57, 34, 65);
+    ctx2.quadraticCurveTo(0, 75, -34, 65);
+    ctx2.quadraticCurveTo(-62, 57, -64, 27);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, shell, { x: -66, y: -78, w: 132, h: 148 }, style, { wash: 0.12, hatch: 0.068 });
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.38);
+  ctx2.lineWidth = 1.2;
+  roughLine(ctx2, -52, 28, 52, 28, 0.48, 13, 1711);
+  roughLine(ctx2, 0, -67, 0, -49, 0.35, 4, 1712);
+  for (const point of [[-47, -48], [47, -48], [-50, 42], [50, 42]]) drawRivet(ctx2, point[0], point[1], 3.2);
+}
+function drawPetCatEar(ctx2, part) {
+  const style = setup(ctx2, part, 2.25, 0.94);
+  const ear = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-42, 52);
+    ctx2.lineTo(-19, -66);
+    ctx2.quadraticCurveTo(-15, -78, -5, -66);
+    ctx2.lineTo(46, 48);
+    ctx2.quadraticCurveTo(4, 64, -42, 52);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, ear, { x: -44, y: -78, w: 92, h: 144 }, style, { wash: 0.12, hatch: 0.072 });
+  const inset = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-24, 40);
+    ctx2.lineTo(-15, -47);
+    ctx2.lineTo(28, 38);
+    ctx2.closePath();
+  };
+  ctx2.fillStyle = colorAlpha(style.dim || "#24d7d0", 0.38);
+  inset();
+  ctx2.fill();
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.55);
+  ctx2.lineWidth = 1.25;
+  inset();
+  ctx2.stroke();
+  for (const point of [[-25, 40], [-14, -42], [27, 38]]) drawRivet(ctx2, point[0], point[1], 3);
+}
+function drawPetDogEar(ctx2, part) {
+  const style = setup(ctx2, part, 2.3, 0.94);
+  const ear = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-34, -59);
+    ctx2.bezierCurveTo(20, -70, 45, -31, 39, 18);
+    ctx2.bezierCurveTo(35, 57, 12, 78, -17, 60);
+    ctx2.bezierCurveTo(-42, 44, -47, -28, -34, -59);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, ear, { x: -48, y: -72, w: 96, h: 154 }, style, { wash: 0.14, hatch: 0.078 });
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.34);
+  ctx2.lineWidth = 1.15;
+  roughLine(ctx2, -25, -39, 23, 42, 0.7, 12, 1731);
+  for (const point of [[-25, -45], [22, 45]]) drawRivet(ctx2, point[0], point[1], 3.2);
+}
+function drawPetMuzzlePlate(ctx2, part) {
+  const style = setup(ctx2, part, 2.1, 0.94);
+  const muzzle = () => {
+    ctx2.beginPath();
+    ctx2.ellipse(0, 0, 55, 37, 0, 0, Math.PI * 2);
+  };
+  drawPetPencilShape(ctx2, muzzle, { x: -57, y: -39, w: 114, h: 78 }, style, { wash: 0.095, hatch: 0.05, shadow: 0.045 });
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.3);
+  roughLine(ctx2, 0, -25, 0, 27, 0.35, 6, 1741);
+  drawRivet(ctx2, -39, 0, 2.8);
+  drawRivet(ctx2, 39, 0, 2.8);
+}
+function drawPetEyeLens(ctx2, part, state = {}) {
+  const style = setup(ctx2, part, 2.1, 0.96);
+  const blinkGroup = Number(part.blinkGroup ?? part.id ?? 0);
+  const eyePhase = Math.abs(blinkGroup) % 23 * 0.31;
+  const blinkPhase = state.previewMotion ? Math.abs(Math.sin((state.time || 0) * 0.82 + eyePhase)) : 0;
+  const open = blinkPhase > 0.965 ? 0.2 : 1;
+  const lens = () => {
+    ctx2.beginPath();
+    ctx2.ellipse(0, 0, 36, 36 * open, 0, 0, Math.PI * 2);
+  };
+  drawPetPencilShape(ctx2, lens, { x: -38, y: -38, w: 76, h: 76 }, style, { wash: 0.07, hatch: 0.035, shadow: 0.05 });
+  if (open < 0.5) return;
+  const glow = ctx2.createRadialGradient(-8, -10, 2, 0, 0, 29);
+  glow.addColorStop(0, style.highlight || "rgba(230,255,252,0.9)");
+  glow.addColorStop(0.34, style.dim || "#24d7d0");
+  glow.addColorStop(1, colorAlpha(style.stroke || "#062e31", 0.95));
+  ctx2.fillStyle = glow;
+  ctx2.beginPath();
+  ctx2.arc(0, 0, 27, 0, Math.PI * 2);
+  ctx2.fill();
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#062e31", 0.86);
+  ctx2.lineWidth = 2;
+  ctx2.stroke();
+  for (const point of [[0, -31], [31, 0], [0, 31], [-31, 0]]) drawRivet(ctx2, point[0], point[1], 2.35);
+  const look = state.previewMotion ? Math.sin((state.time || 0) * 1.1 + eyePhase) * 3 : 0;
+  const pupilShape = part.pupilShape || "round";
+  const pupilWidth = pupilShape === "slit" ? 2.8 : pupilShape === "wide" ? 10 : 7;
+  const pupilHeight = pupilShape === "slit" ? 14 : pupilShape === "wide" ? 8 : 12;
+  ctx2.fillStyle = "rgba(3,12,14,0.88)";
+  ctx2.beginPath();
+  ctx2.ellipse(look, 1, pupilWidth, pupilHeight, 0, 0, Math.PI * 2);
+  ctx2.fill();
+  ctx2.fillStyle = "rgba(255,255,255,0.82)";
+  ctx2.beginPath();
+  ctx2.arc(-7, -9, 4.2, 0, Math.PI * 2);
+  ctx2.fill();
+}
+function drawPetPaw(ctx2, part) {
+  const style = setup(ctx2, part, 2.15, 0.94);
+  const paw = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-48, -15);
+    ctx2.quadraticCurveTo(-46, -43, -20, -48);
+    ctx2.lineTo(22, -48);
+    ctx2.quadraticCurveTo(47, -42, 49, -14);
+    ctx2.lineTo(46, 20);
+    ctx2.quadraticCurveTo(22, 38, -22, 38);
+    ctx2.quadraticCurveTo(-47, 30, -48, -15);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, paw, { x: -51, y: -51, w: 102, h: 92 }, style, { wash: 0.12, hatch: 0.065 });
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.46);
+  ctx2.lineWidth = 1.4;
+  for (const x of [-20, 0, 20]) roughLine(ctx2, x, 13, x, 31, 0.3, 4, 1760 + x);
+  drawRivet(ctx2, -32, -22, 3);
+  drawRivet(ctx2, 32, -22, 3);
+}
+function drawPetWing(ctx2, part) {
+  const style = setup(ctx2, part, 2.3, 0.94);
+  const wing = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-32, -68);
+    ctx2.bezierCurveTo(18, -78, 48, -31, 46, 22);
+    ctx2.bezierCurveTo(44, 53, 20, 73, -7, 82);
+    ctx2.bezierCurveTo(-24, 49, -40, 5, -32, -68);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, wing, { x: -43, y: -82, w: 94, h: 168 }, style, { wash: 0.125, hatch: 0.072 });
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.4);
+  ctx2.lineWidth = 1.25;
+  roughLine(ctx2, -18, -45, 25, 48, 0.65, 13, 1771);
+  roughLine(ctx2, -12, 0, 31, 26, 0.48, 8, 1772);
+  for (const point of [[-19, -48], [24, 49]]) drawRivet(ctx2, point[0], point[1], 3.1);
+}
+function drawPetTailSegment(ctx2, part) {
+  const style = setup(ctx2, part, 2.2, 0.94);
+  const segment = () => roundedRect(ctx2, -64, -22, 128, 44, 22);
+  drawPetPencilShape(ctx2, segment, { x: -67, y: -25, w: 134, h: 50 }, style, { wash: 0.11, hatch: 0.06, shadow: 0.045 });
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.38);
+  ctx2.lineWidth = 1.15;
+  roughLine(ctx2, -35, -17, -35, 17, 0.3, 5, 1781);
+  roughLine(ctx2, 35, -17, 35, 17, 0.3, 5, 1782);
+  drawRivet(ctx2, -48, 0, 3);
+  drawRivet(ctx2, 48, 0, 3);
+}
+function drawPetFin(ctx2, part) {
+  const style = setup(ctx2, part, 2.25, 0.94);
+  const fin = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-58, 48);
+    ctx2.quadraticCurveTo(-14, -78, 7, -86);
+    ctx2.quadraticCurveTo(39, -19, 57, 48);
+    ctx2.quadraticCurveTo(0, 61, -58, 48);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, fin, { x: -61, y: -89, w: 122, h: 153 }, style, { wash: 0.12, hatch: 0.07 });
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.4);
+  ctx2.lineWidth = 1.25;
+  roughLine(ctx2, -39, 39, 8, -63, 0.65, 12, 1791);
+  for (const point of [[-39, 39], [39, 39], [7, -64]]) drawRivet(ctx2, point[0], point[1], 3.1);
+}
+function drawPetJaw(ctx2, part) {
+  const style = setup(ctx2, part, 2.25, 0.94);
+  const jaw = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-68, -22);
+    ctx2.quadraticCurveTo(0, 15, 68, -22);
+    ctx2.quadraticCurveTo(51, 48, 0, 54);
+    ctx2.quadraticCurveTo(-51, 48, -68, -22);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, jaw, { x: -71, y: -26, w: 142, h: 84 }, style, { wash: 0.1, hatch: 0.055 });
+  ctx2.fillStyle = "rgba(5,14,16,0.88)";
+  ctx2.beginPath();
+  ctx2.ellipse(0, 2, 52, 19, 0, 0, Math.PI);
+  ctx2.fill();
+  ctx2.fillStyle = "rgba(255,246,218,0.94)";
+  for (let x = -42; x <= 42; x += 14) {
+    ctx2.beginPath();
+    ctx2.moveTo(x - 5, -2);
+    ctx2.lineTo(x, 12);
+    ctx2.lineTo(x + 5, -2);
+    ctx2.closePath();
+    ctx2.fill();
+  }
+  drawRivet(ctx2, -53, 28, 3);
+  drawRivet(ctx2, 53, 28, 3);
+}
+function drawPetFaceMask(ctx2, part) {
+  const style = setup(ctx2, part, 2.2, 0.94);
+  const mask = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(0, -67);
+    ctx2.bezierCurveTo(-13, -80, -49, -70, -55, -38);
+    ctx2.bezierCurveTo(-64, 8, -42, 55, 0, 72);
+    ctx2.bezierCurveTo(42, 55, 64, 8, 55, -38);
+    ctx2.bezierCurveTo(49, -70, 13, -80, 0, -67);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, mask, { x: -61, y: -79, w: 122, h: 155 }, style, {
+    wash: 0.085,
+    hatch: 0.045,
+    shadow: 0.04,
+    spacing: 6
+  });
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.28);
+  ctx2.lineWidth = 1.15;
+  roughLine(ctx2, -41, 28, 0, 55, 0.42, 8, 1811);
+  roughLine(ctx2, 0, 55, 41, 28, 0.42, 8, 1812);
+  for (const point of [[-42, -37], [42, -37], [-35, 35], [35, 35]]) drawRivet(ctx2, point[0], point[1], 2.8);
+}
+function drawPetTongue(ctx2, part) {
+  const style = setup(ctx2, part, 2.15, 0.96);
+  const tongue = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-23, -28);
+    ctx2.quadraticCurveTo(0, -34, 23, -28);
+    ctx2.lineTo(20, 23);
+    ctx2.bezierCurveTo(16, 51, -16, 51, -20, 23);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, tongue, { x: -26, y: -36, w: 52, h: 86 }, style, {
+    wash: 0.1,
+    hatch: 0.045,
+    shadow: 0.035,
+    spacing: 5
+  });
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.48);
+  ctx2.lineWidth = 1.2;
+  roughLine(ctx2, 0, -22, 0, 34, 0.35, 8, 1821);
+  drawRivet(ctx2, -14, -20, 2.5);
+  drawRivet(ctx2, 14, -20, 2.5);
+}
+function drawPetBellyPlate(ctx2, part) {
+  const style = setup(ctx2, part, 2.25, 0.94);
+  const belly = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(0, -78);
+    ctx2.bezierCurveTo(-49, -78, -66, -42, -61, 8);
+    ctx2.bezierCurveTo(-56, 58, -31, 83, 0, 88);
+    ctx2.bezierCurveTo(31, 83, 56, 58, 61, 8);
+    ctx2.bezierCurveTo(66, -42, 49, -78, 0, -78);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, belly, { x: -66, y: -82, w: 132, h: 174 }, style, {
+    wash: 0.105,
+    hatch: 0.058,
+    shadow: 0.045,
+    spacing: 7
+  });
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.32);
+  ctx2.lineWidth = 1.2;
+  roughLine(ctx2, -48, 18, 0, 42, 0.45, 9, 1831);
+  roughLine(ctx2, 0, 42, 48, 18, 0.45, 9, 1832);
+  roughLine(ctx2, 0, -68, 0, 70, 0.35, 14, 1833);
+  for (const point of [[-43, -48], [43, -48], [-47, 34], [47, 34], [0, 72]]) drawRivet(ctx2, point[0], point[1], 3);
+}
+function drawPetBeak(ctx2, part) {
+  const style = setup(ctx2, part, 2.2, 0.96);
+  const upper = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-47, -10);
+    ctx2.quadraticCurveTo(0, -42, 47, -10);
+    ctx2.lineTo(0, 18);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, upper, { x: -50, y: -44, w: 100, h: 65 }, style, {
+    wash: 0.085,
+    hatch: 0.04,
+    shadow: 0.04,
+    spacing: 5
+  });
+  const lower = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-32, -4);
+    ctx2.quadraticCurveTo(0, 30, 32, -4);
+    ctx2.quadraticCurveTo(0, 14, -32, -4);
+    ctx2.closePath();
+  };
+  ctx2.fillStyle = colorAlpha(style.dim || style.fill || "#d79c36", 0.72);
+  lower();
+  ctx2.fill();
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.78);
+  ctx2.lineWidth = 1.45;
+  lower();
+  ctx2.stroke();
+  roughLine(ctx2, -37, -7, 37, -7, 0.3, 8, 1841);
+  drawRivet(ctx2, -33, -9, 2.7);
+  drawRivet(ctx2, 33, -9, 2.7);
+}
+function drawPetNose(ctx2, part) {
+  const style = setup(ctx2, part, 2.15, 0.96);
+  const nose = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-35, -15);
+    ctx2.quadraticCurveTo(0, -35, 35, -15);
+    ctx2.quadraticCurveTo(29, 23, 0, 32);
+    ctx2.quadraticCurveTo(-29, 23, -35, -15);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, nose, { x: -39, y: -38, w: 78, h: 74 }, style, {
+    wash: 0.075,
+    hatch: 0.035,
+    shadow: 0.035,
+    spacing: 5
+  });
+  ctx2.fillStyle = colorAlpha(style.highlight || "#ffffff", 0.34);
+  ctx2.beginPath();
+  ctx2.ellipse(-10, -12, 8, 4, -0.25, 0, Math.PI * 2);
+  ctx2.fill();
+  drawRivet(ctx2, -25, -11, 2.6);
+  drawRivet(ctx2, 25, -11, 2.6);
+}
+function drawPetHaunchPlate(ctx2, part) {
+  const style = setup(ctx2, part, 2.2, 0.94);
+  const haunch = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-37, -65);
+    ctx2.bezierCurveTo(12, -82, 50, -45, 53, 8);
+    ctx2.bezierCurveTo(55, 51, 24, 76, -13, 65);
+    ctx2.bezierCurveTo(-50, 54, -58, -20, -37, -65);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, haunch, { x: -59, y: -84, w: 116, h: 157 }, style, {
+    wash: 0.115,
+    hatch: 0.063,
+    shadow: 0.05,
+    spacing: 7
+  });
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.34);
+  ctx2.lineWidth = 1.15;
+  roughLine(ctx2, -31, -48, 32, 43, 0.55, 13, 1851);
+  for (const point of [[-31, -48], [33, 42], [-36, 29]]) drawRivet(ctx2, point[0], point[1], 3);
+}
+function drawPetPenguinHead(ctx2, part) {
+  const style = setup(ctx2, part, 2.35, 0.95);
+  const dome = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(0, -70);
+    ctx2.bezierCurveTo(43, -70, 68, -43, 69, -4);
+    ctx2.bezierCurveTo(70, 37, 45, 67, 0, 70);
+    ctx2.bezierCurveTo(-45, 67, -70, 37, -69, -4);
+    ctx2.bezierCurveTo(-68, -43, -43, -70, 0, -70);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, dome, { x: -73, y: -74, w: 146, h: 148 }, style, {
+    wash: 0.13,
+    hatch: 0.074,
+    cross: 0.028,
+    shadow: 0.055,
+    spacing: 7
+  });
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.38);
+  ctx2.lineWidth = 1.25;
+  roughLine(ctx2, 0, -62, 0, 57, 0.42, 14, 1861);
+  const cheekSeam = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-57, 26);
+    ctx2.quadraticCurveTo(0, 55, 57, 26);
+  };
+  sketchStroke(ctx2, cheekSeam, 0.22, 0.72);
+  ctx2.strokeStyle = colorAlpha(style.highlight || "#ffffff", 0.52);
+  roughLine(ctx2, -38, -51, 25, -60, 0.48, 10, 1862);
+  for (const point of [[-45, -39], [45, -39], [-51, 30], [51, 30], [0, 59]]) {
+    drawRivet(ctx2, point[0], point[1], 3.05);
+  }
+}
+function drawPetPenguinFlipper(ctx2, part) {
+  const style = setup(ctx2, part, 2.35, 0.95);
+  const blade = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-12, -14);
+    ctx2.bezierCurveTo(-30, -10, -38, 10, -36, 32);
+    ctx2.bezierCurveTo(-33, 62, -15, 91, 0, 106);
+    ctx2.bezierCurveTo(15, 90, 31, 61, 35, 34);
+    ctx2.bezierCurveTo(39, 11, 27, -9, 11, -14);
+    ctx2.quadraticCurveTo(0, -18, -12, -14);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, blade, { x: -42, y: -20, w: 84, h: 132 }, style, {
+    wash: 0.135,
+    hatch: 0.078,
+    cross: 0.03,
+    shadow: 0.058,
+    spacing: 7
+  });
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.4);
+  ctx2.lineWidth = 1.3;
+  roughLine(ctx2, -26, 24, 21, 43, 0.52, 10, 1871);
+  roughLine(ctx2, 21, 43, -3, 88, 0.46, 9, 1872);
+  ctx2.strokeStyle = colorAlpha(style.highlight || "#ffffff", 0.48);
+  roughLine(ctx2, -23, 3, 15, 0, 0.4, 7, 1873);
+  for (const point of [[-22, 3], [22, 11], [-24, 43], [12, 57], [-5, 88]]) {
+    drawRivet(ctx2, point[0], point[1], 3);
+  }
+}
+function drawPetPenguinFacePlate(ctx2, part) {
+  const style = setup(ctx2, part, 2.25, 0.95);
+  const face = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(0, -62);
+    ctx2.bezierCurveTo(-39, -65, -58, -39, -55, -5);
+    ctx2.bezierCurveTo(-52, 30, -32, 52, 0, 55);
+    ctx2.bezierCurveTo(32, 52, 52, 30, 55, -5);
+    ctx2.bezierCurveTo(58, -39, 39, -65, 0, -62);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, face, { x: -59, y: -68, w: 118, h: 127 }, style, {
+    wash: 0.09,
+    hatch: 0.048,
+    cross: 0.018,
+    shadow: 0.04,
+    spacing: 6
+  });
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.3);
+  ctx2.lineWidth = 1.15;
+  roughLine(ctx2, 0, -53, 0, 43, 0.34, 9, 1881);
+  roughLine(ctx2, -43, 9, 0, 42, 0.4, 8, 1882);
+  roughLine(ctx2, 0, 42, 43, 9, 0.4, 8, 1883);
+  for (const point of [[-38, -32], [38, -32], [-40, 18], [40, 18], [0, 45]]) {
+    drawRivet(ctx2, point[0], point[1], 2.75);
+  }
+}
+function drawPetPenguinBib(ctx2, part) {
+  const style = setup(ctx2, part, 2.3, 0.96);
+  const bib = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(0, -18);
+    ctx2.bezierCurveTo(-10, -55, -32, -83, -49, -69);
+    ctx2.bezierCurveTo(-64, -55, -59, -20, -50, -4);
+    ctx2.bezierCurveTo(-44, 8, -45, 16, -42, 25);
+    ctx2.bezierCurveTo(-38, 42, -39, 76, -24, 101);
+    ctx2.bezierCurveTo(-10, 109, 10, 109, 24, 101);
+    ctx2.bezierCurveTo(39, 76, 38, 42, 42, 25);
+    ctx2.bezierCurveTo(45, 16, 44, 8, 50, -4);
+    ctx2.bezierCurveTo(59, -20, 64, -55, 49, -69);
+    ctx2.bezierCurveTo(32, -83, 10, -55, 0, -18);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, bib, { x: -67, y: -87, w: 134, h: 201 }, style, {
+    wash: 0.095,
+    hatch: 0.052,
+    cross: 0.02,
+    shadow: 0.045,
+    spacing: 7
+  });
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.32);
+  ctx2.lineWidth = 1.2;
+  roughLine(ctx2, -42, 25, 0, 47, 0.42, 9, 1891);
+  roughLine(ctx2, 0, 47, 42, 25, 0.42, 9, 1892);
+  roughLine(ctx2, 0, 47, 0, 96, 0.34, 8, 1893);
+  for (const point of [[-42, -48], [42, -48], [-45, -8], [45, -8], [-33, 39], [33, 39], [-18, 92], [18, 92]]) {
+    drawRivet(ctx2, point[0], point[1], 2.8);
+  }
+}
+function drawPetPenguinNose(ctx2, part) {
+  const style = setup(ctx2, part, 2.15, 0.98);
+  const nose = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-34, 0);
+    ctx2.quadraticCurveTo(0, -16, 34, 0);
+    ctx2.quadraticCurveTo(0, 15, -34, 0);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, nose, { x: -38, y: -20, w: 76, h: 39 }, style, {
+    wash: 0.075,
+    hatch: 0.032,
+    cross: 0.012,
+    shadow: 0.035,
+    spacing: 5
+  });
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.45);
+  ctx2.lineWidth = 1.1;
+  roughLine(ctx2, -27, 1, 27, 1, 0.24, 6, 1901);
+  drawRivet(ctx2, -25, 0, 2.35);
+  drawRivet(ctx2, 25, 0, 2.35);
+}
+function drawPetSharkBody(ctx2, part) {
+  const style = setup(ctx2, part, 2.45, 0.96);
+  const body = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-88, 1);
+    ctx2.bezierCurveTo(-82, -31, -47, -43, 0, -40);
+    ctx2.bezierCurveTo(38, -38, 67, -23, 79, -6);
+    ctx2.quadraticCurveTo(84, 0, 79, 7);
+    ctx2.bezierCurveTo(65, 25, 37, 38, 0, 40);
+    ctx2.bezierCurveTo(-47, 43, -82, 32, -88, 1);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, body, { x: -94, y: -47, w: 180, h: 94 }, style, {
+    wash: 0.14,
+    hatch: 0.078,
+    cross: 0.03,
+    shadow: 0.06,
+    spacing: 7
+  });
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.36);
+  ctx2.lineWidth = 1.25;
+  roughLine(ctx2, -42, -31, -33, 31, 0.48, 11, 1911);
+  roughLine(ctx2, 13, -34, 21, 33, 0.46, 11, 1912);
+  roughLine(ctx2, -70, 18, 57, 20, 0.55, 15, 1913);
+  ctx2.strokeStyle = colorAlpha(style.highlight || "#ffffff", 0.48);
+  roughLine(ctx2, -58, -27, 35, -29, 0.52, 13, 1914);
+  for (const point of [[-55, -26], [-58, 25], [-9, -34], [-7, 34], [42, -22], [45, 22], [70, 0]]) {
+    drawRivet(ctx2, point[0], point[1], 3);
+  }
+}
+function drawPetSharkDorsal(ctx2, part) {
+  const style = setup(ctx2, part, 2.35, 0.96);
+  const fin = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-45, 28);
+    ctx2.bezierCurveTo(-24, -22, -7, -60, 8, -64);
+    ctx2.bezierCurveTo(25, -28, 34, 3, 47, 28);
+    ctx2.quadraticCurveTo(0, 39, -45, 28);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, fin, { x: -50, y: -69, w: 102, h: 104 }, style, {
+    wash: 0.13,
+    hatch: 0.074,
+    cross: 0.025,
+    shadow: 0.05,
+    spacing: 7
+  });
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.38);
+  ctx2.lineWidth = 1.2;
+  roughLine(ctx2, -31, 25, 6, -49, 0.56, 11, 1921);
+  for (const point of [[-31, 24], [7, -49], [35, 24]]) drawRivet(ctx2, point[0], point[1], 2.8);
+}
+function drawPetSharkPectoral(ctx2, part) {
+  const style = setup(ctx2, part, 2.3, 0.96);
+  const fin = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-34, -12);
+    ctx2.bezierCurveTo(-2, -8, 31, 9, 49, 31);
+    ctx2.bezierCurveTo(15, 27, -12, 18, -36, 8);
+    ctx2.quadraticCurveTo(-42, -2, -34, -12);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, fin, { x: -44, y: -17, w: 98, h: 54 }, style, {
+    wash: 0.125,
+    hatch: 0.07,
+    cross: 0.024,
+    shadow: 0.048,
+    spacing: 6
+  });
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.36);
+  ctx2.lineWidth = 1.15;
+  roughLine(ctx2, -27, -5, 36, 24, 0.48, 10, 1931);
+  drawRivet(ctx2, -27, -4, 2.8);
+  drawRivet(ctx2, 33, 23, 2.65);
+}
+function drawPetSharkTail(ctx2, part) {
+  const style = setup(ctx2, part, 2.4, 0.96);
+  const tail = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-12, -10);
+    ctx2.bezierCurveTo(8, -14, 27, -39, 51, -56);
+    ctx2.bezierCurveTo(50, -27, 42, -9, 30, 0);
+    ctx2.bezierCurveTo(42, 9, 50, 27, 51, 56);
+    ctx2.bezierCurveTo(27, 39, 8, 14, -12, 10);
+    ctx2.quadraticCurveTo(-2, 0, -12, -10);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, tail, { x: -17, y: -61, w: 74, h: 122 }, style, {
+    wash: 0.135,
+    hatch: 0.076,
+    cross: 0.028,
+    shadow: 0.055,
+    spacing: 7
+  });
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.4);
+  ctx2.lineWidth = 1.2;
+  roughLine(ctx2, -5, -8, 37, -43, 0.5, 10, 1941);
+  roughLine(ctx2, -5, 8, 37, 43, 0.5, 10, 1942);
+  roughLine(ctx2, 30, 0, 46, 0, 0.34, 5, 1943);
+  for (const point of [[-5, -7], [-5, 7], [36, -42], [36, 42], [33, 0]]) {
+    drawRivet(ctx2, point[0], point[1], 2.75);
+  }
+}
+function goldenReferenceGradient(ctx2, x0, y0, x1, y1, dark = "#503000") {
+  const gradient = ctx2.createLinearGradient(x0, y0, x1, y1);
+  gradient.addColorStop(0, dark);
+  gradient.addColorStop(0.2, "#a06000");
+  gradient.addColorStop(0.42, "#e0a000");
+  gradient.addColorStop(0.57, "#f0b020");
+  gradient.addColorStop(0.77, "#b07000");
+  gradient.addColorStop(1, "#503000");
+  return gradient;
+}
+function goldenReferenceGlass(ctx2, x, y, radius) {
+  const gradient = ctx2.createRadialGradient(x - radius * 0.35, y - radius * 0.42, 1, x, y, radius);
+  gradient.addColorStop(0, "#dffff7");
+  gradient.addColorStop(0.2, "#4fe0d0");
+  gradient.addColorStop(0.54, "#087f79");
+  gradient.addColorStop(1, "#032927");
+  return gradient;
+}
+function drawGoldenReferenceCog(ctx2, x, y, radius, teeth = 12, tealCore = false) {
+  ctx2.save();
+  ctx2.translate(x, y);
+  ctx2.fillStyle = goldenReferenceGradient(ctx2, -radius, -radius, radius, radius);
+  ctx2.strokeStyle = "#2f1c05";
+  ctx2.lineWidth = Math.max(1.5, radius * 0.1);
+  ctx2.beginPath();
+  for (let index = 0; index < teeth * 2; index += 1) {
+    const angle = -Math.PI / 2 + index * Math.PI / teeth;
+    const rr = index % 2 ? radius * 0.78 : radius;
+    const px = Math.cos(angle) * rr;
+    const py = Math.sin(angle) * rr;
+    if (!index) ctx2.moveTo(px, py);
+    else ctx2.lineTo(px, py);
+  }
+  ctx2.closePath();
+  ctx2.fill();
+  ctx2.stroke();
+  ctx2.fillStyle = "#33200a";
+  ctx2.beginPath();
+  ctx2.arc(0, 0, radius * 0.5, 0, Math.PI * 2);
+  ctx2.fill();
+  ctx2.stroke();
+  ctx2.fillStyle = tealCore ? goldenReferenceGlass(ctx2, 0, 0, radius * 0.31) : "#d09000";
+  ctx2.beginPath();
+  ctx2.arc(0, 0, radius * 0.29, 0, Math.PI * 2);
+  ctx2.fill();
+  ctx2.stroke();
+  ctx2.restore();
+}
+function drawGoldenAviatorGoggles(ctx2, part) {
+  setup(ctx2, part, 2.5, 1);
+  ctx2.lineJoin = "round";
+  ctx2.lineCap = "round";
+  const drawLens = (side) => {
+    const x = side * 52;
+    ctx2.save();
+    ctx2.translate(x, 3);
+    ctx2.rotate(side * 0.055);
+    const outer = () => {
+      ctx2.beginPath();
+      ctx2.moveTo(-44, -27);
+      ctx2.quadraticCurveTo(-31, -40, 9, -33);
+      ctx2.quadraticCurveTo(43, -27, 45, -3);
+      ctx2.quadraticCurveTo(43, 24, 7, 36);
+      ctx2.quadraticCurveTo(-28, 31, -44, 7);
+      ctx2.quadraticCurveTo(-50, -12, -44, -27);
+      ctx2.closePath();
+    };
+    ctx2.fillStyle = goldenReferenceGradient(ctx2, -46, -35, 46, 37);
+    ctx2.strokeStyle = "#2f1c05";
+    ctx2.lineWidth = 4;
+    outer();
+    ctx2.fill();
+    ctx2.stroke();
+    const inner = () => {
+      ctx2.beginPath();
+      ctx2.moveTo(-35, -20);
+      ctx2.quadraticCurveTo(-24, -30, 7, -25);
+      ctx2.quadraticCurveTo(34, -20, 35, -2);
+      ctx2.quadraticCurveTo(34, 17, 5, 26);
+      ctx2.quadraticCurveTo(-22, 23, -34, 5);
+      ctx2.quadraticCurveTo(-39, -8, -35, -20);
+      ctx2.closePath();
+    };
+    const glass = ctx2.createLinearGradient(-38, -26, 38, 26);
+    glass.addColorStop(0, "#53635f");
+    glass.addColorStop(0.22, "#151d1b");
+    glass.addColorStop(0.58, "#030706");
+    glass.addColorStop(0.82, "#6f450a");
+    glass.addColorStop(1, "#171108");
+    ctx2.fillStyle = glass;
+    inner();
+    ctx2.fill();
+    ctx2.stroke();
+    ctx2.save();
+    inner();
+    ctx2.clip();
+    ctx2.fillStyle = "rgba(255,225,126,0.34)";
+    ctx2.rotate(-0.16);
+    ctx2.fillRect(-55, -18, 112, 8);
+    ctx2.fillStyle = "rgba(255,255,235,0.22)";
+    ctx2.fillRect(-52, -7, 104, 3);
+    ctx2.restore();
+    for (const [rx, ry] of [[-34, -20], [30, -20], [-31, 16], [28, 19]]) drawRivet(ctx2, rx, ry, 2.6);
+    ctx2.restore();
+    drawGoldenReferenceCog(ctx2, side * 103, 0, 14, 10, side > 0);
+    drawRivet(ctx2, side * 91, 15, 3.2);
+  };
+  ctx2.strokeStyle = "#2f1c05";
+  ctx2.lineWidth = 8;
+  roughBezier(ctx2, [[-78, -35], [-98, -43], [-112, -25], [-110, 1]], 0.18, 9850);
+  roughBezier(ctx2, [[78, -35], [98, -43], [112, -25], [110, 1]], 0.18, 9851);
+  ctx2.strokeStyle = "#d09000";
+  ctx2.lineWidth = 4.5;
+  roughBezier(ctx2, [[-78, -35], [-98, -43], [-112, -25], [-110, 1]], 0.16, 9852);
+  roughBezier(ctx2, [[78, -35], [98, -43], [112, -25], [110, 1]], 0.16, 9853);
+  drawLens(-1);
+  drawLens(1);
+  ctx2.fillStyle = goldenReferenceGradient(ctx2, -22, -17, 22, 12);
+  ctx2.strokeStyle = "#2f1c05";
+  ctx2.lineWidth = 3;
+  ctx2.beginPath();
+  ctx2.roundRect(-21, -14, 42, 21, 6);
+  ctx2.fill();
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.roundRect(-13, -48, 26, 13, 4);
+  ctx2.fill();
+  ctx2.stroke();
+  ctx2.strokeStyle = "#d09000";
+  ctx2.lineWidth = 4;
+  roughBezier(ctx2, [[-43, -31], [-30, -43], [-14, -42], [0, -40]], 0.16, 9854);
+  roughBezier(ctx2, [[43, -31], [30, -43], [14, -42], [0, -40]], 0.16, 9855);
+  drawRivet(ctx2, -14, -4, 2.4);
+  drawRivet(ctx2, 14, -4, 2.4);
+}
+function drawGoldenSunforgeSombrero(ctx2, part) {
+  setup(ctx2, part, 2.6, 1);
+  ctx2.lineJoin = "round";
+  const brim = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-137, 24);
+    ctx2.quadraticCurveTo(-100, -8, -51, 3);
+    ctx2.quadraticCurveTo(0, 14, 51, 3);
+    ctx2.quadraticCurveTo(100, -8, 137, 24);
+    ctx2.quadraticCurveTo(110, 67, 0, 70);
+    ctx2.quadraticCurveTo(-110, 67, -137, 24);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, brim, 6, 8, 0.11);
+  ctx2.fillStyle = goldenReferenceGradient(ctx2, -137, -8, 137, 70);
+  ctx2.strokeStyle = "#2f1c05";
+  ctx2.lineWidth = 4;
+  brim();
+  ctx2.fill();
+  ctx2.stroke();
+  ctx2.fillStyle = "#075b55";
+  ctx2.beginPath();
+  ctx2.moveTo(-121, 36);
+  for (let x = -121; x < 121; x += 30.25) {
+    ctx2.lineTo(x + 14.5, 46);
+    ctx2.lineTo(x + 30.25, 36);
+  }
+  ctx2.lineTo(113, 56);
+  ctx2.quadraticCurveTo(0, 76, -113, 56);
+  ctx2.closePath();
+  ctx2.fill();
+  ctx2.strokeStyle = "#d09000";
+  ctx2.lineWidth = 2.4;
+  ctx2.stroke();
+  const crown = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-55, 24);
+    ctx2.quadraticCurveTo(-50, -54, -31, -80);
+    ctx2.quadraticCurveTo(0, -108, 31, -80);
+    ctx2.quadraticCurveTo(50, -54, 55, 24);
+    ctx2.quadraticCurveTo(0, 38, -55, 24);
+    ctx2.closePath();
+  };
+  ctx2.fillStyle = goldenReferenceGradient(ctx2, -55, -105, 55, 36);
+  ctx2.strokeStyle = "#2f1c05";
+  ctx2.lineWidth = 4;
+  crown();
+  ctx2.fill();
+  ctx2.stroke();
+  ctx2.strokeStyle = "rgba(47,28,5,0.72)";
+  ctx2.lineWidth = 1.7;
+  roughLine(ctx2, -29, -78, -20, 13, 0.18, 9860);
+  roughLine(ctx2, 29, -78, 20, 13, 0.18, 9861);
+  roughLine(ctx2, 0, -96, 0, 16, 0.18, 9862);
+  ctx2.strokeStyle = "#2f1c05";
+  ctx2.lineWidth = 11;
+  roughBezier(ctx2, [[-52, -2], [-35, -17], [-17, 5], [0, -7], [17, -17], [35, 5], [52, -2]], 0.14, 9863);
+  ctx2.strokeStyle = "#d09000";
+  ctx2.lineWidth = 7;
+  roughBezier(ctx2, [[-52, -2], [-35, -17], [-17, 5], [0, -7], [17, -17], [35, 5], [52, -2]], 0.12, 9864);
+  drawGoldenReferenceCog(ctx2, -53, 18, 14, 10, false);
+  drawGoldenReferenceCog(ctx2, 53, 18, 14, 10, true);
+  ctx2.fillStyle = goldenReferenceGradient(ctx2, -20, 0, 20, 34);
+  ctx2.strokeStyle = "#2f1c05";
+  ctx2.lineWidth = 2.5;
+  ctx2.beginPath();
+  ctx2.roundRect(-20, -1, 40, 36, 4);
+  ctx2.fill();
+  ctx2.stroke();
+  drawGoldenReferenceCog(ctx2, 0, 17, 13, 11, true);
+  for (const [index, x] of [-114, -84, -55, -27, 27, 55, 84, 114].entries()) drawRivet(ctx2, x, 37 + Math.abs(x) * 0.12, 2.5 + index % 2 * 0.25);
+}
+function drawGoldenPocketWatch(ctx2, part) {
+  setup(ctx2, part, 2.6, 1);
+  ctx2.lineJoin = "round";
+  ctx2.strokeStyle = "#2f1c05";
+  ctx2.lineWidth = 15;
+  ctx2.beginPath();
+  ctx2.ellipse(0, -91, 27, 20, 0, 0, Math.PI * 2);
+  ctx2.stroke();
+  ctx2.strokeStyle = "#d09000";
+  ctx2.lineWidth = 9;
+  ctx2.stroke();
+  ctx2.fillStyle = goldenReferenceGradient(ctx2, -18, -74, 18, -48);
+  ctx2.strokeStyle = "#2f1c05";
+  ctx2.lineWidth = 3;
+  ctx2.beginPath();
+  ctx2.roundRect(-17, -73, 34, 22, 6);
+  ctx2.fill();
+  ctx2.stroke();
+  for (let x = -12; x <= 12; x += 6) roughLine(ctx2, x, -69, x, -54, 0.1, 2, 9870 + x);
+  const casePath = () => {
+    ctx2.beginPath();
+    ctx2.arc(0, 24, 77, 0, Math.PI * 2);
+  };
+  drawCastShadow(ctx2, casePath, 7, 9, 0.12);
+  ctx2.fillStyle = goldenReferenceGradient(ctx2, -76, -54, 77, 103);
+  casePath();
+  ctx2.fill();
+  ctx2.strokeStyle = "#2f1c05";
+  ctx2.lineWidth = 5;
+  ctx2.stroke();
+  ctx2.fillStyle = "#5d3908";
+  ctx2.beginPath();
+  ctx2.arc(0, 24, 62, 0, Math.PI * 2);
+  ctx2.fill();
+  ctx2.stroke();
+  ctx2.fillStyle = goldenReferenceGradient(ctx2, -54, -30, 54, 78, "#3f2607");
+  ctx2.beginPath();
+  ctx2.arc(0, 24, 54, 0, Math.PI * 2);
+  ctx2.fill();
+  ctx2.strokeStyle = "#d09000";
+  ctx2.lineWidth = 5;
+  ctx2.stroke();
+  ctx2.fillStyle = "rgba(4,75,69,0.32)";
+  ctx2.beginPath();
+  ctx2.arc(0, 24, 48, 0, Math.PI * 2);
+  ctx2.fill();
+  drawGoldenReferenceCog(ctx2, -22, 14, 21, 11, false);
+  drawGoldenReferenceCog(ctx2, 23, 39, 24, 12, false);
+  drawGoldenReferenceCog(ctx2, 9, -8, 16, 10, true);
+  ctx2.strokeStyle = "rgba(80,225,211,0.28)";
+  ctx2.lineWidth = 1;
+  for (let y = -24; y <= 73; y += 12) roughLine(ctx2, -48, y, 48, y, 0.08, 2, 9880 + y);
+  ctx2.strokeStyle = "#2f1c05";
+  ctx2.lineWidth = 7;
+  roughLine(ctx2, 0, 24, -17, 61, 0.1, 3, 9890);
+  roughLine(ctx2, 0, 24, 35, 3, 0.1, 3, 9891);
+  ctx2.strokeStyle = "#f0b020";
+  ctx2.lineWidth = 3;
+  roughLine(ctx2, 0, 24, -17, 61, 0.08, 2, 9892);
+  roughLine(ctx2, 0, 24, 35, 3, 0.08, 2, 9893);
+  drawRivet(ctx2, 0, 24, 6);
+  for (let index = 0; index < 12; index += 1) {
+    const angle = index * Math.PI / 6;
+    drawRivet(ctx2, Math.cos(angle) * 68, 24 + Math.sin(angle) * 68, 2.7);
+  }
+  for (const [x, y] of [[0, -28], [52, 24], [0, 76], [-52, 24]]) {
+    ctx2.fillStyle = goldenReferenceGlass(ctx2, x, y, 5);
+    ctx2.fillRect(x - 5, y - 5, 10, 10);
+    ctx2.strokeStyle = "#d09000";
+    ctx2.lineWidth = 2;
+    ctx2.strokeRect(x - 5, y - 5, 10, 10);
+  }
+}
+function drawGoldenMechanicalSkull(ctx2, part) {
+  setup(ctx2, part, 2.6, 1);
+  ctx2.lineJoin = "round";
+  const cranium = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-77, -31);
+    ctx2.lineTo(-70, -70);
+    ctx2.quadraticCurveTo(-55, -103, -25, -113);
+    ctx2.quadraticCurveTo(0, -120, 27, -108);
+    ctx2.quadraticCurveTo(57, -101, 71, -69);
+    ctx2.lineTo(78, -31);
+    ctx2.lineTo(66, 30);
+    ctx2.lineTo(47, 58);
+    ctx2.lineTo(31, 91);
+    ctx2.lineTo(-31, 91);
+    ctx2.lineTo(-43, 55);
+    ctx2.lineTo(-59, 27);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, cranium, 7, 9, 0.12);
+  ctx2.fillStyle = goldenReferenceGradient(ctx2, -78, -116, 78, 94);
+  cranium();
+  ctx2.fill();
+  ctx2.strokeStyle = "#2f1c05";
+  ctx2.lineWidth = 4;
+  ctx2.stroke();
+  ctx2.strokeStyle = "rgba(47,28,5,0.74)";
+  ctx2.lineWidth = 2;
+  roughBezier(ctx2, [[-63, -37], [-42, -72], [0, -82], [42, -72], [63, -37]], 0.18, 9900);
+  roughLine(ctx2, 0, -105, 0, -46, 0.16, 4, 9901);
+  roughLine(ctx2, -53, -32, -31, -18, 0.16, 3, 9902);
+  roughLine(ctx2, 53, -32, 31, -18, 0.16, 3, 9903);
+  drawGoldenReferenceCog(ctx2, 0, -57, 18, 12, false);
+  for (const side of [-1, 1]) {
+    const x = side * 29;
+    ctx2.fillStyle = "#17110a";
+    ctx2.beginPath();
+    ctx2.ellipse(x, -8, 25, 30, side * 0.12, 0, Math.PI * 2);
+    ctx2.fill();
+    ctx2.strokeStyle = "#2f1c05";
+    ctx2.lineWidth = 4;
+    ctx2.stroke();
+    ctx2.fillStyle = goldenReferenceGlass(ctx2, x, -8, 7);
+    ctx2.beginPath();
+    ctx2.arc(x, -8, 7, 0, Math.PI * 2);
+    ctx2.fill();
+    ctx2.strokeStyle = "#d09000";
+    ctx2.lineWidth = 4;
+    ctx2.stroke();
+    drawGoldenReferenceCog(ctx2, side * 88, -10, 23, 12, side > 0);
+    roughLine(ctx2, side * 54, -13, side * 68, -12, 0.12, 2, 9910 + side);
+  }
+  ctx2.fillStyle = "#17110a";
+  ctx2.beginPath();
+  ctx2.moveTo(0, 14);
+  ctx2.lineTo(-10, 35);
+  ctx2.lineTo(0, 40);
+  ctx2.lineTo(10, 35);
+  ctx2.closePath();
+  ctx2.fill();
+  ctx2.stroke();
+  ctx2.fillStyle = goldenReferenceGradient(ctx2, -48, 32, 48, 87);
+  ctx2.beginPath();
+  ctx2.moveTo(-48, 31);
+  ctx2.lineTo(-29, 44);
+  ctx2.lineTo(-23, 69);
+  ctx2.lineTo(-11, 80);
+  ctx2.lineTo(0, 72);
+  ctx2.lineTo(11, 80);
+  ctx2.lineTo(23, 69);
+  ctx2.lineTo(29, 44);
+  ctx2.lineTo(48, 31);
+  ctx2.lineTo(39, 78);
+  ctx2.lineTo(24, 94);
+  ctx2.lineTo(-24, 94);
+  ctx2.lineTo(-39, 78);
+  ctx2.closePath();
+  ctx2.fill();
+  ctx2.strokeStyle = "#2f1c05";
+  ctx2.lineWidth = 3;
+  ctx2.stroke();
+  ctx2.fillStyle = "#37200a";
+  ctx2.fillRect(-31, 48, 62, 13);
+  ctx2.strokeRect(-31, 48, 62, 13);
+  for (let x = -27; x <= 27; x += 9) {
+    ctx2.fillStyle = "#e0a000";
+    ctx2.fillRect(x - 3, 48, 6, 13);
+    ctx2.strokeRect(x - 3, 48, 6, 13);
+  }
+  ctx2.fillStyle = "#17110a";
+  ctx2.fillRect(-25, 65, 50, 8);
+  for (let x = -21; x <= 21; x += 8) {
+    ctx2.fillStyle = "#c08000";
+    ctx2.fillRect(x - 2.5, 65, 5, 10);
+  }
+  for (const [x, y] of [[-49, -50], [49, -50], [-54, 22], [54, 22], [-36, 75], [36, 75], [0, -94]]) drawRivet(ctx2, x, y, 2.8);
+}
+function drawGoldenSteamHelmShell(ctx2, part) {
+  const style = setup(ctx2, part, 2.5, 0.94);
+  const shell = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-126, 48);
+    ctx2.quadraticCurveTo(-118, -36, -66, -72);
+    ctx2.quadraticCurveTo(0, -112, 70, -70);
+    ctx2.quadraticCurveTo(120, -34, 128, 48);
+    ctx2.quadraticCurveTo(72, 70, 0, 72);
+    ctx2.quadraticCurveTo(-72, 70, -126, 48);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, shell, 5, 7, 0.08);
+  const fill = ctx2.createLinearGradient(-112, -86, 116, 72);
+  fill.addColorStop(0, "#d09000");
+  fill.addColorStop(0.28, "#e0a000");
+  fill.addColorStop(0.7, "#905000");
+  fill.addColorStop(1, "#503000");
+  ctx2.fillStyle = fill;
+  shell();
+  ctx2.fill();
+  pencilShade(ctx2, shell, { x: -128, y: -106, w: 256, h: 180 }, { wash: 0.06, hatch: 0.03, cross: 0.01, spacing: 10, texture: 0.025 });
+  ctx2.strokeStyle = "#2f1c05";
+  ctx2.lineWidth = 3;
+  shell();
+  ctx2.stroke();
+  ctx2.strokeStyle = "rgba(47,28,5,0.72)";
+  ctx2.lineWidth = 2;
+  roughBezier(ctx2, [[-104, 26], [-54, 8], [54, 8], [106, 26]], 0.34, 9901);
+  roughBezier(ctx2, [[-92, -26], [-42, -56], [44, -54], [94, -24]], 0.32, 9902);
+  ctx2.strokeStyle = "rgba(255,240,160,0.72)";
+  ctx2.lineWidth = 1.4;
+  roughBezier(ctx2, [[-82, -48], [-34, -82], [28, -80], [72, -51]], 0.28, 9903);
+  for (const [x, y] of [[-102, 39], [-54, 55], [0, 59], [54, 55], [102, 39], [-82, -18], [82, -18]]) {
+    drawRivet(ctx2, x, y, 3.2);
+  }
+}
+function drawGoldenSteamHelmSpike(ctx2, part) {
+  setup(ctx2, part, 2.2, 1);
+  const spike = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-22, 28);
+    ctx2.lineTo(-13, 9);
+    ctx2.quadraticCurveTo(-8, -41, 0, -96);
+    ctx2.quadraticCurveTo(9, -38, 14, 9);
+    ctx2.lineTo(22, 28);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, spike, 4, 5, 0.1);
+  const fill = ctx2.createLinearGradient(-18, 20, 14, -90);
+  fill.addColorStop(0, "#704000");
+  fill.addColorStop(0.2, "#b07000");
+  fill.addColorStop(0.46, "#f0b020");
+  fill.addColorStop(0.68, "#e0a000");
+  fill.addColorStop(1, "#905000");
+  ctx2.fillStyle = fill;
+  spike();
+  ctx2.fill();
+  ctx2.strokeStyle = "#2f1c05";
+  ctx2.lineWidth = 3;
+  spike();
+  ctx2.stroke();
+  ctx2.strokeStyle = "rgba(255,239,153,0.74)";
+  ctx2.lineWidth = 1.5;
+  roughBezier(ctx2, [[-7, 4], [-5, -31], [-2, -65], [0, -88]], 0.16, 9890);
+  ctx2.strokeStyle = "rgba(47,28,5,0.72)";
+  roughBezier(ctx2, [[7, 6], [5, -27], [3, -58], [1, -86]], 0.16, 9894);
+  const collarFill = ctx2.createLinearGradient(-28, 0, 28, 0);
+  collarFill.addColorStop(0, "#704000");
+  collarFill.addColorStop(0.42, "#e0a000");
+  collarFill.addColorStop(0.68, "#f0b020");
+  collarFill.addColorStop(1, "#704000");
+  ctx2.fillStyle = collarFill;
+  ctx2.strokeStyle = "#2f1c05";
+  ctx2.lineWidth = 2.2;
+  for (const [x, y, w, h] of [[-25, 20, 50, 11], [-20, 11, 40, 10], [-15, 3, 30, 9]]) {
+    ctx2.beginPath();
+    ctx2.roundRect(x, y, w, h, 3);
+    ctx2.fill();
+    ctx2.stroke();
+  }
+  drawRivet(ctx2, -16, 25, 2.2);
+  drawRivet(ctx2, 16, 25, 2.2);
+}
+function drawGoldenRiderJacketSide(ctx2, part, side) {
+  setup(ctx2, part, 2.4, 1);
+  ctx2.save();
+  ctx2.scale(side, 1);
+  const shell = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(48, -105);
+    ctx2.quadraticCurveTo(101, -116, 154, -83);
+    ctx2.quadraticCurveTo(202, -58, 214, -10);
+    ctx2.lineTo(198, 116);
+    ctx2.quadraticCurveTo(184, 141, 150, 142);
+    ctx2.quadraticCurveTo(107, 139, 64, 126);
+    ctx2.lineTo(58, 78);
+    ctx2.lineTo(62, 24);
+    ctx2.lineTo(30, -38);
+    ctx2.lineTo(48, -105);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, shell, 7, 9, 0.1);
+  const fill = ctx2.createLinearGradient(32, -108, 202, 128);
+  fill.addColorStop(0, "#e0a000");
+  fill.addColorStop(0.25, "#d09000");
+  fill.addColorStop(0.58, "#a06000");
+  fill.addColorStop(0.82, "#704000");
+  fill.addColorStop(1, "#503000");
+  ctx2.fillStyle = fill;
+  shell();
+  ctx2.fill();
+  pencilShade(ctx2, shell, { x: 24, y: -116, w: 186, h: 252 }, { wash: 0.045, hatch: 0.026, cross: 8e-3, spacing: 12, texture: 0.02 });
+  ctx2.strokeStyle = "#2f1c05";
+  ctx2.lineWidth = 3.2;
+  shell();
+  ctx2.stroke();
+  const shoulderFill = ctx2.createLinearGradient(74, -103, 181, -35);
+  shoulderFill.addColorStop(0, "#f0b020");
+  shoulderFill.addColorStop(0.46, "#c08000");
+  shoulderFill.addColorStop(1, "#704000");
+  ctx2.fillStyle = shoulderFill;
+  ctx2.beginPath();
+  ctx2.moveTo(73, -88);
+  ctx2.quadraticCurveTo(126, -108, 176, -68);
+  ctx2.lineTo(164, -31);
+  ctx2.quadraticCurveTo(121, -58, 80, -48);
+  ctx2.closePath();
+  ctx2.fill();
+  ctx2.strokeStyle = "rgba(47,28,5,0.9)";
+  ctx2.lineWidth = 2.5;
+  ctx2.stroke();
+  roughBezier(ctx2, [[84, -78], [119, -92], [151, -79], [169, -61]], 0.25, 9911 + side);
+  ctx2.fillStyle = "#241606";
+  ctx2.strokeStyle = "#2f1c05";
+  ctx2.lineWidth = 2.4;
+  ctx2.beginPath();
+  ctx2.moveTo(49, -101);
+  ctx2.lineTo(26, -39);
+  ctx2.lineTo(66, 31);
+  ctx2.lineTo(80, 15);
+  ctx2.lineTo(102, -58);
+  ctx2.closePath();
+  ctx2.fill();
+  ctx2.stroke();
+  const lapelFill = ctx2.createLinearGradient(35, -98, 104, 34);
+  lapelFill.addColorStop(0, "#f0b020");
+  lapelFill.addColorStop(0.48, "#b07000");
+  lapelFill.addColorStop(1, "#603800");
+  ctx2.fillStyle = lapelFill;
+  ctx2.beginPath();
+  ctx2.moveTo(49, -101);
+  ctx2.lineTo(31, -39);
+  ctx2.lineTo(72, 24);
+  ctx2.lineTo(108, -62);
+  ctx2.closePath();
+  ctx2.fill();
+  ctx2.stroke();
+  ctx2.strokeStyle = "rgba(255,231,132,0.68)";
+  ctx2.lineWidth = 1.35;
+  roughBezier(ctx2, [[50, -92], [47, -67], [44, -51], [34, -39]], 0.2, 9918 + side);
+  ctx2.strokeStyle = "rgba(47,28,5,0.94)";
+  ctx2.lineWidth = 2;
+  roughBezier(ctx2, [[31, -34], [43, -8], [57, 12], [61, 32], [59, 92]], 0.2, 9924 + side);
+  for (let y = -24; y <= 82; y += 12) {
+    const zipperX = y < 28 ? 36 + (y + 24) * 0.45 : 59;
+    roughLine(ctx2, zipperX, y, zipperX + 8, y + 2, 0.12, 2, 9940 + y + side);
+  }
+  ctx2.strokeStyle = "rgba(47,28,5,0.82)";
+  ctx2.lineWidth = 2.15;
+  roughBezier(ctx2, [[119, -28], [132, 6], [143, 42], [153, 75]], 0.25, 9960 + side);
+  roughLine(ctx2, 79, 45, 137, 37, 0.22, 5, 9970 + side);
+  roughLine(ctx2, 82, 55, 140, 47, 0.22, 5, 9974 + side);
+  roughLine(ctx2, 67, 94, 174, 91, 0.22, 6, 9978 + side);
+  roughLine(ctx2, 101, -42, 112, 29, 0.2, 5, 9982 + side);
+  for (let index = 0; index < 5; index += 1) {
+    const y = -7 + index * 17;
+    roughBezier(ctx2, [[124, y], [140, y + 4], [159, y + 6], [177, y + 2]], 0.18, 9986 + index + side);
+  }
+  ctx2.fillStyle = "#704000";
+  ctx2.strokeStyle = "#2f1c05";
+  ctx2.lineWidth = 2.2;
+  ctx2.beginPath();
+  ctx2.arc(132, -66, 16, 0, Math.PI * 2);
+  ctx2.fill();
+  ctx2.stroke();
+  ctx2.fillStyle = "#d09000";
+  ctx2.beginPath();
+  ctx2.arc(132, -66, 9, 0, Math.PI * 2);
+  ctx2.fill();
+  ctx2.stroke();
+  drawRivet(ctx2, 132, -66, 3.1);
+  for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 4) {
+    drawRivet(ctx2, 132 + Math.cos(angle) * 20, -66 + Math.sin(angle) * 20, 2.25);
+  }
+  drawGoldenReferenceCog(ctx2, 169, 61, 18, 12, false);
+  ctx2.strokeStyle = "#2f1c05";
+  ctx2.lineWidth = 4;
+  roughLine(ctx2, 177, 84, 188, 126, 0.16, 4, 9992 + side);
+  ctx2.strokeStyle = "#e0a000";
+  ctx2.lineWidth = 1.7;
+  roughLine(ctx2, 177, 84, 188, 126, 0.12, 3, 9994 + side);
+  for (let y = 88; y <= 120; y += 8) drawRivet(ctx2, 180 + (y - 88) * 0.25, y, 1.8);
+  for (const [x, y] of [[79, -90], [172, -57], [166, 83], [82, 110], [72, 72], [104, 42], [148, 37]]) {
+    drawRivet(ctx2, x, y, 2.8);
+  }
+  ctx2.restore();
+}
+function drawGoldenRiderJacketLeft(ctx2, part) {
+  drawGoldenRiderJacketSide(ctx2, part, -1);
+}
+function drawGoldenRiderJacketRight(ctx2, part) {
+  drawGoldenRiderJacketSide(ctx2, part, 1);
+}
+function drawWingFeather(ctx2, part) {
+  const style = setup(ctx2, part, 2.1, 0.9);
+  const blade = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(0, -96);
+    ctx2.bezierCurveTo(10, -70, 16, -20, 15, 40);
+    ctx2.quadraticCurveTo(14, 74, 4, 92);
+    ctx2.lineTo(-6, 92);
+    ctx2.quadraticCurveTo(-14, 60, -13, 10);
+    ctx2.bezierCurveTo(-12, -40, -8, -74, 0, -96);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, blade, { x: -16, y: -98, w: 34, h: 194 }, style, { wash: 0.12, hatch: 0.06 });
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.5);
+  ctx2.lineWidth = 1.4;
+  roughLine(ctx2, 1, -88, 1, 84, 0.4, 16, 4501);
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.3);
+  ctx2.lineWidth = 1;
+  for (let i = 0; i < 5; i += 1) {
+    const y = -70 + i * 32;
+    roughLine(ctx2, 1, y, 13, y + 14, 0.4, 5, 4510 + i);
+    roughLine(ctx2, 1, y, -11, y + 14, 0.4, 5, 4520 + i);
+  }
+  ctx2.strokeStyle = colorAlpha(style.highlight || "#ffffff", 0.4);
+  roughLine(ctx2, -6, -80, -10, 40, 0.4, 12, 4530);
+  drawRivet(ctx2, 0, 78, 3.2);
+}
+function drawWingSpar(ctx2, part) {
+  const style = setup(ctx2, part, 2.2, 0.92);
+  const arm = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-98, -14);
+    ctx2.quadraticCurveTo(-40, -22, 30, -12);
+    ctx2.quadraticCurveTo(78, -8, 100, -2);
+    ctx2.lineTo(100, 6);
+    ctx2.quadraticCurveTo(78, 12, 30, 16);
+    ctx2.quadraticCurveTo(-40, 24, -98, 16);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, arm, { x: -101, y: -26, w: 204, h: 52 }, style, { wash: 0.12, hatch: 0.06 });
+  const knuckle = () => {
+    ctx2.beginPath();
+    ctx2.arc(-86, 0, 20, 0, Math.PI * 2);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, knuckle, { x: -108, y: -22, w: 44, h: 44 }, style, { wash: 0.14 });
+  drawRivet(ctx2, -86, 0, 5);
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.34);
+  ctx2.lineWidth = 1.1;
+  for (const x of [-40, 6, 52]) roughLine(ctx2, x, -18, x, 18, 0.4, 6, 4600 + (x + 60));
+  ctx2.strokeStyle = colorAlpha(style.highlight || "#ffffff", 0.4);
+  roughLine(ctx2, -70, -12, 92, -2, 0.4, 16, 4650);
+}
+function drawWingMembrane(ctx2, part) {
+  const style = setup(ctx2, part, 2.2, 0.9);
+  const membrane = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-88, 60);
+    ctx2.quadraticCurveTo(-40, -50, 40, -66);
+    ctx2.quadraticCurveTo(78, -60, 90, -30);
+    ctx2.quadraticCurveTo(60, -6, 78, 8);
+    ctx2.quadraticCurveTo(44, 18, 58, 36);
+    ctx2.quadraticCurveTo(24, 40, 34, 60);
+    ctx2.quadraticCurveTo(2, 60, 8, 78);
+    ctx2.quadraticCurveTo(-40, 74, -88, 60);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, membrane, { x: -91, y: -68, w: 184, h: 150 }, style, { wash: 0.14, hatch: 0.05 });
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.4);
+  ctx2.lineWidth = 2;
+  const root = [-84, 58];
+  for (const tip of [[86, -28], [74, 10], [54, 38], [30, 60], [6, 76]]) roughLine(ctx2, root[0], root[1], tip[0], tip[1], 0.5, 12, 4700 + (tip[0] + 90));
+  drawRivet(ctx2, -84, 56, 4);
+}
+function drawWingCovert(ctx2, part) {
+  const style = setup(ctx2, part, 2, 0.9);
+  const plate = (ang, len, wid, seed) => {
+    ctx2.save();
+    ctx2.rotate(ang);
+    const p = () => {
+      ctx2.beginPath();
+      ctx2.moveTo(0, 0);
+      ctx2.lineTo(len, -wid);
+      ctx2.lineTo(len + 14, 0);
+      ctx2.lineTo(len, wid);
+      ctx2.closePath();
+    };
+    drawPetPencilShape(ctx2, p, { x: 0, y: -wid - 2, w: len + 16, h: wid * 2 + 4 }, style, { wash: 0.12, hatch: 0.05 });
+    drawRivet(ctx2, 12, 0, 2.6);
+    ctx2.restore();
+  };
+  ctx2.save();
+  ctx2.translate(-52, 34);
+  plate(-1.15, 96, 15, 4801);
+  plate(-0.86, 108, 16, 4802);
+  plate(-0.57, 118, 17, 4803);
+  plate(-0.3, 122, 17, 4804);
+  plate(-0.05, 120, 16, 4805);
+  ctx2.restore();
+}
+function drawWingSlat(ctx2, part) {
+  const style = setup(ctx2, part, 2, 0.9);
+  const wing = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-140, -18);
+    ctx2.quadraticCurveTo(20, -30, 120, -14);
+    ctx2.quadraticCurveTo(140, -8, 138, 0);
+    ctx2.quadraticCurveTo(140, 8, 120, 12);
+    ctx2.quadraticCurveTo(20, 26, -140, 20);
+    ctx2.closePath();
+  };
+  ctx2.save();
+  wing();
+  ctx2.clip();
+  ctx2.fillStyle = "#b0201c";
+  ctx2.fillRect(-150, -40, 300, 80);
+  ctx2.fillStyle = "#1b1410";
+  const cs = 22;
+  for (let gx = -140; gx < 140; gx += cs) {
+    for (let gy = -32; gy < 32; gy += cs) {
+      if ((Math.round((gx + 140) / cs) + Math.round((gy + 32) / cs)) % 2 === 0) ctx2.fillRect(gx, gy, cs, cs);
+    }
+  }
+  ctx2.fillStyle = "rgba(255,255,255,0.10)";
+  ctx2.fillRect(-150, -40, 300, 22);
+  ctx2.restore();
+  ctx2.strokeStyle = "#140f0c";
+  ctx2.lineWidth = 2.4;
+  wing();
+  ctx2.stroke();
+  ctx2.strokeStyle = "rgba(20,15,12,0.4)";
+  ctx2.lineWidth = 1.2;
+  for (const x of [-90, -40, 10, 60]) roughLine(ctx2, x, -22, x, 22, 0.4, 6, 4900 + (x + 100));
+  for (const x of [-120, -60, 0, 60, 110]) drawRivet(ctx2, x, 0, 2.6);
+}
+function drawWingJet(ctx2, part) {
+  const style = setup(ctx2, part, 2.2, 0.92);
+  const wing = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-150, -2);
+    ctx2.quadraticCurveTo(-30, -26, 108, -42);
+    ctx2.lineTo(150, -38);
+    ctx2.quadraticCurveTo(118, -26, 44, -6);
+    ctx2.quadraticCurveTo(-30, 12, -104, 28);
+    ctx2.lineTo(-150, 28);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, wing, { x: -152, y: -44, w: 304, h: 74 }, style, { wash: 0.12, hatch: 0.05 });
+  ctx2.strokeStyle = colorAlpha(style.highlight || "#ffffff", 0.42);
+  ctx2.lineWidth = 1.4;
+  roughLine(ctx2, -142, 0, 128, -38, 0.4, 18, 5001);
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.34);
+  ctx2.lineWidth = 1;
+  roughLine(ctx2, -120, 8, 118, -30, 0.4, 16, 5002);
+  for (const x of [-92, -34, 34, 92]) roughLine(ctx2, x, -22, x, 20, 0.4, 6, 5010 + (x + 100));
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.5);
+  ctx2.lineWidth = 1.6;
+  roughLine(ctx2, -104, 20, 40, 0, 0.4, 12, 5030);
+  for (const x of [-120, -60, 0, 60]) drawRivet(ctx2, x, -3, 2.6);
+  drawRivet(ctx2, 120, -32, 2.2);
+}
+function drawRocketThruster(ctx2, part) {
+  const style = setup(ctx2, part, 2.2, 0.92);
+  const fin = (a, b, c) => () => {
+    ctx2.beginPath();
+    ctx2.moveTo(28, a);
+    ctx2.lineTo(62, b);
+    ctx2.lineTo(44, c);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, fin(-16, -34, -8), { x: 26, y: -36, w: 40, h: 30 }, style, { wash: 0.1 });
+  drawPetPencilShape(ctx2, fin(16, 34, 8), { x: 26, y: 6, w: 40, h: 30 }, style, { wash: 0.1 });
+  const body = () => roundedRect(ctx2, -70, -22, 118, 44, 16);
+  drawPetPencilShape(ctx2, body, { x: -72, y: -24, w: 122, h: 48 }, style, { wash: 0.14, hatch: 0.05 });
+  const nose = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-70, -18);
+    ctx2.quadraticCurveTo(-104, 0, -70, 18);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, nose, { x: -106, y: -20, w: 40, h: 40 }, style, { wash: 0.14 });
+  const nozzle = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(44, -14);
+    ctx2.lineTo(76, -30);
+    ctx2.lineTo(76, 30);
+    ctx2.lineTo(44, 14);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, nozzle, { x: 42, y: -32, w: 36, h: 64 }, style, { wash: 0.12 });
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.34);
+  ctx2.lineWidth = 1;
+  for (const x of [-38, -8, 22]) roughLine(ctx2, x, -20, x, 20, 0.4, 6, 5100 + (x + 60));
+  ctx2.strokeStyle = colorAlpha(style.highlight || "#ffffff", 0.42);
+  roughLine(ctx2, -58, -12, 40, -12, 0.4, 10, 5150);
+  drawRivet(ctx2, -56, 0, 3);
+  drawRivet(ctx2, 0, -14, 2.4);
+  drawRivet(ctx2, 0, 14, 2.4);
+}
+function drawWingFin(ctx2, part) {
+  const style = setup(ctx2, part, 2.1, 0.9);
+  const fin = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-8, 58);
+    ctx2.lineTo(-2, -48);
+    ctx2.quadraticCurveTo(2, -60, 14, -58);
+    ctx2.lineTo(26, -20);
+    ctx2.quadraticCurveTo(30, 30, 18, 58);
+    ctx2.closePath();
+  };
+  drawPetPencilShape(ctx2, fin, { x: -10, y: -62, w: 42, h: 122 }, style, { wash: 0.12, hatch: 0.05 });
+  ctx2.strokeStyle = colorAlpha(style.highlight || "#ffffff", 0.4);
+  ctx2.lineWidth = 1.2;
+  roughLine(ctx2, 0, -46, 6, 52, 0.4, 12, 5201);
+  ctx2.strokeStyle = colorAlpha(style.stroke || "#171b1d", 0.34);
+  ctx2.lineWidth = 1;
+  roughLine(ctx2, 16, -30, 12, 50, 0.4, 8, 5202);
+  drawRivet(ctx2, 4, 44, 2.6);
+  drawRivet(ctx2, 8, 8, 2.2);
+}
+function drawRocketFlame(ctx2, part) {
+  setup(ctx2, part, 1, 0.9);
+  const plume = (col, len, wid) => {
+    ctx2.beginPath();
+    ctx2.moveTo(-42, -wid);
+    ctx2.quadraticCurveTo(len * 0.5, -wid * 0.55, len, 0);
+    ctx2.quadraticCurveTo(len * 0.5, wid * 0.55, -42, wid);
+    ctx2.quadraticCurveTo(-30, 0, -42, -wid);
+    ctx2.closePath();
+    ctx2.fillStyle = col;
+    ctx2.fill();
+  };
+  plume("rgba(255,110,28,0.92)", 122, 30);
+  plume("rgba(255,180,60,0.95)", 90, 20);
+  plume("rgba(255,240,180,0.96)", 56, 11);
+  plume("rgba(150,205,255,0.85)", 26, 6);
+}
+var BIN_FILL = "rgba(251,250,245,0.55)";
+var BIN_INK = "rgba(18,22,25,0.52)";
+function binShade(ctx2, pathFn, x, y, w, h) {
+  pencilShade(ctx2, pathFn, { x, y, w, h }, { wash: 0.1, hatch: 0.05, cross: 0.016, spacing: 6, texture: 0.04 });
+}
+function drawPlateHex(ctx2, part) {
+  setup(ctx2, part, 1.9, 0.8);
+  const R = 54;
+  const hex = () => {
+    ctx2.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const a = Math.PI / 6 + i * Math.PI / 3;
+      const x = Math.cos(a) * R, y = Math.sin(a) * R;
+      i ? ctx2.lineTo(x, y) : ctx2.moveTo(x, y);
+    }
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, hex, 3, 5, 0.05);
+  hex();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, hex, -R, -R, R * 2, R * 2);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  hex();
+  ctx2.stroke();
+  for (let i = 0; i < 6; i++) {
+    const a = Math.PI / 6 + i * Math.PI / 3;
+    drawRivet(ctx2, Math.cos(a) * (R - 13), Math.sin(a) * (R - 13), 2.7);
+  }
+}
+function drawPlateRound(ctx2, part) {
+  setup(ctx2, part, 1.9, 0.8);
+  const R = 52;
+  const disc = () => {
+    ctx2.beginPath();
+    ctx2.arc(0, 0, R, 0, 7);
+  };
+  drawCastShadow(ctx2, disc, 3, 5, 0.05);
+  disc();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, disc, -R, -R, R * 2, R * 2);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  disc();
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.arc(0, 0, 13, 0, 7);
+  ctx2.stroke();
+  for (let i = 0; i < 8; i++) {
+    const a = i * Math.PI / 4;
+    drawRivet(ctx2, Math.cos(a) * (R - 11), Math.sin(a) * (R - 11), 2.6);
+  }
+}
+function drawPlateSlotted(ctx2, part) {
+  setup(ctx2, part, 1.9, 0.8);
+  const rect = () => roundedRect(ctx2, -58, -34, 116, 68, 8);
+  drawCastShadow(ctx2, rect, 3, 5, 0.05);
+  rect();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, rect, -58, -34, 116, 68);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  rect();
+  ctx2.stroke();
+  for (const sx of [-34, 0, 34]) {
+    roundedRect(ctx2, sx - 7, -20, 14, 40, 7);
+    ctx2.stroke();
+  }
+}
+function drawPlateCorrugated(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.8);
+  const rect = () => roundedRect(ctx2, -58, -34, 116, 68, 6);
+  drawCastShadow(ctx2, rect, 3, 5, 0.05);
+  rect();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.save();
+  rect();
+  ctx2.clip();
+  ctx2.strokeStyle = "rgba(18,22,25,0.26)";
+  ctx2.lineWidth = 3;
+  for (let x = -50; x <= 50; x += 12) {
+    ctx2.beginPath();
+    ctx2.moveTo(x, -34);
+    ctx2.lineTo(x, 34);
+    ctx2.stroke();
+  }
+  ctx2.strokeStyle = "rgba(255,255,255,0.4)";
+  ctx2.lineWidth = 1.4;
+  for (let x = -44; x <= 56; x += 12) {
+    ctx2.beginPath();
+    ctx2.moveTo(x, -34);
+    ctx2.lineTo(x, 34);
+    ctx2.stroke();
+  }
+  ctx2.restore();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  rect();
+  ctx2.stroke();
+}
+function drawWheelSpoked(ctx2, part) {
+  setup(ctx2, part, 1.9, 0.8);
+  const R = 52;
+  const tire = () => {
+    ctx2.beginPath();
+    ctx2.arc(0, 0, R, 0, 7);
+  };
+  drawCastShadow(ctx2, tire, 3, 5, 0.05);
+  tire();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 3;
+  tire();
+  ctx2.stroke();
+  ctx2.lineWidth = 2;
+  ctx2.beginPath();
+  ctx2.arc(0, 0, R - 12, 0, 7);
+  ctx2.stroke();
+  ctx2.lineWidth = 2.4;
+  for (let i = 0; i < 8; i++) {
+    const a = i * Math.PI / 4;
+    ctx2.beginPath();
+    ctx2.moveTo(Math.cos(a) * 12, Math.sin(a) * 12);
+    ctx2.lineTo(Math.cos(a) * (R - 12), Math.sin(a) * (R - 12));
+    ctx2.stroke();
+  }
+  ctx2.beginPath();
+  ctx2.arc(0, 0, 12, 0, 7);
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.stroke();
+  drawRivet(ctx2, 0, 0, 3.4);
+}
+function drawWheelSolid(ctx2, part) {
+  setup(ctx2, part, 1.9, 0.8);
+  const R = 50;
+  const tire = () => {
+    ctx2.beginPath();
+    ctx2.arc(0, 0, R, 0, 7);
+  };
+  drawCastShadow(ctx2, tire, 3, 5, 0.05);
+  tire();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, tire, -R, -R, R * 2, R * 2);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 5;
+  tire();
+  ctx2.stroke();
+  ctx2.lineWidth = 2;
+  ctx2.beginPath();
+  ctx2.arc(0, 0, R - 12, 0, 7);
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.arc(0, 0, 16, 0, 7);
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.stroke();
+  drawRivet(ctx2, 0, 0, 3.6);
+}
+function drawWheelCaster(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.8);
+  const fork = () => roundedRect(ctx2, -20, -46, 40, 30, 6);
+  fork();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  fork();
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.moveTo(-18, -16);
+  ctx2.lineTo(-18, 8);
+  ctx2.moveTo(18, -16);
+  ctx2.lineTo(18, 8);
+  ctx2.stroke();
+  const w = () => {
+    ctx2.beginPath();
+    ctx2.arc(0, 12, 30, 0, 7);
+  };
+  drawCastShadow(ctx2, w, 3, 4, 0.05);
+  w();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.lineWidth = 3;
+  w();
+  ctx2.stroke();
+  drawRivet(ctx2, 0, 12, 4);
+  drawRivet(ctx2, 0, -40, 3);
+}
+function drawFastenerNail(ctx2, part) {
+  setup(ctx2, part, 1.7, 0.82);
+  const head = () => {
+    ctx2.beginPath();
+    ctx2.ellipse(0, -50, 15, 6, 0, 0, 7);
+  };
+  head();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  head();
+  ctx2.stroke();
+  const shaft = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-4, -46);
+    ctx2.lineTo(4, -46);
+    ctx2.lineTo(1.5, 44);
+    ctx2.lineTo(0, 54);
+    ctx2.lineTo(-1.5, 44);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, shaft, 2, 3, 0.05);
+  shaft();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  shaft();
+  ctx2.stroke();
+  ctx2.strokeStyle = "rgba(255,255,255,0.4)";
+  ctx2.lineWidth = 1;
+  ctx2.beginPath();
+  ctx2.moveTo(-1.5, -44);
+  ctx2.lineTo(-0.5, 40);
+  ctx2.stroke();
+}
+function drawFastenerScrew(ctx2, part) {
+  setup(ctx2, part, 1.7, 0.82);
+  const head = () => {
+    ctx2.beginPath();
+    ctx2.arc(0, -46, 15, 0, 7);
+  };
+  head();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  head();
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.moveTo(-10, -46);
+  ctx2.lineTo(10, -46);
+  ctx2.lineWidth = 3;
+  ctx2.stroke();
+  const shaft = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-9, -32);
+    ctx2.lineTo(9, -32);
+    ctx2.lineTo(1, 48);
+    ctx2.lineTo(0, 56);
+    ctx2.lineTo(-1, 48);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, shaft, 2, 3, 0.05);
+  shaft();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.lineWidth = 2;
+  shaft();
+  ctx2.stroke();
+  ctx2.lineWidth = 1.6;
+  for (let y = -28; y < 44; y += 9) {
+    const t = (y + 32) / 88;
+    const hw = 9 - t * 8.5;
+    ctx2.beginPath();
+    ctx2.moveTo(-hw, y);
+    ctx2.lineTo(hw, y + 4);
+    ctx2.stroke();
+  }
+}
+function drawFastenerStaple(ctx2, part) {
+  setup(ctx2, part, 2, 0.82);
+  const u = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-30, 40);
+    ctx2.lineTo(-30, -30);
+    ctx2.quadraticCurveTo(-30, -40, -20, -40);
+    ctx2.lineTo(20, -40);
+    ctx2.quadraticCurveTo(30, -40, 30, -30);
+    ctx2.lineTo(30, 40);
+  };
+  u();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 11;
+  ctx2.lineCap = "round";
+  ctx2.stroke();
+  u();
+  ctx2.strokeStyle = "rgba(255,255,255,0.3)";
+  ctx2.lineWidth = 3;
+  ctx2.stroke();
+}
+function drawWireCoil(ctx2, part) {
+  setup(ctx2, part, 2, 0.82);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 3;
+  ctx2.lineCap = "round";
+  ctx2.beginPath();
+  ctx2.moveTo(-60, 0);
+  ctx2.lineTo(-46, 0);
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.moveTo(46, 0);
+  ctx2.lineTo(60, 0);
+  ctx2.stroke();
+  for (let i = 0; i < 6; i++) {
+    const x = -40 + i * 15;
+    ctx2.beginPath();
+    ctx2.ellipse(x, 0, 8, 20, 0.35, -1.9, 1.9);
+    ctx2.stroke();
+  }
+}
+function drawWireLoop(ctx2, part) {
+  setup(ctx2, part, 2, 0.82);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 3.5;
+  ctx2.lineCap = "round";
+  ctx2.beginPath();
+  ctx2.moveTo(-56, 22);
+  ctx2.bezierCurveTo(-34, 26, -52, -38, -8, -34);
+  ctx2.bezierCurveTo(38, -30, 20, 30, 44, 22);
+  ctx2.stroke();
+  drawRivet(ctx2, -56, 22, 4);
+  drawRivet(ctx2, 46, 22, 4);
+}
+function drawElecResistor(ctx2, part) {
+  setup(ctx2, part, 1.7, 0.82);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  ctx2.lineCap = "round";
+  ctx2.beginPath();
+  ctx2.moveTo(-58, 0);
+  ctx2.lineTo(-30, 0);
+  ctx2.moveTo(30, 0);
+  ctx2.lineTo(58, 0);
+  ctx2.stroke();
+  const body = () => roundedRect(ctx2, -30, -15, 60, 30, 14);
+  drawCastShadow(ctx2, body, 2, 3, 0.05);
+  body();
+  ctx2.fillStyle = "rgba(214,190,150,0.72)";
+  ctx2.fill();
+  body();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.stroke();
+  ["#7a4a1e", "#d23", "#e6b400", "#b8912a"].forEach((c, i) => {
+    ctx2.fillStyle = c;
+    ctx2.fillRect(-17 + i * 11, -15, 5, 30);
+  });
+}
+function drawElecCapacitor(ctx2, part) {
+  setup(ctx2, part, 1.7, 0.82);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  ctx2.lineCap = "round";
+  ctx2.beginPath();
+  ctx2.moveTo(-8, 40);
+  ctx2.lineTo(-8, 56);
+  ctx2.moveTo(8, 40);
+  ctx2.lineTo(8, 56);
+  ctx2.stroke();
+  const body = () => roundedRect(ctx2, -24, -46, 48, 88, 12);
+  drawCastShadow(ctx2, body, 2, 3, 0.05);
+  body();
+  ctx2.fillStyle = "rgba(44,64,120,0.62)";
+  ctx2.fill();
+  body();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.ellipse(0, -46, 24, 7, 0, 0, 7);
+  ctx2.stroke();
+  ctx2.fillStyle = "rgba(215,224,238,0.7)";
+  ctx2.fillRect(-24, -18, 12, 58);
+  ctx2.fillStyle = BIN_INK;
+  ctx2.fillRect(-20, -6, 4, 34);
+}
+function drawElecChip(ctx2, part) {
+  setup(ctx2, part, 1.7, 0.82);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 3;
+  ctx2.lineCap = "round";
+  for (let i = 0; i < 4; i++) {
+    const y = -21 + i * 14;
+    ctx2.beginPath();
+    ctx2.moveTo(-46, y);
+    ctx2.lineTo(-30, y);
+    ctx2.moveTo(30, y);
+    ctx2.lineTo(46, y);
+    ctx2.stroke();
+  }
+  const body = () => roundedRect(ctx2, -30, -32, 60, 64, 6);
+  drawCastShadow(ctx2, body, 3, 4, 0.05);
+  body();
+  ctx2.fillStyle = "rgba(32,34,38,0.82)";
+  ctx2.fill();
+  body();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.arc(0, -32, 7, 0, Math.PI);
+  ctx2.fillStyle = "rgba(66,68,72,0.9)";
+  ctx2.fill();
+  ctx2.fillStyle = "rgba(205,210,215,0.7)";
+  ctx2.beginPath();
+  ctx2.arc(-20, 22, 3.5, 0, 7);
+  ctx2.fill();
+}
+function drawElecTube(ctx2, part) {
+  setup(ctx2, part, 1.7, 0.82);
+  const glass = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-24, 30);
+    ctx2.lineTo(-24, -30);
+    ctx2.quadraticCurveTo(-24, -56, 0, -56);
+    ctx2.quadraticCurveTo(24, -56, 24, -30);
+    ctx2.lineTo(24, 30);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, glass, 3, 4, 0.05);
+  glass();
+  ctx2.fillStyle = "rgba(200,225,240,0.32)";
+  ctx2.fill();
+  glass();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  ctx2.stroke();
+  ctx2.strokeStyle = "rgba(255,150,60,0.78)";
+  ctx2.lineWidth = 2;
+  ctx2.beginPath();
+  ctx2.moveTo(-8, 18);
+  ctx2.lineTo(-8, -30);
+  ctx2.lineTo(8, -30);
+  ctx2.lineTo(8, 18);
+  ctx2.stroke();
+  const base = () => roundedRect(ctx2, -22, 30, 44, 26, 5);
+  base();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.stroke();
+  ctx2.lineWidth = 3;
+  ctx2.lineCap = "round";
+  for (const px of [-10, 0, 10]) {
+    ctx2.beginPath();
+    ctx2.moveTo(px, 56);
+    ctx2.lineTo(px, 66);
+    ctx2.stroke();
+  }
+}
+function binGear(ctx2, R, teeth, th) {
+  const n = teeth * 4;
+  ctx2.beginPath();
+  for (let i = 0; i <= n; i++) {
+    const a = i / n * Math.PI * 2;
+    const phase = a % (Math.PI * 2 / teeth) / (Math.PI * 2 / teeth);
+    const r = phase > 0.25 && phase < 0.75 ? R + th : R;
+    const x = Math.cos(a) * r, y = Math.sin(a) * r;
+    i ? ctx2.lineTo(x, y) : ctx2.moveTo(x, y);
+  }
+  ctx2.closePath();
+}
+function drawPlateTriangle(ctx2, part) {
+  setup(ctx2, part, 1.9, 0.8);
+  const tri = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-54, 46);
+    ctx2.lineTo(54, 46);
+    ctx2.lineTo(-54, -50);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, tri, 3, 5, 0.05);
+  tri();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, tri, -54, -50, 108, 96);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  tri();
+  ctx2.stroke();
+  drawRivet(ctx2, -42, 36, 3);
+  drawRivet(ctx2, 40, 36, 3);
+  drawRivet(ctx2, -42, -34, 3);
+}
+function drawBracketAngle(ctx2, part) {
+  setup(ctx2, part, 1.9, 0.8);
+  const L = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-46, -46);
+    ctx2.lineTo(-16, -46);
+    ctx2.lineTo(-16, 16);
+    ctx2.lineTo(46, 16);
+    ctx2.lineTo(46, 46);
+    ctx2.lineTo(-46, 46);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, L, 3, 5, 0.05);
+  L();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, L, -46, -46, 92, 92);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  L();
+  ctx2.stroke();
+  drawRivet(ctx2, -31, -30, 3);
+  drawRivet(ctx2, 30, 31, 3);
+  drawRivet(ctx2, -31, 31, 3);
+}
+function drawPlateDiamond(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.8);
+  const rect = () => roundedRect(ctx2, -56, -40, 112, 80, 6);
+  drawCastShadow(ctx2, rect, 3, 5, 0.05);
+  rect();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.save();
+  rect();
+  ctx2.clip();
+  ctx2.strokeStyle = "rgba(18,22,25,0.22)";
+  ctx2.lineWidth = 2;
+  for (let y = -44; y < 44; y += 16) for (let x = -56; x < 56; x += 20) {
+    const ox = Math.round((y + 48) / 16) % 2 ? 10 : 0;
+    ctx2.beginPath();
+    ctx2.moveTo(x + ox, y);
+    ctx2.lineTo(x + ox + 8, y + 8);
+    ctx2.moveTo(x + ox + 8, y);
+    ctx2.lineTo(x + ox, y + 8);
+    ctx2.stroke();
+  }
+  ctx2.restore();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  rect();
+  ctx2.stroke();
+}
+function drawPlateName(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.8);
+  const rect = () => roundedRect(ctx2, -60, -24, 120, 48, 5);
+  drawCastShadow(ctx2, rect, 3, 5, 0.05);
+  rect();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, rect, -60, -24, 120, 48);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  rect();
+  ctx2.stroke();
+  ctx2.lineWidth = 1.4;
+  roundedRect(ctx2, -52, -16, 104, 32, 3);
+  ctx2.stroke();
+  drawRivet(ctx2, -46, 0, 2.6);
+  drawRivet(ctx2, 46, 0, 2.6);
+  ctx2.strokeStyle = "rgba(18,22,25,0.3)";
+  ctx2.lineWidth = 3;
+  ctx2.beginPath();
+  ctx2.moveTo(-28, 0);
+  ctx2.lineTo(28, 0);
+  ctx2.stroke();
+}
+function drawGearSprocket(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.8);
+  const g = () => binGear(ctx2, 44, 12, 9);
+  drawCastShadow(ctx2, g, 3, 5, 0.05);
+  g();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  g();
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.arc(0, 0, 15, 0, 7);
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.stroke();
+  for (let i = 0; i < 6; i++) {
+    const a = i / 6 * Math.PI * 2;
+    ctx2.beginPath();
+    ctx2.arc(Math.cos(a) * 30, Math.sin(a) * 30, 4.5, 0, 7);
+    ctx2.stroke();
+  }
+  drawRivet(ctx2, 0, 0, 3.4);
+}
+function drawGearRatchet(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.8);
+  const R = 44, teeth = 12;
+  const g = () => {
+    ctx2.beginPath();
+    for (let i = 0; i < teeth; i++) {
+      const a = i / teeth * Math.PI * 2;
+      const a2 = (i + 1) / teeth * Math.PI * 2;
+      ctx2.lineTo(Math.cos(a) * R, Math.sin(a) * R);
+      ctx2.lineTo(Math.cos(a) * (R + 11), Math.sin(a) * (R + 11));
+      ctx2.lineTo(Math.cos(a2) * R, Math.sin(a2) * R);
+    }
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, g, 3, 5, 0.05);
+  g();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  g();
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.arc(0, 0, 14, 0, 7);
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.stroke();
+  drawRivet(ctx2, 0, 0, 3.2);
+  ctx2.beginPath();
+  ctx2.moveTo(38, -52);
+  ctx2.lineTo(54, -22);
+  ctx2.lineTo(44, -17);
+  ctx2.lineTo(28, -44);
+  ctx2.closePath();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.stroke();
+}
+function drawGearPinion(ctx2, part) {
+  setup(ctx2, part, 1.7, 0.8);
+  const g = () => binGear(ctx2, 30, 9, 8);
+  drawCastShadow(ctx2, g, 2, 4, 0.05);
+  g();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  g();
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.arc(0, 0, 9, 0, 7);
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.stroke();
+  ctx2.fillStyle = BIN_INK;
+  ctx2.fillRect(-2, -9, 4, 5);
+}
+function drawGearRack(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.8);
+  const rect = () => roundedRect(ctx2, -62, 6, 124, 28, 4);
+  drawCastShadow(ctx2, rect, 3, 4, 0.05);
+  rect();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  rect();
+  ctx2.stroke();
+  for (let x = -56; x <= 52; x += 14) {
+    ctx2.beginPath();
+    ctx2.moveTo(x, 6);
+    ctx2.lineTo(x + 4, -12);
+    ctx2.lineTo(x + 10, -12);
+    ctx2.lineTo(x + 14, 6);
+    ctx2.closePath();
+    ctx2.fillStyle = BIN_FILL;
+    ctx2.fill();
+    ctx2.stroke();
+  }
+}
+function drawSpringCoilTall(ctx2, part) {
+  setup(ctx2, part, 2, 0.82);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 3;
+  ctx2.lineCap = "round";
+  ctx2.beginPath();
+  ctx2.moveTo(0, -58);
+  ctx2.lineTo(0, -46);
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.moveTo(0, 46);
+  ctx2.lineTo(0, 58);
+  ctx2.stroke();
+  for (let i = 0; i < 6; i++) {
+    const y = -42 + i * 15;
+    ctx2.beginPath();
+    ctx2.ellipse(0, y, 22, 9, 0, 0, Math.PI * 2);
+    ctx2.stroke();
+  }
+}
+function drawSpringLeaf(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineCap = "round";
+  ctx2.lineWidth = 6;
+  for (let i = 0; i < 4; i++) {
+    const w = 60 - i * 10, y = i * 7;
+    ctx2.beginPath();
+    ctx2.moveTo(-w, y);
+    ctx2.quadraticCurveTo(0, y + 20 + i * 2, w, y);
+    ctx2.stroke();
+  }
+  ctx2.fillStyle = BIN_FILL;
+  roundedRect(ctx2, -8, 8, 16, 30, 3);
+  ctx2.fill();
+  ctx2.lineWidth = 2;
+  roundedRect(ctx2, -8, 8, 16, 30, 3);
+  ctx2.stroke();
+}
+function drawSpringTorsion(ctx2, part) {
+  setup(ctx2, part, 2, 0.82);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 3;
+  ctx2.lineCap = "round";
+  for (let i = 0; i < 3; i++) {
+    ctx2.beginPath();
+    ctx2.arc(0, 0, 20 - i * 5, 0.3, Math.PI * 2);
+    ctx2.stroke();
+  }
+  ctx2.beginPath();
+  ctx2.moveTo(7, -19);
+  ctx2.lineTo(50, -36);
+  ctx2.moveTo(-7, 19);
+  ctx2.lineTo(-50, 36);
+  ctx2.stroke();
+}
+function drawDamperShock(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const cyl = () => roundedRect(ctx2, -16, -4, 32, 54, 8);
+  drawCastShadow(ctx2, cyl, 3, 4, 0.05);
+  cyl();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, cyl, -16, -4, 32, 54);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  cyl();
+  ctx2.stroke();
+  ctx2.lineWidth = 8;
+  ctx2.lineCap = "round";
+  ctx2.beginPath();
+  ctx2.moveTo(0, -4);
+  ctx2.lineTo(0, -48);
+  ctx2.stroke();
+  ctx2.lineWidth = 3;
+  ctx2.beginPath();
+  ctx2.arc(0, -52, 8, 0, 7);
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.arc(0, 54, 9, 0, 7);
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.stroke();
+}
+function drawPipeTee(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const p = () => roundedRect(ctx2, -54, -14, 108, 28, 6);
+  const v = () => roundedRect(ctx2, -14, -14, 28, 46, 6);
+  drawCastShadow(ctx2, () => {
+    p();
+    v();
+  }, 3, 4, 0.05);
+  ctx2.fillStyle = BIN_FILL;
+  p();
+  ctx2.fill();
+  v();
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  p();
+  ctx2.stroke();
+  v();
+  ctx2.stroke();
+  for (const [x, y, w, h] of [[-60, -18, 8, 36], [52, -18, 8, 36], [-18, 26, 36, 8]]) {
+    ctx2.fillStyle = BIN_FILL;
+    ctx2.fillRect(x, y, w, h);
+    ctx2.strokeRect(x, y, w, h);
+  }
+}
+function drawPipeCross(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const h = () => roundedRect(ctx2, -52, -14, 104, 28, 6);
+  const v = () => roundedRect(ctx2, -14, -52, 28, 104, 6);
+  drawCastShadow(ctx2, () => {
+    h();
+    v();
+  }, 3, 4, 0.05);
+  ctx2.fillStyle = BIN_FILL;
+  h();
+  ctx2.fill();
+  v();
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  h();
+  ctx2.stroke();
+  v();
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.arc(0, 0, 8, 0, 7);
+  ctx2.stroke();
+}
+function drawValveGate(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const body = () => roundedRect(ctx2, -40, -2, 80, 32, 6);
+  drawCastShadow(ctx2, body, 3, 4, 0.05);
+  body();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  body();
+  ctx2.stroke();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fillRect(-46, -6, 8, 40);
+  ctx2.strokeRect(-46, -6, 8, 40);
+  ctx2.fillRect(38, -6, 8, 40);
+  ctx2.strokeRect(38, -6, 8, 40);
+  ctx2.lineWidth = 6;
+  ctx2.lineCap = "round";
+  ctx2.beginPath();
+  ctx2.moveTo(0, -2);
+  ctx2.lineTo(0, -42);
+  ctx2.stroke();
+  ctx2.lineWidth = 3;
+  ctx2.beginPath();
+  ctx2.arc(0, -46, 20, 0, 7);
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.arc(0, -46, 7, 0, 7);
+  ctx2.stroke();
+  ctx2.lineWidth = 2;
+  for (let i = 0; i < 4; i++) {
+    const a = i * Math.PI / 4;
+    ctx2.beginPath();
+    ctx2.moveTo(Math.cos(a) * 7, -46 + Math.sin(a) * 7);
+    ctx2.lineTo(Math.cos(a) * 20, -46 + Math.sin(a) * 20);
+    ctx2.stroke();
+  }
+}
+function drawPipeFlange(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const pipe = () => roundedRect(ctx2, -50, -16, 70, 32, 4);
+  drawCastShadow(ctx2, pipe, 3, 4, 0.05);
+  pipe();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  pipe();
+  ctx2.stroke();
+  const fl = () => roundedRect(ctx2, 16, -30, 20, 60, 4);
+  fl();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  fl();
+  ctx2.stroke();
+  for (const y of [-22, -8, 8, 22]) drawRivet(ctx2, 26, y, 3);
+}
+function drawPipeReducer(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const r = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-50, -22);
+    ctx2.lineTo(-10, -22);
+    ctx2.lineTo(50, -11);
+    ctx2.lineTo(50, 11);
+    ctx2.lineTo(-10, 22);
+    ctx2.lineTo(-50, 22);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, r, 3, 4, 0.05);
+  r();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, r, -50, -22, 100, 44);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  r();
+  ctx2.stroke();
+  ctx2.lineWidth = 1.6;
+  ctx2.beginPath();
+  ctx2.moveTo(-38, -22);
+  ctx2.lineTo(-38, 22);
+  ctx2.stroke();
+}
+function drawCouplingUnion(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const R = 34;
+  const hex = () => {
+    ctx2.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const a = i * Math.PI / 3;
+      const x = Math.cos(a) * R, y = Math.sin(a) * R * 0.74;
+      i ? ctx2.lineTo(x, y) : ctx2.moveTo(x, y);
+    }
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, hex, 3, 4, 0.05);
+  hex();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  hex();
+  ctx2.stroke();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fillRect(-52, -12, 20, 24);
+  ctx2.strokeRect(-52, -12, 20, 24);
+  ctx2.fillRect(32, -12, 20, 24);
+  ctx2.strokeRect(32, -12, 20, 24);
+  ctx2.beginPath();
+  ctx2.arc(0, 0, 12, 0, 7);
+  ctx2.stroke();
+}
+function drawCarPiston(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const body = () => roundedRect(ctx2, -26, -50, 52, 54, 6);
+  drawCastShadow(ctx2, body, 3, 4, 0.05);
+  body();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, body, -26, -50, 52, 54);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  body();
+  ctx2.stroke();
+  ctx2.lineWidth = 2;
+  for (const y of [-40, -32, -24]) {
+    ctx2.beginPath();
+    ctx2.moveTo(-26, y);
+    ctx2.lineTo(26, y);
+    ctx2.stroke();
+  }
+  ctx2.beginPath();
+  ctx2.arc(0, -18, 8, 0, 7);
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.moveTo(-8, -14);
+  ctx2.lineTo(-10, 46);
+  ctx2.lineTo(10, 46);
+  ctx2.lineTo(8, -14);
+  ctx2.closePath();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.arc(0, 48, 12, 0, 7);
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.stroke();
+}
+function drawCarSparkPlug(ctx2, part) {
+  setup(ctx2, part, 1.7, 0.82);
+  const cer = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-11, -54);
+    ctx2.lineTo(11, -54);
+    ctx2.lineTo(13, -20);
+    ctx2.quadraticCurveTo(16, -6, 10, 2);
+    ctx2.lineTo(-10, 2);
+    ctx2.quadraticCurveTo(-16, -6, -13, -20);
+    ctx2.closePath();
+  };
+  cer();
+  ctx2.fillStyle = "rgba(238,232,220,0.72)";
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  cer();
+  ctx2.stroke();
+  ctx2.lineWidth = 1.4;
+  for (const y of [-44, -36, -28]) {
+    ctx2.beginPath();
+    ctx2.moveTo(-12, y);
+    ctx2.lineTo(12, y);
+    ctx2.stroke();
+  }
+  const hex = () => roundedRect(ctx2, -14, 2, 28, 20, 3);
+  hex();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.lineWidth = 2;
+  hex();
+  ctx2.stroke();
+  const thread = () => roundedRect(ctx2, -9, 22, 18, 26, 2);
+  thread();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  thread();
+  ctx2.stroke();
+  ctx2.lineWidth = 1.2;
+  for (let y = 26; y < 46; y += 4) {
+    ctx2.beginPath();
+    ctx2.moveTo(-9, y);
+    ctx2.lineTo(9, y + 2);
+    ctx2.stroke();
+  }
+  ctx2.lineWidth = 2.5;
+  ctx2.beginPath();
+  ctx2.moveTo(0, 48);
+  ctx2.lineTo(0, 56);
+  ctx2.lineTo(7, 56);
+  ctx2.stroke();
+}
+function drawCarMuffler(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const body = () => roundedRect(ctx2, -44, -22, 88, 44, 20);
+  drawCastShadow(ctx2, body, 3, 4, 0.05);
+  body();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, body, -44, -22, 88, 44);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  body();
+  ctx2.stroke();
+  ctx2.lineWidth = 1.6;
+  for (const x of [-20, 20]) {
+    ctx2.beginPath();
+    ctx2.moveTo(x, -22);
+    ctx2.lineTo(x, 22);
+    ctx2.stroke();
+  }
+  ctx2.lineWidth = 2;
+  roundedRect(ctx2, -62, -8, 20, 16, 4);
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  roundedRect(ctx2, -62, -8, 20, 16, 4);
+  ctx2.stroke();
+  roundedRect(ctx2, 42, -8, 22, 16, 4);
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  roundedRect(ctx2, 42, -8, 22, 16, 4);
+  ctx2.stroke();
+}
+function drawCarHeadlight(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const lens = () => {
+    ctx2.beginPath();
+    ctx2.ellipse(0, 0, 40, 46, 0, 0, 7);
+  };
+  drawCastShadow(ctx2, lens, 3, 4, 0.05);
+  lens();
+  ctx2.fillStyle = "rgba(235,240,245,0.5)";
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 3;
+  lens();
+  ctx2.stroke();
+  ctx2.lineWidth = 1.6;
+  for (const r of [30, 20, 10]) {
+    ctx2.beginPath();
+    ctx2.ellipse(0, 0, r * 0.86, r, 0, 0, 7);
+    ctx2.stroke();
+  }
+  ctx2.beginPath();
+  ctx2.arc(0, 0, 5, 0, 7);
+  ctx2.fillStyle = "rgba(255,240,180,0.9)";
+  ctx2.fill();
+  ctx2.stroke();
+  ctx2.fillStyle = "rgba(255,255,255,0.5)";
+  ctx2.beginPath();
+  ctx2.ellipse(-14, -18, 8, 12, -0.5, 0, 7);
+  ctx2.fill();
+}
+function drawCarRim(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const R = 50;
+  const tire = () => {
+    ctx2.beginPath();
+    ctx2.arc(0, 0, R, 0, 7);
+  };
+  drawCastShadow(ctx2, tire, 3, 5, 0.05);
+  tire();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 3;
+  tire();
+  ctx2.stroke();
+  ctx2.lineWidth = 2;
+  ctx2.beginPath();
+  ctx2.arc(0, 0, R - 8, 0, 7);
+  ctx2.stroke();
+  ctx2.lineWidth = 8;
+  ctx2.lineCap = "round";
+  for (let i = 0; i < 5; i++) {
+    const a = i / 5 * Math.PI * 2 - Math.PI / 2;
+    ctx2.beginPath();
+    ctx2.moveTo(0, 0);
+    ctx2.lineTo(Math.cos(a) * (R - 12), Math.sin(a) * (R - 12));
+    ctx2.stroke();
+  }
+  ctx2.beginPath();
+  ctx2.arc(0, 0, 12, 0, 7);
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.lineWidth = 2;
+  ctx2.stroke();
+  drawRivet(ctx2, 0, 0, 4);
+}
+function drawCarGauge(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const R = 44;
+  const face = () => {
+    ctx2.beginPath();
+    ctx2.arc(0, 0, R, 0, 7);
+  };
+  drawCastShadow(ctx2, face, 3, 4, 0.05);
+  face();
+  ctx2.fillStyle = "rgba(245,244,238,0.72)";
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 3;
+  face();
+  ctx2.stroke();
+  ctx2.lineWidth = 2;
+  for (let i = 0; i <= 10; i++) {
+    const a = Math.PI * 0.75 + i / 10 * Math.PI * 1.5;
+    ctx2.beginPath();
+    ctx2.moveTo(Math.cos(a) * (R - 4), Math.sin(a) * (R - 4));
+    ctx2.lineTo(Math.cos(a) * (R - 12), Math.sin(a) * (R - 12));
+    ctx2.stroke();
+  }
+  ctx2.strokeStyle = "#c0392b";
+  ctx2.lineWidth = 3;
+  ctx2.lineCap = "round";
+  const na = Math.PI * 0.75 + 0.35 * Math.PI * 1.5;
+  ctx2.beginPath();
+  ctx2.moveTo(0, 0);
+  ctx2.lineTo(Math.cos(na) * (R - 12), Math.sin(na) * (R - 12));
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.arc(0, 0, 5, 0, 7);
+  ctx2.fillStyle = BIN_INK;
+  ctx2.fill();
+}
+function drawApplianceKnob(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const R = 40;
+  const k = () => {
+    ctx2.beginPath();
+    ctx2.arc(0, 0, R, 0, 7);
+  };
+  drawCastShadow(ctx2, k, 3, 4, 0.05);
+  k();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, k, -R, -R, R * 2, R * 2);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2.5;
+  k();
+  ctx2.stroke();
+  ctx2.lineWidth = 2;
+  for (let i = 0; i < 16; i++) {
+    const a = i / 16 * Math.PI * 2;
+    ctx2.beginPath();
+    ctx2.moveTo(Math.cos(a) * (R - 8), Math.sin(a) * (R - 8));
+    ctx2.lineTo(Math.cos(a) * R, Math.sin(a) * R);
+    ctx2.stroke();
+  }
+  ctx2.strokeStyle = "#c0392b";
+  ctx2.lineWidth = 4;
+  ctx2.lineCap = "round";
+  ctx2.beginPath();
+  ctx2.moveTo(0, 0);
+  ctx2.lineTo(0, -R + 8);
+  ctx2.stroke();
+  drawRivet(ctx2, 0, 0, 4);
+}
+function drawApplianceDial(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const R = 46;
+  const face = () => {
+    ctx2.beginPath();
+    ctx2.arc(0, 0, R, 0, 7);
+  };
+  drawCastShadow(ctx2, face, 3, 4, 0.05);
+  face();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2.5;
+  face();
+  ctx2.stroke();
+  ctx2.lineWidth = 1.6;
+  for (let i = 0; i < 12; i++) {
+    const a = i / 12 * Math.PI * 2;
+    ctx2.beginPath();
+    ctx2.moveTo(Math.cos(a) * (R - 3), Math.sin(a) * (R - 3));
+    ctx2.lineTo(Math.cos(a) * (R - 10), Math.sin(a) * (R - 10));
+    ctx2.stroke();
+  }
+  ctx2.beginPath();
+  ctx2.arc(0, 0, 12, 0, 7);
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.lineWidth = 2;
+  ctx2.stroke();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 3;
+  ctx2.beginPath();
+  ctx2.moveTo(0, 0);
+  ctx2.lineTo(21, -21);
+  ctx2.stroke();
+}
+function drawApplianceMotor(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const body = () => roundedRect(ctx2, -40, -30, 72, 60, 14);
+  drawCastShadow(ctx2, body, 3, 4, 0.05);
+  body();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, body, -40, -30, 72, 60);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  body();
+  ctx2.stroke();
+  ctx2.lineWidth = 1.6;
+  for (let x = -32; x < 26; x += 8) {
+    ctx2.beginPath();
+    ctx2.moveTo(x, -30);
+    ctx2.lineTo(x, 30);
+    ctx2.stroke();
+  }
+  ctx2.lineWidth = 2;
+  roundedRect(ctx2, 32, -8, 26, 16, 3);
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  roundedRect(ctx2, 32, -8, 26, 16, 3);
+  ctx2.stroke();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fillRect(-40, 28, 14, 8);
+  ctx2.strokeRect(-40, 28, 14, 8);
+}
+function drawApplianceBelt(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  for (const x of [-34, 34]) {
+    ctx2.beginPath();
+    ctx2.arc(x, 0, 20, 0, 7);
+    ctx2.fillStyle = BIN_FILL;
+    ctx2.fill();
+    ctx2.strokeStyle = BIN_INK;
+    ctx2.lineWidth = 2;
+    ctx2.stroke();
+    ctx2.beginPath();
+    ctx2.arc(x, 0, 6, 0, 7);
+    ctx2.stroke();
+  }
+  ctx2.lineWidth = 4;
+  ctx2.strokeStyle = "rgba(30,30,34,0.8)";
+  ctx2.beginPath();
+  ctx2.moveTo(-34, -20);
+  ctx2.lineTo(34, -20);
+  ctx2.moveTo(-34, 20);
+  ctx2.lineTo(34, 20);
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.arc(-34, 0, 20, Math.PI / 2, Math.PI * 1.5);
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.arc(34, 0, 20, -Math.PI / 2, Math.PI / 2);
+  ctx2.stroke();
+}
+function drawApplianceSwitch(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const frame = () => roundedRect(ctx2, -30, -40, 60, 80, 8);
+  drawCastShadow(ctx2, frame, 3, 4, 0.05);
+  frame();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  frame();
+  ctx2.stroke();
+  const rock = () => roundedRect(ctx2, -22, -32, 44, 64, 6);
+  rock();
+  ctx2.fillStyle = "rgba(235,232,224,0.8)";
+  ctx2.fill();
+  ctx2.stroke();
+  ctx2.fillStyle = "rgba(18,22,25,0.12)";
+  roundedRect(ctx2, -22, 0, 44, 32, 6);
+  ctx2.fill();
+  ctx2.lineWidth = 1.6;
+  ctx2.beginPath();
+  ctx2.moveTo(-22, 0);
+  ctx2.lineTo(22, 0);
+  ctx2.stroke();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2.5;
+  ctx2.beginPath();
+  ctx2.moveTo(0, -22);
+  ctx2.lineTo(0, -12);
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.arc(0, 18, 6, 0, 7);
+  ctx2.stroke();
+}
+function drawElecTransistor(ctx2, part) {
+  setup(ctx2, part, 1.7, 0.82);
+  const body = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-26, 20);
+    ctx2.lineTo(-26, -6);
+    ctx2.arc(0, -6, 26, Math.PI, 0, true);
+    ctx2.lineTo(26, 20);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, body, 3, 4, 0.05);
+  body();
+  ctx2.fillStyle = "rgba(40,42,46,0.82)";
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  body();
+  ctx2.stroke();
+  ctx2.lineWidth = 1.4;
+  ctx2.beginPath();
+  ctx2.moveTo(-26, -2);
+  ctx2.lineTo(26, -2);
+  ctx2.stroke();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 3;
+  ctx2.lineCap = "round";
+  for (const x of [-14, 0, 14]) {
+    ctx2.beginPath();
+    ctx2.moveTo(x, 20);
+    ctx2.lineTo(x, 54);
+    ctx2.stroke();
+  }
+}
+function drawElecLed(ctx2, part) {
+  setup(ctx2, part, 1.7, 0.82);
+  const dome = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-20, 22);
+    ctx2.lineTo(-20, -6);
+    ctx2.arc(0, -6, 20, Math.PI, 0, true);
+    ctx2.lineTo(20, 22);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, dome, 3, 4, 0.05);
+  dome();
+  ctx2.fillStyle = "rgba(220,60,70,0.55)";
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  dome();
+  ctx2.stroke();
+  roundedRect(ctx2, -24, 16, 48, 10, 2);
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  roundedRect(ctx2, -24, 16, 48, 10, 2);
+  ctx2.stroke();
+  ctx2.fillStyle = "rgba(255,255,255,0.55)";
+  ctx2.beginPath();
+  ctx2.ellipse(-7, -8, 4, 8, -0.4, 0, 7);
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2.5;
+  ctx2.lineCap = "round";
+  ctx2.beginPath();
+  ctx2.moveTo(-8, 26);
+  ctx2.lineTo(-8, 50);
+  ctx2.moveTo(8, 26);
+  ctx2.lineTo(8, 58);
+  ctx2.stroke();
+}
+function drawElecTransformer(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const core = () => roundedRect(ctx2, -38, -34, 76, 68, 4);
+  drawCastShadow(ctx2, core, 3, 4, 0.05);
+  core();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  core();
+  ctx2.stroke();
+  roundedRect(ctx2, -18, -40, 36, 80, 4);
+  ctx2.fillStyle = "rgba(180,120,60,0.5)";
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  roundedRect(ctx2, -18, -40, 36, 80, 4);
+  ctx2.stroke();
+  ctx2.strokeStyle = "rgba(120,70,30,0.5)";
+  ctx2.lineWidth = 1.4;
+  for (let y = -34; y < 34; y += 6) {
+    ctx2.beginPath();
+    ctx2.moveTo(-18, y);
+    ctx2.lineTo(18, y);
+    ctx2.stroke();
+  }
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2.5;
+  ctx2.lineCap = "round";
+  for (const x of [-10, 0, 10]) {
+    ctx2.beginPath();
+    ctx2.moveTo(x, 40);
+    ctx2.lineTo(x, 52);
+    ctx2.stroke();
+  }
+}
+function drawElecPcb(ctx2, part) {
+  setup(ctx2, part, 1.7, 0.82);
+  const board = () => roundedRect(ctx2, -54, -38, 108, 76, 5);
+  drawCastShadow(ctx2, board, 3, 4, 0.05);
+  board();
+  ctx2.fillStyle = "rgba(30,110,70,0.55)";
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  board();
+  ctx2.stroke();
+  ctx2.strokeStyle = "rgba(210,190,90,0.7)";
+  ctx2.lineWidth = 2;
+  ctx2.lineCap = "round";
+  ctx2.beginPath();
+  ctx2.moveTo(-44, -24);
+  ctx2.lineTo(-10, -24);
+  ctx2.lineTo(-10, 10);
+  ctx2.lineTo(30, 10);
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.moveTo(-44, 20);
+  ctx2.lineTo(20, 20);
+  ctx2.lineTo(20, -20);
+  ctx2.lineTo(44, -20);
+  ctx2.stroke();
+  for (const [x, y] of [[-44, -24], [30, 10], [-44, 20], [44, -20], [0, -30]]) {
+    ctx2.fillStyle = "rgba(210,190,90,0.85)";
+    ctx2.beginPath();
+    ctx2.arc(x, y, 4, 0, 7);
+    ctx2.fill();
+    ctx2.fillStyle = "rgba(40,40,40,0.8)";
+    ctx2.beginPath();
+    ctx2.arc(x, y, 1.6, 0, 7);
+    ctx2.fill();
+  }
+}
+function drawElecSwitchToggle(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const base = () => roundedRect(ctx2, -22, 4, 44, 40, 5);
+  drawCastShadow(ctx2, base, 3, 4, 0.05);
+  base();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  base();
+  ctx2.stroke();
+  roundedRect(ctx2, -10, -6, 20, 16, 3);
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  roundedRect(ctx2, -10, -6, 20, 16, 3);
+  ctx2.stroke();
+  ctx2.lineWidth = 8;
+  ctx2.lineCap = "round";
+  ctx2.beginPath();
+  ctx2.moveTo(0, -2);
+  ctx2.lineTo(-16, -40);
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.arc(-16, -42, 8, 0, 7);
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.lineWidth = 2;
+  ctx2.stroke();
+  ctx2.lineWidth = 2.5;
+  ctx2.lineCap = "round";
+  for (const x of [-10, 10]) {
+    ctx2.beginPath();
+    ctx2.moveTo(x, 44);
+    ctx2.lineTo(x, 56);
+    ctx2.stroke();
+  }
+}
+function drawElecDiode(ctx2, part) {
+  setup(ctx2, part, 1.7, 0.82);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2.5;
+  ctx2.lineCap = "round";
+  ctx2.beginPath();
+  ctx2.moveTo(-56, 0);
+  ctx2.lineTo(-24, 0);
+  ctx2.moveTo(24, 0);
+  ctx2.lineTo(56, 0);
+  ctx2.stroke();
+  const body = () => roundedRect(ctx2, -24, -13, 48, 26, 8);
+  drawCastShadow(ctx2, body, 2, 3, 0.05);
+  body();
+  ctx2.fillStyle = "rgba(44,32,32,0.74)";
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  body();
+  ctx2.stroke();
+  ctx2.fillStyle = "rgba(232,227,217,0.88)";
+  ctx2.fillRect(12, -13, 6, 26);
+}
+function drawToolWrench(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const bar = () => roundedRect(ctx2, -7, -28, 14, 56, 6);
+  drawCastShadow(ctx2, bar, 3, 4, 0.05);
+  bar();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  bar();
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.arc(0, 40, 15, 0, 7);
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.arc(0, 40, 7, 0, 7);
+  ctx2.stroke();
+  const head = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-18, -28);
+    ctx2.lineTo(-18, -54);
+    ctx2.lineTo(-6, -54);
+    ctx2.lineTo(-6, -40);
+    ctx2.lineTo(6, -40);
+    ctx2.lineTo(6, -54);
+    ctx2.lineTo(18, -54);
+    ctx2.lineTo(18, -28);
+    ctx2.closePath();
+  };
+  head();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  head();
+  ctx2.stroke();
+}
+function drawToolHammer(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const handle = () => roundedRect(ctx2, -5, -30, 10, 78, 4);
+  drawCastShadow(ctx2, handle, 3, 4, 0.05);
+  handle();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  handle();
+  ctx2.stroke();
+  const head = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-30, -46);
+    ctx2.lineTo(20, -46);
+    ctx2.quadraticCurveTo(40, -42, 42, -30);
+    ctx2.lineTo(30, -22);
+    ctx2.lineTo(20, -28);
+    ctx2.lineTo(-20, -28);
+    ctx2.quadraticCurveTo(-30, -28, -30, -38);
+    ctx2.closePath();
+  };
+  head();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  head();
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.moveTo(-28, -28);
+  ctx2.quadraticCurveTo(-42, -8, -34, 4);
+  ctx2.lineTo(-27, 0);
+  ctx2.quadraticCurveTo(-32, -12, -20, -28);
+  ctx2.closePath();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.stroke();
+}
+function drawHookJ(ctx2, part) {
+  setup(ctx2, part, 2, 0.82);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 9;
+  ctx2.lineCap = "round";
+  ctx2.beginPath();
+  ctx2.moveTo(0, -52);
+  ctx2.lineTo(0, 12);
+  ctx2.arc(-14, 12, 14, 0, Math.PI * 0.92, false);
+  ctx2.stroke();
+  ctx2.lineWidth = 4;
+  ctx2.beginPath();
+  ctx2.arc(0, -50, 8, 0, 7);
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.stroke();
+}
+function drawChainLink(ctx2, part) {
+  setup(ctx2, part, 2, 0.82);
+  const ring = () => roundedRect(ctx2, -20, -38, 40, 76, 20);
+  ring();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 11;
+  ctx2.stroke();
+  ring();
+  ctx2.strokeStyle = "rgba(255,255,255,0.32)";
+  ctx2.lineWidth = 3.5;
+  ctx2.stroke();
+}
+function drawHingeBarrel(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const left = () => roundedRect(ctx2, -48, -34, 46, 68, 4);
+  const right = () => roundedRect(ctx2, 2, -34, 46, 68, 4);
+  drawCastShadow(ctx2, () => {
+    left();
+    right();
+  }, 3, 4, 0.05);
+  left();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  left();
+  ctx2.stroke();
+  right();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  right();
+  ctx2.stroke();
+  for (const s of [[-30, -18], [-30, 18], [30, -18], [30, 18]]) drawRivet(ctx2, s[0], s[1], 3.4);
+  const pin = () => roundedRect(ctx2, -8, -40, 16, 80, 8);
+  pin();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  pin();
+  ctx2.stroke();
+  ctx2.lineWidth = 1.4;
+  for (const y of [-30, -10, 10, 30]) {
+    ctx2.beginPath();
+    ctx2.moveTo(-8, y);
+    ctx2.lineTo(8, y);
+    ctx2.stroke();
+  }
+}
+function drawLatchHook(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const base = () => roundedRect(ctx2, -52, -16, 40, 32, 4);
+  base();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  base();
+  ctx2.stroke();
+  drawRivet(ctx2, -42, 0, 3);
+  drawRivet(ctx2, -20, 0, 3);
+  ctx2.lineWidth = 8;
+  ctx2.lineCap = "round";
+  ctx2.beginPath();
+  ctx2.moveTo(-32, -2);
+  ctx2.lineTo(28, -2);
+  ctx2.arc(28, 6, 8, -Math.PI / 2, Math.PI, false);
+  ctx2.stroke();
+  const c = () => roundedRect(ctx2, 34, -14, 12, 28, 3);
+  c();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.lineWidth = 2;
+  c();
+  ctx2.stroke();
+}
+function drawClampC(ctx2, part) {
+  setup(ctx2, part, 2, 0.82);
+  const frame = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(24, -44);
+    ctx2.lineTo(-14, -44);
+    ctx2.quadraticCurveTo(-38, -44, -38, -20);
+    ctx2.lineTo(-38, 20);
+    ctx2.quadraticCurveTo(-38, 44, -14, 44);
+    ctx2.lineTo(24, 44);
+    ctx2.lineTo(24, 30);
+    ctx2.lineTo(-14, 30);
+    ctx2.quadraticCurveTo(-24, 30, -24, 20);
+    ctx2.lineTo(-24, -20);
+    ctx2.quadraticCurveTo(-24, -30, -14, -30);
+    ctx2.lineTo(24, -30);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, frame, 3, 4, 0.05);
+  frame();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  frame();
+  ctx2.stroke();
+  ctx2.lineWidth = 6;
+  ctx2.lineCap = "round";
+  ctx2.beginPath();
+  ctx2.moveTo(20, 38);
+  ctx2.lineTo(48, 38);
+  ctx2.stroke();
+  ctx2.lineWidth = 5;
+  ctx2.beginPath();
+  ctx2.moveTo(44, 26);
+  ctx2.lineTo(44, 50);
+  ctx2.stroke();
+  ctx2.lineWidth = 2;
+  ctx2.beginPath();
+  ctx2.arc(20, 38, 5, 0, 7);
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.stroke();
+}
+function drawTankCanister(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const body = () => roundedRect(ctx2, -34, -40, 68, 84, 8);
+  drawCastShadow(ctx2, body, 3, 4, 0.05);
+  body();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, body, -34, -40, 68, 84);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  body();
+  ctx2.stroke();
+  ctx2.lineWidth = 2;
+  ctx2.beginPath();
+  ctx2.moveTo(-26, -30);
+  ctx2.lineTo(26, 34);
+  ctx2.moveTo(26, -30);
+  ctx2.lineTo(-26, 34);
+  ctx2.stroke();
+  const cap = () => roundedRect(ctx2, -10, -50, 20, 12, 3);
+  cap();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  cap();
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.moveTo(-28, -40);
+  ctx2.lineTo(-28, -48);
+  ctx2.lineTo(-14, -48);
+  ctx2.stroke();
+}
+function drawTankDrum(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const body = () => roundedRect(ctx2, -34, -46, 68, 92, 8);
+  drawCastShadow(ctx2, body, 3, 4, 0.05);
+  body();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, body, -34, -46, 68, 92);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  body();
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.ellipse(0, -46, 34, 8, 0, 0, 7);
+  ctx2.stroke();
+  ctx2.lineWidth = 2.4;
+  for (const y of [-20, 0, 20]) {
+    ctx2.beginPath();
+    ctx2.moveTo(-34, y);
+    ctx2.lineTo(34, y);
+    ctx2.stroke();
+  }
+  drawRivet(ctx2, -14, -46, 4);
+  drawRivet(ctx2, 14, -46, 4);
+}
+function drawTankCylinder(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const body = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-24, 48);
+    ctx2.lineTo(-24, -30);
+    ctx2.quadraticCurveTo(-24, -50, 0, -50);
+    ctx2.quadraticCurveTo(24, -50, 24, -30);
+    ctx2.lineTo(24, 48);
+    ctx2.quadraticCurveTo(24, 54, 0, 54);
+    ctx2.quadraticCurveTo(-24, 54, -24, 48);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, body, 3, 4, 0.05);
+  body();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, body, -24, -50, 48, 104);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  body();
+  ctx2.stroke();
+  const valve = () => roundedRect(ctx2, -8, -62, 16, 14, 3);
+  valve();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  valve();
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.arc(0, -64, 6, 0, 7);
+  ctx2.stroke();
+}
+function drawBulbRound(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const glass = () => {
+    ctx2.beginPath();
+    ctx2.arc(0, -18, 34, Math.PI * 0.16, Math.PI * 0.84, false);
+    ctx2.lineTo(-14, 30);
+    ctx2.lineTo(14, 30);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, glass, 3, 4, 0.05);
+  glass();
+  ctx2.fillStyle = "rgba(255,244,200,0.4)";
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  glass();
+  ctx2.stroke();
+  ctx2.strokeStyle = "rgba(255,160,60,0.85)";
+  ctx2.lineWidth = 2;
+  ctx2.beginPath();
+  ctx2.moveTo(-8, 22);
+  ctx2.lineTo(-6, -10);
+  ctx2.lineTo(0, -18);
+  ctx2.lineTo(6, -10);
+  ctx2.lineTo(8, 22);
+  ctx2.stroke();
+  const base = () => roundedRect(ctx2, -14, 30, 28, 26, 3);
+  base();
+  ctx2.fillStyle = "rgba(200,200,205,0.6)";
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  base();
+  ctx2.stroke();
+  ctx2.lineWidth = 1.4;
+  for (let y = 34; y < 52; y += 5) {
+    ctx2.beginPath();
+    ctx2.moveTo(-14, y);
+    ctx2.lineTo(14, y + 2);
+    ctx2.stroke();
+  }
+  ctx2.beginPath();
+  ctx2.moveTo(-6, 56);
+  ctx2.lineTo(6, 56);
+  ctx2.lineTo(0, 62);
+  ctx2.closePath();
+  ctx2.fillStyle = BIN_INK;
+  ctx2.fill();
+}
+function drawBulbNeon(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const bezel = () => {
+    ctx2.beginPath();
+    ctx2.arc(0, 0, 28, 0, 7);
+  };
+  drawCastShadow(ctx2, bezel, 3, 4, 0.05);
+  bezel();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 3;
+  bezel();
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.arc(0, 0, 18, 0, 7);
+  ctx2.fillStyle = "rgba(255,120,60,0.6)";
+  ctx2.fill();
+  ctx2.lineWidth = 1.6;
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.stroke();
+  ctx2.fillStyle = "rgba(255,220,180,0.85)";
+  ctx2.beginPath();
+  ctx2.arc(-6, -6, 5, 0, 7);
+  ctx2.fill();
+}
+function drawBulbFilament(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const tube = () => roundedRect(ctx2, -54, -14, 108, 28, 14);
+  drawCastShadow(ctx2, tube, 3, 4, 0.05);
+  tube();
+  ctx2.fillStyle = "rgba(220,240,255,0.4)";
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  tube();
+  ctx2.stroke();
+  ctx2.fillStyle = "rgba(255,255,220,0.5)";
+  roundedRect(ctx2, -44, -6, 88, 12, 6);
+  ctx2.fill();
+  const cap1 = () => roundedRect(ctx2, -60, -11, 10, 22, 3);
+  const cap2 = () => roundedRect(ctx2, 50, -11, 10, 22, 3);
+  cap1();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  cap1();
+  ctx2.stroke();
+  cap2();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  cap2();
+  ctx2.stroke();
+}
+function drawPlugAc(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const body = () => roundedRect(ctx2, -30, -6, 60, 50, 12);
+  drawCastShadow(ctx2, body, 3, 4, 0.05);
+  body();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  body();
+  ctx2.stroke();
+  const pr1 = () => roundedRect(ctx2, -16, -28, 8, 24, 2);
+  const pr2 = () => roundedRect(ctx2, 8, -28, 8, 24, 2);
+  pr1();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  pr1();
+  ctx2.stroke();
+  pr2();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  pr2();
+  ctx2.stroke();
+  ctx2.lineWidth = 6;
+  ctx2.lineCap = "round";
+  ctx2.beginPath();
+  ctx2.moveTo(0, 44);
+  ctx2.lineTo(0, 56);
+  ctx2.stroke();
+}
+function drawJackSocket(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const body = () => roundedRect(ctx2, -20, -34, 40, 68, 6);
+  drawCastShadow(ctx2, body, 3, 4, 0.05);
+  body();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  body();
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.moveTo(-20, -20);
+  ctx2.lineTo(20, -20);
+  ctx2.lineTo(20, -8);
+  ctx2.lineTo(-20, -8);
+  ctx2.closePath();
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.arc(0, -30, 8, 0, 7);
+  ctx2.fillStyle = "rgba(30,30,34,0.7)";
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  ctx2.stroke();
+  ctx2.lineWidth = 2.5;
+  ctx2.lineCap = "round";
+  ctx2.beginPath();
+  ctx2.moveTo(-8, 34);
+  ctx2.lineTo(-8, 46);
+  ctx2.moveTo(8, 34);
+  ctx2.lineTo(8, 46);
+  ctx2.stroke();
+}
+function drawTerminalBlock(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const body = () => roundedRect(ctx2, -54, -24, 108, 48, 5);
+  drawCastShadow(ctx2, body, 3, 4, 0.05);
+  body();
+  ctx2.fillStyle = "rgba(60,120,90,0.42)";
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  body();
+  ctx2.stroke();
+  for (let i = 0; i < 4; i++) {
+    const x = -40 + i * 26;
+    ctx2.beginPath();
+    ctx2.arc(x, -6, 8, 0, 7);
+    ctx2.fillStyle = BIN_FILL;
+    ctx2.fill();
+    ctx2.strokeStyle = BIN_INK;
+    ctx2.lineWidth = 1.6;
+    ctx2.stroke();
+    ctx2.beginPath();
+    ctx2.moveTo(x - 5, -6);
+    ctx2.lineTo(x + 5, -6);
+    ctx2.stroke();
+    ctx2.beginPath();
+    ctx2.moveTo(x, -3);
+    ctx2.lineTo(x, 20);
+    ctx2.stroke();
+  }
+}
+function drawBeamI(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const I = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-40, -44);
+    ctx2.lineTo(40, -44);
+    ctx2.lineTo(40, -30);
+    ctx2.lineTo(10, -30);
+    ctx2.lineTo(10, 30);
+    ctx2.lineTo(40, 30);
+    ctx2.lineTo(40, 44);
+    ctx2.lineTo(-40, 44);
+    ctx2.lineTo(-40, 30);
+    ctx2.lineTo(-10, 30);
+    ctx2.lineTo(-10, -30);
+    ctx2.lineTo(-40, -30);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, I, 3, 4, 0.05);
+  I();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, I, -40, -44, 80, 88);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  I();
+  ctx2.stroke();
+}
+function drawChannelU(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const U = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-40, -40);
+    ctx2.lineTo(-40, 40);
+    ctx2.lineTo(40, 40);
+    ctx2.lineTo(40, -40);
+    ctx2.lineTo(26, -40);
+    ctx2.lineTo(26, 26);
+    ctx2.lineTo(-26, 26);
+    ctx2.lineTo(-26, -40);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, U, 3, 4, 0.05);
+  U();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, U, -40, -40, 80, 80);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  U();
+  ctx2.stroke();
+}
+function drawGrateMesh(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.82);
+  const rect = () => roundedRect(ctx2, -50, -40, 100, 80, 6);
+  drawCastShadow(ctx2, rect, 3, 4, 0.05);
+  rect();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.save();
+  rect();
+  ctx2.clip();
+  ctx2.strokeStyle = "rgba(18,22,25,0.4)";
+  ctx2.lineWidth = 3;
+  for (let x = -44; x <= 44; x += 14) {
+    ctx2.beginPath();
+    ctx2.moveTo(x, -40);
+    ctx2.lineTo(x, 40);
+    ctx2.stroke();
+  }
+  for (let y = -34; y <= 34; y += 14) {
+    ctx2.beginPath();
+    ctx2.moveTo(-50, y);
+    ctx2.lineTo(50, y);
+    ctx2.stroke();
+  }
+  ctx2.restore();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2.5;
+  rect();
+  ctx2.stroke();
+  for (const p of [[-42, -32], [42, -32], [-42, 32], [42, 32]]) drawRivet(ctx2, p[0], p[1], 3);
+}
+function drawPrimDisc(ctx2, part) {
+  setup(ctx2, part, 1.9, 0.8);
+  const d = () => {
+    ctx2.beginPath();
+    ctx2.arc(0, 0, 48, 0, 7);
+  };
+  drawCastShadow(ctx2, d, 3, 5, 0.05);
+  d();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, d, -48, -48, 96, 96);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  d();
+  ctx2.stroke();
+}
+function drawPrimRing(ctx2, part) {
+  setup(ctx2, part, 1.9, 0.8);
+  const ring = () => {
+    ctx2.beginPath();
+    ctx2.arc(0, 0, 48, 0, Math.PI * 2);
+    ctx2.arc(0, 0, 26, 0, Math.PI * 2, true);
+  };
+  drawCastShadow(ctx2, ring, 3, 5, 0.05);
+  ring();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill("evenodd");
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  ctx2.beginPath();
+  ctx2.arc(0, 0, 48, 0, 7);
+  ctx2.stroke();
+  ctx2.beginPath();
+  ctx2.arc(0, 0, 26, 0, 7);
+  ctx2.stroke();
+}
+function drawPrimDome(ctx2, part) {
+  setup(ctx2, part, 1.9, 0.8);
+  const d = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-50, 40);
+    ctx2.bezierCurveTo(-54, -30, -30, -52, 0, -52);
+    ctx2.bezierCurveTo(30, -52, 54, -30, 50, 40);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, d, 3, 5, 0.05);
+  d();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, d, -54, -52, 108, 92);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  d();
+  ctx2.stroke();
+}
+function drawPrimTeardrop(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.8);
+  const t = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(0, -50);
+    ctx2.bezierCurveTo(34, -8, 26, 44, 0, 44);
+    ctx2.bezierCurveTo(-26, 44, -34, -8, 0, -50);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, t, 3, 4, 0.05);
+  t();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, t, -34, -50, 68, 94);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  t();
+  ctx2.stroke();
+  ctx2.fillStyle = "rgba(255,255,255,0.4)";
+  ctx2.beginPath();
+  ctx2.ellipse(-8, -4, 6, 12, -0.4, 0, 7);
+  ctx2.fill();
+}
+function drawPrimBlob(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.8);
+  const b = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-40, -20);
+    ctx2.bezierCurveTo(-52, -44, -8, -54, 18, -44);
+    ctx2.bezierCurveTo(50, -34, 52, 6, 38, 28);
+    ctx2.bezierCurveTo(24, 50, -18, 52, -36, 34);
+    ctx2.bezierCurveTo(-52, 18, -30, 4, -40, -20);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, b, 3, 4, 0.05);
+  b();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, b, -52, -54, 106, 106);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  b();
+  ctx2.stroke();
+}
+function drawPrimBlade(ctx2, part) {
+  setup(ctx2, part, 1.9, 0.85);
+  const bl = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-52, 0);
+    ctx2.bezierCurveTo(-30, -20, 30, -22, 54, -8);
+    ctx2.bezierCurveTo(64, -2, 64, 2, 54, 8);
+    ctx2.bezierCurveTo(30, 22, -30, 20, -52, 0);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, bl, 2, 3, 0.05);
+  bl();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, bl, -52, -22, 118, 44);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  bl();
+  ctx2.stroke();
+  ctx2.strokeStyle = "rgba(255,255,255,0.35)";
+  ctx2.lineWidth = 1.4;
+  ctx2.beginPath();
+  ctx2.moveTo(-40, -2);
+  ctx2.quadraticCurveTo(10, -8, 48, -4);
+  ctx2.stroke();
+}
+function drawPrimOval(ctx2, part) {
+  setup(ctx2, part, 1.9, 0.8);
+  const o = () => {
+    ctx2.beginPath();
+    ctx2.ellipse(0, 0, 52, 32, 0, 0, 7);
+  };
+  drawCastShadow(ctx2, o, 3, 4, 0.05);
+  o();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, o, -52, -32, 104, 64);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  o();
+  ctx2.stroke();
+}
+function drawPrimCone(ctx2, part) {
+  setup(ctx2, part, 1.9, 0.8);
+  const c = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(0, -50);
+    ctx2.lineTo(42, 44);
+    ctx2.lineTo(-42, 44);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, c, 3, 4, 0.05);
+  c();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, c, -42, -50, 84, 94);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  c();
+  ctx2.stroke();
+}
+function drawPrimCrescent(ctx2, part) {
+  setup(ctx2, part, 1.9, 0.8);
+  const cr = () => {
+    ctx2.beginPath();
+    ctx2.arc(0, 0, 48, Math.PI * 0.34, Math.PI * 1.66, false);
+    ctx2.arc(20, 0, 44, Math.PI * 1.5, Math.PI * 0.5, true);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, cr, 3, 4, 0.05);
+  cr();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  cr();
+  ctx2.stroke();
+}
+function drawPrimStar(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.8);
+  const st = () => {
+    ctx2.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + i * Math.PI / 5;
+      const r = i % 2 ? 20 : 48;
+      const x = Math.cos(a) * r, y = Math.sin(a) * r;
+      i ? ctx2.lineTo(x, y) : ctx2.moveTo(x, y);
+    }
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, st, 3, 4, 0.05);
+  st();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, st, -48, -48, 96, 96);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  st();
+  ctx2.stroke();
+}
+function drawPrimArch(ctx2, part) {
+  setup(ctx2, part, 1.9, 0.8);
+  const a = () => {
+    ctx2.beginPath();
+    ctx2.arc(0, 28, 50, Math.PI, 0, false);
+    ctx2.arc(0, 28, 30, 0, Math.PI, true);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, a, 3, 4, 0.05);
+  a();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill("evenodd");
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  a();
+  ctx2.stroke();
+}
+function drawPrimPill(ctx2, part) {
+  setup(ctx2, part, 1.9, 0.8);
+  const p = () => roundedRect(ctx2, -52, -20, 104, 40, 20);
+  drawCastShadow(ctx2, p, 3, 4, 0.05);
+  p();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, p, -52, -20, 104, 40);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  p();
+  ctx2.stroke();
+}
+function drawPrimHeart(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.8);
+  const h = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(0, 44);
+    ctx2.bezierCurveTo(-48, 8, -44, -40, -14, -40);
+    ctx2.bezierCurveTo(-2, -40, 0, -26, 0, -20);
+    ctx2.bezierCurveTo(0, -26, 2, -40, 14, -40);
+    ctx2.bezierCurveTo(44, -40, 48, 8, 0, 44);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, h, 3, 4, 0.05);
+  h();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, h, -48, -40, 96, 84);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  h();
+  ctx2.stroke();
+}
+function drawPrimDiamond(ctx2, part) {
+  setup(ctx2, part, 1.9, 0.8);
+  const d = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(0, -50);
+    ctx2.lineTo(34, 0);
+    ctx2.lineTo(0, 50);
+    ctx2.lineTo(-34, 0);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, d, 3, 4, 0.05);
+  d();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, d, -34, -50, 68, 100);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  d();
+  ctx2.stroke();
+}
+function drawPrimPetal(ctx2, part) {
+  setup(ctx2, part, 1.8, 0.8);
+  const p = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(0, -52);
+    ctx2.bezierCurveTo(30, -30, 30, 30, 0, 52);
+    ctx2.bezierCurveTo(-30, 30, -30, -30, 0, -52);
+    ctx2.closePath();
+  };
+  drawCastShadow(ctx2, p, 3, 4, 0.05);
+  p();
+  ctx2.fillStyle = BIN_FILL;
+  ctx2.fill();
+  binShade(ctx2, p, -30, -52, 60, 104);
+  ctx2.strokeStyle = BIN_INK;
+  ctx2.lineWidth = 2;
+  p();
+  ctx2.stroke();
+}
+var DDGC = {
+  red: "#e23742",
+  redDk: "#a81f2a",
+  redHi: "#ff6f77",
+  blue: "#3f7fe6",
+  blueDk: "#264fae",
+  blueHi: "#7bacff",
+  purple: "#6f42c9",
+  purpleDk: "#3a1e80",
+  purpleMesh: "#5c34a8",
+  cream: "#efe7d2",
+  creamDk: "#cdbf99",
+  ice: "#5ec2f0",
+  skRed: "#ff5566",
+  skYellow: "#ffd447",
+  skGreen: "#5fe39a",
+  slPurple: "#8a4fe0",
+  slBlue: "#4aa8ef",
+  teal: "#14b7a4",
+  lime: "#8ee63a",
+  pink: "#ff5db0",
+  canPurple: "#6a3fa0",
+  silver: "#c8ccd6",
+  ink: "#0b0b12"
+};
+function ddgOutline(ctx2, w) {
+  ctx2.lineJoin = "round";
+  ctx2.lineCap = "round";
+  ctx2.strokeStyle = DDGC.ink;
+  ctx2.lineWidth = w;
+  ctx2.stroke();
+}
+function ddgPut(ctx2, state, key, x, y, scale, rot, material, passes, opts) {
+  if (!getPart(key)) return;
+  opts = opts || {};
+  const sx = opts.sx != null ? opts.sx : scale || 1;
+  const sy = opts.sy != null ? opts.sy : scale || 1;
+  const opacity = opts.opacity != null ? opts.opacity : 1;
+  const subState = { ...state, fastStill: true };
+  for (let n = 0; n < Math.max(1, passes || 1); n += 1) {
+    drawPart(ctx2, { key, x, y, scaleX: sx, scaleY: sy, rotation: rot || 0, material, opacity }, subState);
+  }
+}
+function ddgSkullPrim(ctx2, state, cx, cy, s) {
+  const P = (k, x, y, sc, rot, mat, n) => ddgPut(ctx2, state, k, cx + x * s, cy + y * s, sc * s, rot, mat, n);
+  P("prim.blob", -14, 66, 1.05, 0.2, "signalGreen", 5);
+  P("prim.dome", 0, -6, 1.7, 0, "petCoralEnamel", 6);
+  P("prim.dome", 40, 2, 1.45, 0.18, "pfpGold", 6);
+  P("prim.blob", -2, 48, 1.16, 0, "petCoralEnamel", 5);
+  P("prim.blob", 32, 50, 0.95, 0, "pfpGold", 5);
+  P("prim.blob", -46, 22, 0.72, 0.5, "petCoralEnamel", 4);
+  P("prim.blob", 48, 24, 0.72, -0.5, "pfpGold", 4);
+  P("prim.disc", -34, 8, 0.62, 0, "voidGlass", 5);
+  P("prim.disc", 34, 8, 0.62, 0, "voidGlass", 5);
+  P("prim.blade", -16, -14, 0.36, 0.7, "pressureRed", 3);
+  P("prim.blade", 16, -14, 0.36, Math.PI - 0.7, "pressureRed", 3);
+  P("prim.cone", 0, 42, 0.34, Math.PI, "voidGlass", 4);
+  for (let i = -2; i <= 2; i += 1) P("prim.cone", i * 13, 72, 0.16, Math.PI, "voidGlass", 3);
+}
+function ddgSlimePrim(ctx2, state, cx, cy, s) {
+  const P = (k, x, y, sc, rot, mat, n) => ddgPut(ctx2, state, k, cx + x * s, cy + y * s, sc * s, rot, mat, n);
+  const R = 74;
+  const angs = [-2.9, -2.4, -1.95, -1.55, -1.15, -0.72, -0.28, 0.45, 2.5];
+  angs.forEach((a) => P("prim.teardrop", Math.cos(a) * R + 8, Math.sin(a) * R + 6, 1.3, a + Math.PI / 2, "reactorGlass", 4));
+  angs.forEach((a) => P("prim.teardrop", Math.cos(a) * R, Math.sin(a) * R, 1.08, a + Math.PI / 2, "violetGlass", 5));
+  P("prim.ring", -82, -4, 0.56, 0, "violetGlass", 4);
+  P("prim.teardrop", -46, -134, 0.5, 0, "violetGlass", 4);
+  P("prim.teardrop", 8, -158, 0.42, 0, "violetGlass", 4);
+  P("prim.teardrop", 52, -132, 0.46, 0, "violetGlass", 4);
+}
+function ddgLetter(ctx2, state, char, cx, cy, h, mat) {
+  const t = h * 0.22, w = h * 0.62, PW = 108, PH = 44;
+  const bar = (x, y, L, vert) => ddgPut(ctx2, state, "prim.pill", cx + x, cy + y, 1, vert ? Math.PI / 2 : 0, mat, 3, { sx: L / PW, sy: t / PH });
+  bar(-w / 2, 0, h, true);
+  bar(0, -h / 2 + t / 2, w * 0.78, false);
+  bar(0, h / 2 - t / 2, w * 0.78, false);
+  if (char === "D") {
+    bar(w / 2 - t / 2, 0, h * 0.7, true);
+  } else {
+    bar(w / 2 - t / 2, h * 0.24, h * 0.5, true);
+    bar(w * 0.12, h * 0.08, w * 0.52, false);
+  }
+}
+function ddgCan(ctx2, state, cx, cy, h, tilt, body, stripe) {
+  body = body || "mercuryGlass";
+  stripe = stripe || "signalGreen";
+  const w = h * 0.44, PW = 108, PH = 44;
+  const R = (lx, ly) => [cx + lx * Math.cos(tilt) - ly * Math.sin(tilt), cy + lx * Math.sin(tilt) + ly * Math.cos(tilt)];
+  const put = (lx, ly, extraRot, mat, n, opts) => {
+    const p = R(lx, ly);
+    ddgPut(ctx2, state, "prim.pill", p[0], p[1], 1, tilt + extraRot, mat, n, opts);
+  };
+  put(0, 0, Math.PI / 2, body, 5, { sx: h / PW, sy: w / PH });
+  [stripe, "petCreamEnamel", stripe, "petCreamEnamel", stripe].forEach((m, i) => put(0, -h * 0.3 + i * h * 0.15, 0.5, m, 2, { sx: w * 1.15 / PW, sy: w * (i % 2 ? 0.12 : 0.34) / PH }));
+  put(0, h * 0.34, Math.PI / 2, "petCreamEnamel", 3, { sx: w * 0.5 / PW, sy: w * 0.5 / PH });
+  put(0, h * 0.42, Math.PI / 2, "mercuryGlass", 4, { sx: w * 0.55 / PW, sy: w / PH });
+  put(0, -h * 0.56, Math.PI / 2, stripe, 3, { sx: w * 0.55 / PW, sy: w * 0.55 / PH });
+  put(0, -h * 0.7, Math.PI / 2, "voidGlass", 2, { sx: w * 0.2 / PW, sy: w * 0.34 / PH });
+}
+function drawDdgBlade(ctx2, part) {
+  const blue = part && part.material === "blue";
+  const col = blue ? DDGC.blue : DDGC.red;
+  const hi = blue ? DDGC.blueHi : DDGC.redHi;
+  const path = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(6, -10);
+    ctx2.bezierCurveTo(56, -27, 100, -26, 120, -15);
+    ctx2.bezierCurveTo(134, -7, 134, 9, 120, 15);
+    ctx2.bezierCurveTo(100, 26, 56, 27, 6, 10);
+    ctx2.bezierCurveTo(-4, 5, -4, -5, 6, -10);
+    ctx2.closePath();
+  };
+  path();
+  ctx2.fillStyle = col;
+  ctx2.fill();
+  ctx2.save();
+  path();
+  ctx2.clip();
+  ctx2.fillStyle = hi;
+  ctx2.beginPath();
+  ctx2.moveTo(12, -8);
+  ctx2.bezierCurveTo(58, -21, 98, -20, 118, -11);
+  ctx2.bezierCurveTo(94, -15, 58, -14, 16, -3);
+  ctx2.closePath();
+  ctx2.fill();
+  ctx2.restore();
+  path();
+  ddgOutline(ctx2, 6.5);
+}
+function drawDdgMast(ctx2) {
+  const h = 36;
+  ctx2.beginPath();
+  ctx2.moveTo(-9, 6);
+  ctx2.bezierCurveTo(-13, -h * 0.28, -6, -h * 0.42, -9, -h * 0.62);
+  ctx2.bezierCurveTo(-12, -h * 0.82, -7, -h, 0, -h);
+  ctx2.bezierCurveTo(7, -h, 12, -h * 0.82, 9, -h * 0.62);
+  ctx2.bezierCurveTo(6, -h * 0.42, 13, -h * 0.28, 9, 6);
+  ctx2.closePath();
+  ctx2.fillStyle = DDGC.purpleDk;
+  ctx2.fill();
+  ddgOutline(ctx2, 6);
+  ctx2.strokeStyle = "rgba(255,255,255,0.26)";
+  ctx2.lineWidth = 3;
+  ctx2.beginPath();
+  ctx2.moveTo(-5, -h * 0.2);
+  ctx2.quadraticCurveTo(6, -h * 0.34, -4, -h * 0.5);
+  ctx2.quadraticCurveTo(6, -h * 0.66, -4, -h * 0.8);
+  ctx2.stroke();
+}
+function drawDdgHub(ctx2) {
+  ctx2.beginPath();
+  ctx2.arc(0, 0, 15, 0, 7);
+  ctx2.fillStyle = DDGC.purpleDk;
+  ctx2.fill();
+  ddgOutline(ctx2, 5);
+  ctx2.fillStyle = "rgba(255,255,255,0.5)";
+  ctx2.beginPath();
+  ctx2.arc(-4, -4, 5, 0, 7);
+  ctx2.fill();
+}
+function drawDdgBubble(ctx2) {
+  const r = 26;
+  ctx2.beginPath();
+  ctx2.arc(0, 0, r, 0, 7);
+  ctx2.fillStyle = "rgba(190,225,255,0.38)";
+  ctx2.fill();
+  ctx2.save();
+  ctx2.beginPath();
+  ctx2.arc(0, 0, r, 0, 7);
+  ctx2.clip();
+  ctx2.fillStyle = DDGC.slBlue;
+  ctx2.beginPath();
+  ctx2.moveTo(-r * 0.35, r * 0.15);
+  ctx2.bezierCurveTo(-r * 0.7, -r * 0.5, r * 0.5, -r * 0.75, r * 0.45, 0);
+  ctx2.bezierCurveTo(r * 0.25, r * 0.55, -r * 0.35, r * 0.55, -r * 0.35, r * 0.15);
+  ctx2.closePath();
+  ctx2.fill();
+  ctx2.fillStyle = DDGC.slPurple;
+  ctx2.beginPath();
+  ctx2.arc(r * 0.12, r * 0.24, r * 0.26, 0, 7);
+  ctx2.fill();
+  ctx2.restore();
+  ctx2.strokeStyle = DDGC.ice;
+  ctx2.lineWidth = 3.5;
+  ctx2.beginPath();
+  ctx2.arc(0, 0, r, 0, 7);
+  ctx2.stroke();
+  ctx2.fillStyle = "rgba(255,255,255,0.92)";
+  ctx2.beginPath();
+  ctx2.arc(-r * 0.34, -r * 0.36, r * 0.16, 0, 7);
+  ctx2.fill();
+}
+function drawDdgSprayCan(ctx2) {
+  const body = () => {
+    ctx2.beginPath();
+    ctx2.roundRect(-32, -66, 64, 150, 14);
+  };
+  body();
+  ctx2.save();
+  ctx2.clip();
+  const cols = [DDGC.teal, DDGC.lime, DDGC.pink, DDGC.canPurple, DDGC.teal, DDGC.lime, DDGC.pink, DDGC.canPurple];
+  ctx2.save();
+  ctx2.translate(-72, 0);
+  ctx2.rotate(0.42);
+  cols.forEach((c, i) => {
+    ctx2.fillStyle = c;
+    ctx2.fillRect(i * 26, -150, 26, 320);
+  });
+  ctx2.restore();
+  ctx2.restore();
+  ctx2.fillStyle = "#f3f3f7";
+  ctx2.fillRect(-32, -6, 64, 20);
+  ctx2.strokeStyle = DDGC.ink;
+  ctx2.lineWidth = 4;
+  ctx2.strokeRect(-32, -6, 64, 20);
+  ctx2.beginPath();
+  ctx2.roundRect(-32, 52, 64, 30, 8);
+  ctx2.fillStyle = DDGC.silver;
+  ctx2.fill();
+  ddgOutline(ctx2, 5);
+  body();
+  ddgOutline(ctx2, 6);
+  ctx2.beginPath();
+  ctx2.roundRect(-19, -92, 38, 30, 7);
+  ctx2.fillStyle = DDGC.canPurple;
+  ctx2.fill();
+  ddgOutline(ctx2, 6);
+  ctx2.beginPath();
+  ctx2.roundRect(-7, -102, 14, 14, 3);
+  ctx2.fillStyle = DDGC.canPurple;
+  ctx2.fill();
+  ddgOutline(ctx2, 4);
+}
+function drawDdgSlime(ctx2) {
+  const flame = (dx, dy) => {
+    ctx2.beginPath();
+    ctx2.moveTo(-120 + dx, 70 + dy);
+    ctx2.bezierCurveTo(-176 + dx, 10 + dy, -150 + dx, -70 + dy, -128 + dx, -118 + dy);
+    ctx2.bezierCurveTo(-138 + dx, -60 + dy, -96 + dx, -44 + dy, -74 + dx, -110 + dy);
+    ctx2.bezierCurveTo(-52 + dx, -168 + dy, -18 + dx, -120 + dy, -4 + dx, -150 + dy);
+    ctx2.bezierCurveTo(14 + dx, -118 + dy, 48 + dx, -170 + dy, 72 + dx, -112 + dy);
+    ctx2.bezierCurveTo(96 + dx, -46 + dy, 140 + dx, -66 + dy, 128 + dx, -118 + dy);
+    ctx2.bezierCurveTo(160 + dx, -66 + dy, 172 + dx, 6 + dy, 120 + dx, 66 + dy);
+    ctx2.lineTo(-120 + dx, 70 + dy);
+    ctx2.closePath();
+  };
+  flame(7, 6);
+  ctx2.fillStyle = DDGC.slBlue;
+  ctx2.fill();
+  flame(0, 0);
+  ctx2.fillStyle = DDGC.slPurple;
+  ctx2.fill();
+  ddgOutline(ctx2, 7);
+  const drop = (x, y, r) => {
+    ctx2.beginPath();
+    ctx2.moveTo(x, y - r * 1.5);
+    ctx2.bezierCurveTo(x + r, y - r * 0.4, x + r, y + r * 0.7, x, y + r * 0.8);
+    ctx2.bezierCurveTo(x - r, y + r * 0.7, x - r, y - r * 0.4, x, y - r * 1.5);
+    ctx2.closePath();
+    ctx2.fillStyle = DDGC.slPurple;
+    ctx2.fill();
+    ddgOutline(ctx2, 6);
+  };
+  drop(-70, -178, 18);
+  drop(6, -202, 15);
+  drop(74, -176, 16);
+}
+function drawDdgSkull(ctx2) {
+  const skull = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-106, -6);
+    ctx2.bezierCurveTo(-116, -92, -58, -132, 0, -132);
+    ctx2.bezierCurveTo(58, -132, 116, -92, 106, -6);
+    ctx2.bezierCurveTo(110, 34, 86, 50, 58, 60);
+    ctx2.lineTo(58, 92);
+    ctx2.bezierCurveTo(58, 116, 30, 124, 20, 104);
+    ctx2.bezierCurveTo(12, 122, -12, 122, -20, 104);
+    ctx2.bezierCurveTo(-30, 124, -58, 116, -58, 92);
+    ctx2.lineTo(-58, 60);
+    ctx2.bezierCurveTo(-86, 50, -110, 34, -106, -6);
+    ctx2.closePath();
+  };
+  skull();
+  ctx2.save();
+  ctx2.clip();
+  ctx2.fillStyle = DDGC.skRed;
+  ctx2.fillRect(-140, -150, 280, 300);
+  ctx2.fillStyle = DDGC.skYellow;
+  ctx2.beginPath();
+  ctx2.moveTo(2, -150);
+  ctx2.lineTo(150, -150);
+  ctx2.lineTo(150, 150);
+  ctx2.lineTo(40, 150);
+  ctx2.bezierCurveTo(-22, 40, 30, -50, 2, -150);
+  ctx2.closePath();
+  ctx2.fill();
+  ctx2.fillStyle = DDGC.skGreen;
+  ctx2.beginPath();
+  ctx2.moveTo(-120, 44);
+  ctx2.bezierCurveTo(-64, 52, -34, 84, -16, 150);
+  ctx2.lineTo(-120, 150);
+  ctx2.closePath();
+  ctx2.fill();
+  ctx2.restore();
+  skull();
+  ddgOutline(ctx2, 8);
+  ctx2.fillStyle = DDGC.ink;
+  ctx2.beginPath();
+  ctx2.ellipse(-44, 6, 28, 34, -0.05, 0, 7);
+  ctx2.fill();
+  ctx2.beginPath();
+  ctx2.ellipse(44, 6, 28, 34, 0.05, 0, 7);
+  ctx2.fill();
+  ctx2.beginPath();
+  ctx2.moveTo(0, 42);
+  ctx2.bezierCurveTo(-15, 60, -8, 74, 0, 72);
+  ctx2.bezierCurveTo(8, 74, 15, 60, 0, 42);
+  ctx2.closePath();
+  ctx2.fill();
+  ctx2.strokeStyle = DDGC.ink;
+  ctx2.lineWidth = 6;
+  [-1, 0, 1].forEach((i) => {
+    ctx2.beginPath();
+    ctx2.moveTo(i * 24, 80);
+    ctx2.lineTo(i * 24, 108);
+    ctx2.stroke();
+  });
+}
+function drawDdgCapCrown(ctx2) {
+  const dome = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-150, 66);
+    ctx2.bezierCurveTo(-172, -66, -118, -158, 4, -160);
+    ctx2.bezierCurveTo(128, -158, 166, -60, 146, 70);
+    ctx2.bezierCurveTo(110, 96, -116, 96, -150, 66);
+    ctx2.closePath();
+  };
+  dome();
+  ctx2.fillStyle = DDGC.cream;
+  ctx2.fill();
+  ctx2.save();
+  dome();
+  ctx2.clip();
+  ctx2.fillStyle = DDGC.purpleMesh;
+  ctx2.beginPath();
+  ctx2.moveTo(-180, -180);
+  ctx2.lineTo(2, -160);
+  ctx2.bezierCurveTo(-26, -70, -30, 10, -18, 96);
+  ctx2.lineTo(-180, 96);
+  ctx2.closePath();
+  ctx2.fill();
+  ctx2.fillStyle = DDGC.purpleDk;
+  for (let yy = -150; yy < 92; yy += 15) {
+    for (let xx = -162; xx < 2; xx += 15) {
+      const off = Math.round((yy + 150) / 15) % 2 ? 7.5 : 0;
+      ctx2.beginPath();
+      ctx2.arc(xx + off, yy, 4, 0, 7);
+      ctx2.fill();
+    }
+  }
+  ctx2.restore();
+  ctx2.strokeStyle = DDGC.ink;
+  ctx2.lineWidth = 6;
+  ctx2.beginPath();
+  ctx2.moveTo(2, -160);
+  ctx2.bezierCurveTo(-26, -70, -30, 10, -18, 90);
+  ctx2.stroke();
+  dome();
+  ddgOutline(ctx2, 7);
+}
+function drawDdgCapBrim(ctx2) {
+  const brim = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-46, 70);
+    ctx2.bezierCurveTo(50, 44, 150, 52, 196, 104);
+    ctx2.bezierCurveTo(206, 118, 198, 132, 176, 132);
+    ctx2.bezierCurveTo(90, 132, 10, 120, -40, 104);
+    ctx2.closePath();
+  };
+  brim();
+  ctx2.fillStyle = DDGC.red;
+  ctx2.fill();
+  ctx2.save();
+  brim();
+  ctx2.clip();
+  ctx2.fillStyle = DDGC.redDk;
+  ctx2.beginPath();
+  ctx2.moveTo(-40, 108);
+  ctx2.bezierCurveTo(60, 130, 150, 140, 206, 116);
+  ctx2.lineTo(206, 150);
+  ctx2.lineTo(-40, 140);
+  ctx2.closePath();
+  ctx2.fill();
+  ctx2.restore();
+  brim();
+  ddgOutline(ctx2, 7);
+}
+function drawDdgCapPatch(ctx2) {
+  ctx2.beginPath();
+  ctx2.roundRect(-64, -46, 128, 92, 16);
+  ctx2.fillStyle = DDGC.purple;
+  ctx2.fill();
+  ddgOutline(ctx2, 6);
+  ctx2.fillStyle = DDGC.ice;
+  ctx2.font = '900 58px "Arial Black", Impact, system-ui, sans-serif';
+  ctx2.textAlign = "center";
+  ctx2.textBaseline = "middle";
+  ctx2.lineJoin = "round";
+  ctx2.strokeStyle = DDGC.ink;
+  ctx2.lineWidth = 7;
+  ctx2.strokeText("DDG", 0, 0);
+  ctx2.fillText("DDG", 0, 0);
+  ctx2.fillStyle = DDGC.ice;
+  [-40, -4, 34].forEach((dx) => {
+    ctx2.beginPath();
+    ctx2.moveTo(dx, 22);
+    ctx2.lineTo(dx - 5, 40);
+    ctx2.quadraticCurveTo(dx, 46, dx + 5, 40);
+    ctx2.closePath();
+    ctx2.fill();
+  });
+}
+function drawDdgCapBlue(ctx2) {
+  const dome = () => {
+    ctx2.beginPath();
+    ctx2.moveTo(-128, 70);
+    ctx2.bezierCurveTo(-150, -54, -96, -140, 6, -142);
+    ctx2.bezierCurveTo(110, -140, 150, -52, 128, 72);
+    ctx2.bezierCurveTo(96, 96, -96, 96, -128, 70);
+    ctx2.closePath();
+  };
+  dome();
+  ctx2.fillStyle = DDGC.blue;
+  ctx2.fill();
+  ctx2.save();
+  dome();
+  ctx2.clip();
+  ctx2.fillStyle = DDGC.blueHi;
+  ctx2.beginPath();
+  ctx2.moveTo(-120, -40);
+  ctx2.bezierCurveTo(-60, -120, 60, -120, 110, -40);
+  ctx2.bezierCurveTo(40, -96, -50, -96, -120, -40);
+  ctx2.closePath();
+  ctx2.fill();
+  ctx2.restore();
+  dome();
+  ddgOutline(ctx2, 7);
+}
+function drawDdgSkullItem(ctx2, part, state) {
+  ddgSlimePrim(ctx2, state, 0, 12, 1.16);
+  ddgSkullPrim(ctx2, state, 0, 26, 1.18);
+}
+function drawDdgPropellerCapItem(ctx2, part, state) {
+  const time = state && state.previewMotion === false ? 0 : state && state.time || 0;
+  const spin = time * 3;
+  const mir = state && state.mirrored ? -1 : 1;
+  const shell = part && part.material || "violetGlass";
+  const accent = part && part.accentMat || "pressureRed";
+  ctx2.save();
+  ctx2.scale(mir, 1);
+  ddgPut(ctx2, state, "prim.pill", 12, 92, 2, 0.06, accent, 4);
+  ddgPut(ctx2, state, "prim.dome", -44, 4, 2, 0, shell, 5);
+  ddgPut(ctx2, state, "prim.dome", 30, 4, 2, 0, "petCreamEnamel", 4);
+  ddgPut(ctx2, state, "prim.pill", 48, -2, 1, 0, shell, 4, { sx: 1.35, sy: 0.9 });
+  const hx = -6, hy = -120;
+  ddgPut(ctx2, state, "prim.pill", hx, hy + 24, 1, Math.PI / 2, "voidGlass", 3, { sx: 0.14, sy: 0.52 });
+  const fanCols = ["pressureRed", "reactorGlass", "signalGreen"];
+  const fanR = 40;
+  for (let i = 0; i < 3; i += 1) {
+    const a = spin + i * (2 * Math.PI / 3) - Math.PI / 2;
+    ddgPut(ctx2, state, "prim.blade", hx + Math.cos(a) * fanR, hy + Math.sin(a) * fanR, 0.8, a, fanCols[i], 3);
+  }
+  ddgPut(ctx2, state, "prim.disc", hx, hy, 0.36, 0, "voidGlass", 3);
+  ctx2.restore();
+  const cxL = 48 * mir;
+  ddgLetter(ctx2, state, "D", cxL - 42, -2, 46, "amberGlass");
+  ddgLetter(ctx2, state, "D", cxL, -2, 46, "amberGlass");
+  ddgLetter(ctx2, state, "G", cxL + 42, -2, 46, "amberGlass");
+}
+function drawDdgSprayCapItem(ctx2, part, state) {
+  const time = state && state.previewMotion === false ? 0 : state && state.time || 0;
+  const shell = part && part.material || "reactorGlass";
+  const accent = part && part.accentMat || "signalGreen";
+  ddgCan(ctx2, state, -118, -8, 156, -0.34, shell, accent);
+  ddgCan(ctx2, state, 118, -8, 156, 0.34, shell, accent);
+  ddgPut(ctx2, state, "prim.pill", 8, 84, 1.9, 0.05, accent, 4);
+  ddgPut(ctx2, state, "prim.dome", 0, 6, 1.95, 0, shell, 5);
+  ddgSkullPrim(ctx2, state, 4, 8, 0.4);
+  const bubbles = [[-92, 0, 0.5], [-52, 0.4, 0.32], [96, 0.62, 0.46], [128, 0.2, 0.3]];
+  for (const [bx, phase, bs] of bubbles) {
+    const cyc = ((time * 0.5 + phase) % 1 + 1) % 1;
+    const by = -60 - cyc * 96;
+    ddgPut(ctx2, state, "prim.ring", bx, by, bs * (0.7 + cyc * 0.4), 0, shell, 2, { opacity: Math.sin(cyc * Math.PI) });
+  }
+}
 var PARTS = {
+  "ddg.slimeSkull": { id: 900, label: "DDG Slime Skull", category: "collab", kind: "sticker", owned: true, canDuplicate: true, showInLibrary: false, bounds: { x: -185, y: -215, w: 370, h: 380 }, draw: drawDdgSkullItem },
+  "ddg.propellerCap": { id: 901, label: "DDG Propeller Cap", category: "collab", kind: "shell", owned: true, canDuplicate: true, showInLibrary: false, bounds: { x: -156, y: -218, w: 300, h: 370 }, draw: drawDdgPropellerCapItem },
+  "ddg.sprayCap": { id: 902, label: "DDG Spray-Can Cap", category: "collab", kind: "shell", owned: true, canDuplicate: true, showInLibrary: false, bounds: { x: -178, y: -174, w: 352, h: 314 }, draw: drawDdgSprayCapItem },
+  // DDG component parts — the pieces the three items above are assembled from (each a first-class part).
+  "ddg.propBlade": { id: 903, label: "DDG Prop Blade", category: "collab", kind: "ddg", owned: true, showInLibrary: false, bounds: { x: -8, y: -30, w: 148, h: 60 }, draw: drawDdgBlade },
+  "ddg.propMast": { id: 904, label: "DDG Prop Mast", category: "collab", kind: "ddg", owned: true, showInLibrary: false, bounds: { x: -14, y: -40, w: 28, h: 50 }, draw: drawDdgMast },
+  "ddg.propHub": { id: 905, label: "DDG Prop Hub", category: "collab", kind: "ddg", owned: true, showInLibrary: false, bounds: { x: -18, y: -18, w: 36, h: 36 }, draw: drawDdgHub },
+  "ddg.capCrown": { id: 906, label: "DDG Cap Crown", category: "collab", kind: "ddg", owned: true, showInLibrary: false, bounds: { x: -154, y: -164, w: 308, h: 266 }, draw: drawDdgCapCrown },
+  "ddg.capBrim": { id: 907, label: "DDG Cap Brim", category: "collab", kind: "ddg", owned: true, showInLibrary: false, bounds: { x: -48, y: 42, w: 258, h: 94 }, draw: drawDdgCapBrim },
+  "ddg.capPatch": { id: 908, label: "DDG Cap Patch", category: "collab", kind: "ddg", owned: true, showInLibrary: false, bounds: { x: -68, y: -50, w: 136, h: 100 }, draw: drawDdgCapPatch },
+  "ddg.capBlue": { id: 909, label: "DDG Blue Crown", category: "collab", kind: "ddg", owned: true, showInLibrary: false, bounds: { x: -132, y: -146, w: 264, h: 248 }, draw: drawDdgCapBlue },
+  "ddg.sprayCan": { id: 910, label: "DDG Spray Can", category: "collab", kind: "ddg", owned: true, showInLibrary: false, bounds: { x: -36, y: -106, w: 72, h: 194 }, draw: drawDdgSprayCan },
+  "ddg.bubble": { id: 911, label: "DDG Bubble", category: "collab", kind: "ddg", owned: true, showInLibrary: false, bounds: { x: -30, y: -30, w: 60, h: 60 }, draw: drawDdgBubble },
+  "ddg.skull": { id: 912, label: "DDG Skull", category: "collab", kind: "ddg", owned: true, showInLibrary: false, bounds: { x: -112, y: -136, w: 224, h: 264 }, draw: drawDdgSkull },
+  "ddg.slime": { id: 913, label: "DDG Slime Aura", category: "collab", kind: "ddg", owned: true, showInLibrary: false, bounds: { x: -184, y: -216, w: 368, h: 294 }, draw: drawDdgSlime },
+  // ---- Mechanical parts bin (batch 1) — generic recolourable components ----
+  "plate.hex": { id: 1e3, label: "Hex Plate", category: "plate", kind: "plate", owned: true, showInLibrary: true, bounds: { x: -56, y: -56, w: 112, h: 112 }, draw: drawPlateHex },
+  "plate.round": { id: 1001, label: "Round Plate", category: "plate", kind: "plate", owned: true, showInLibrary: true, bounds: { x: -54, y: -54, w: 108, h: 108 }, draw: drawPlateRound },
+  "plate.slotted": { id: 1002, label: "Slotted Plate", category: "plate", kind: "plate", owned: true, showInLibrary: true, bounds: { x: -60, y: -38, w: 120, h: 76 }, draw: drawPlateSlotted },
+  "plate.corrugated": { id: 1003, label: "Corrugated Panel", category: "plate", kind: "plate", owned: true, showInLibrary: true, bounds: { x: -60, y: -38, w: 120, h: 76 }, draw: drawPlateCorrugated },
+  "wheel.spoked": { id: 1004, label: "Spoked Wheel", category: "wheel", kind: "wheel", owned: true, showInLibrary: true, bounds: { x: -54, y: -54, w: 108, h: 108 }, draw: drawWheelSpoked },
+  "wheel.solid": { id: 1005, label: "Solid Wheel", category: "wheel", kind: "wheel", owned: true, showInLibrary: true, bounds: { x: -52, y: -52, w: 104, h: 104 }, draw: drawWheelSolid },
+  "wheel.caster": { id: 1006, label: "Caster Wheel", category: "wheel", kind: "wheel", owned: true, showInLibrary: true, bounds: { x: -24, y: -48, w: 48, h: 96 }, draw: drawWheelCaster },
+  "fastener.nail": { id: 1007, label: "Nail", category: "fastener", kind: "fastener", owned: true, showInLibrary: true, bounds: { x: -16, y: -58, w: 32, h: 118 }, draw: drawFastenerNail },
+  "fastener.screw": { id: 1008, label: "Screw", category: "fastener", kind: "fastener", owned: true, showInLibrary: true, bounds: { x: -18, y: -62, w: 36, h: 122 }, draw: drawFastenerScrew },
+  "fastener.staple": { id: 1009, label: "Staple", category: "fastener", kind: "fastener", owned: true, showInLibrary: true, bounds: { x: -36, y: -46, w: 72, h: 92 }, draw: drawFastenerStaple },
+  "wire.coil": { id: 1010, label: "Coiled Wire", category: "wire", kind: "wire", owned: true, showInLibrary: true, bounds: { x: -62, y: -24, w: 124, h: 48 }, draw: drawWireCoil },
+  "wire.loop": { id: 1011, label: "Looped Wire", category: "wire", kind: "wire", owned: true, showInLibrary: true, bounds: { x: -62, y: -40, w: 124, h: 74 }, draw: drawWireLoop },
+  "elec.resistor": { id: 1012, label: "Resistor", category: "electronic", kind: "electronic", owned: true, showInLibrary: true, bounds: { x: -60, y: -18, w: 120, h: 36 }, draw: drawElecResistor },
+  "elec.capacitor": { id: 1013, label: "Capacitor", category: "electronic", kind: "electronic", owned: true, showInLibrary: true, bounds: { x: -26, y: -50, w: 52, h: 112 }, draw: drawElecCapacitor },
+  "elec.chip": { id: 1014, label: "IC Chip", category: "electronic", kind: "electronic", owned: true, showInLibrary: true, bounds: { x: -48, y: -34, w: 96, h: 68 }, draw: drawElecChip },
+  "elec.tube": { id: 1015, label: "Vacuum Tube", category: "electronic", kind: "electronic", owned: true, showInLibrary: true, bounds: { x: -26, y: -58, w: 52, h: 128 }, draw: drawElecTube },
+  // ---- Mechanical parts bin (batches 2 & 3) ----
+  "plate.triangle": { id: 1016, label: "Gusset Plate", category: "plate", kind: "plate", owned: true, showInLibrary: true, bounds: { x: -56, y: -52, w: 112, h: 100 }, draw: drawPlateTriangle },
+  "bracket.angle": { id: 1017, label: "Angle Bracket", category: "bracket", kind: "bracket", owned: true, showInLibrary: true, bounds: { x: -48, y: -48, w: 96, h: 96 }, draw: drawBracketAngle },
+  "plate.diamond": { id: 1018, label: "Diamond Tread Plate", category: "plate", kind: "plate", owned: true, showInLibrary: true, bounds: { x: -58, y: -42, w: 116, h: 84 }, draw: drawPlateDiamond },
+  "plate.name": { id: 1019, label: "Name Plate", category: "plate", kind: "plate", owned: true, showInLibrary: true, bounds: { x: -62, y: -26, w: 124, h: 52 }, draw: drawPlateName },
+  "gear.sprocket": { id: 1020, label: "Chain Sprocket", category: "gear", kind: "gear", owned: true, showInLibrary: true, bounds: { x: -54, y: -54, w: 108, h: 108 }, draw: drawGearSprocket },
+  "gear.ratchet": { id: 1021, label: "Ratchet Wheel", category: "gear", kind: "gear", owned: true, showInLibrary: true, bounds: { x: -56, y: -56, w: 112, h: 112 }, draw: drawGearRatchet },
+  "gear.pinion": { id: 1022, label: "Pinion Gear", category: "gear", kind: "gear", owned: true, showInLibrary: true, bounds: { x: -40, y: -40, w: 80, h: 80 }, draw: drawGearPinion },
+  "gear.rack": { id: 1023, label: "Gear Rack", category: "gear", kind: "gear", owned: true, showInLibrary: true, bounds: { x: -64, y: -14, w: 128, h: 50 }, draw: drawGearRack },
+  "spring.coilTall": { id: 1024, label: "Coil Spring", category: "spring", kind: "spring", owned: true, showInLibrary: true, bounds: { x: -24, y: -60, w: 48, h: 120 }, draw: drawSpringCoilTall },
+  "spring.leaf": { id: 1025, label: "Leaf Spring", category: "spring", kind: "spring", owned: true, showInLibrary: true, bounds: { x: -62, y: -6, w: 124, h: 52 }, draw: drawSpringLeaf },
+  "spring.torsion": { id: 1026, label: "Torsion Spring", category: "spring", kind: "spring", owned: true, showInLibrary: true, bounds: { x: -52, y: -38, w: 104, h: 78 }, draw: drawSpringTorsion },
+  "damper.shock": { id: 1027, label: "Shock Absorber", category: "spring", kind: "spring", owned: true, showInLibrary: true, bounds: { x: -18, y: -62, w: 36, h: 128 }, draw: drawDamperShock },
+  "pipe.tee": { id: 1028, label: "Tee Joint", category: "pipe", kind: "pipe", owned: true, showInLibrary: true, bounds: { x: -62, y: -20, w: 124, h: 56 }, draw: drawPipeTee },
+  "pipe.cross": { id: 1029, label: "Cross Joint", category: "pipe", kind: "pipe", owned: true, showInLibrary: true, bounds: { x: -54, y: -54, w: 108, h: 108 }, draw: drawPipeCross },
+  "valve.gate": { id: 1030, label: "Gate Valve", category: "pipe", kind: "pipe", owned: true, showInLibrary: true, bounds: { x: -48, y: -68, w: 96, h: 106 }, draw: drawValveGate },
+  "pipe.flange": { id: 1031, label: "Flanged Pipe", category: "pipe", kind: "pipe", owned: true, showInLibrary: true, bounds: { x: -52, y: -32, w: 92, h: 64 }, draw: drawPipeFlange },
+  "pipe.reducer": { id: 1032, label: "Pipe Reducer", category: "pipe", kind: "pipe", owned: true, showInLibrary: true, bounds: { x: -52, y: -24, w: 104, h: 48 }, draw: drawPipeReducer },
+  "coupling.union": { id: 1033, label: "Union Coupling", category: "pipe", kind: "pipe", owned: true, showInLibrary: true, bounds: { x: -54, y: -28, w: 108, h: 56 }, draw: drawCouplingUnion },
+  "car.piston": { id: 1034, label: "Piston", category: "car", kind: "car", owned: true, showInLibrary: true, bounds: { x: -28, y: -52, w: 56, h: 114 }, draw: drawCarPiston },
+  "car.sparkPlug": { id: 1035, label: "Spark Plug", category: "car", kind: "car", owned: true, showInLibrary: true, bounds: { x: -18, y: -56, w: 36, h: 116 }, draw: drawCarSparkPlug },
+  "car.muffler": { id: 1036, label: "Muffler", category: "car", kind: "car", owned: true, showInLibrary: true, bounds: { x: -64, y: -24, w: 130, h: 48 }, draw: drawCarMuffler },
+  "car.headlight": { id: 1037, label: "Headlight", category: "car", kind: "car", owned: true, showInLibrary: true, bounds: { x: -42, y: -48, w: 84, h: 96 }, draw: drawCarHeadlight },
+  "car.rim": { id: 1038, label: "Wheel Rim", category: "car", kind: "car", owned: true, showInLibrary: true, bounds: { x: -52, y: -52, w: 104, h: 104 }, draw: drawCarRim },
+  "car.gauge": { id: 1039, label: "Dash Gauge", category: "car", kind: "car", owned: true, showInLibrary: true, bounds: { x: -46, y: -46, w: 92, h: 92 }, draw: drawCarGauge },
+  "appliance.knob": { id: 1040, label: "Control Knob", category: "appliance", kind: "appliance", owned: true, showInLibrary: true, bounds: { x: -42, y: -42, w: 84, h: 84 }, draw: drawApplianceKnob },
+  "appliance.dial": { id: 1041, label: "Dial", category: "appliance", kind: "appliance", owned: true, showInLibrary: true, bounds: { x: -48, y: -48, w: 96, h: 96 }, draw: drawApplianceDial },
+  "appliance.motor": { id: 1042, label: "Electric Motor", category: "appliance", kind: "appliance", owned: true, showInLibrary: true, bounds: { x: -42, y: -32, w: 102, h: 72 }, draw: drawApplianceMotor },
+  "appliance.belt": { id: 1043, label: "Drive Belt", category: "appliance", kind: "appliance", owned: true, showInLibrary: true, bounds: { x: -58, y: -24, w: 116, h: 48 }, draw: drawApplianceBelt },
+  "appliance.switch": { id: 1044, label: "Rocker Switch", category: "appliance", kind: "appliance", owned: true, showInLibrary: true, bounds: { x: -32, y: -42, w: 64, h: 84 }, draw: drawApplianceSwitch },
+  "elec.transistor": { id: 1045, label: "Transistor", category: "electronic", kind: "electronic", owned: true, showInLibrary: true, bounds: { x: -28, y: -34, w: 56, h: 92 }, draw: drawElecTransistor },
+  "elec.led": { id: 1046, label: "LED", category: "electronic", kind: "electronic", owned: true, showInLibrary: true, bounds: { x: -26, y: -28, w: 52, h: 90 }, draw: drawElecLed },
+  "elec.transformer": { id: 1047, label: "Transformer", category: "electronic", kind: "electronic", owned: true, showInLibrary: true, bounds: { x: -40, y: -42, w: 80, h: 98 }, draw: drawElecTransformer },
+  "elec.pcb": { id: 1048, label: "Circuit Board", category: "electronic", kind: "electronic", owned: true, showInLibrary: true, bounds: { x: -56, y: -40, w: 112, h: 80 }, draw: drawElecPcb },
+  "elec.switchToggle": { id: 1049, label: "Toggle Switch", category: "electronic", kind: "electronic", owned: true, showInLibrary: true, bounds: { x: -26, y: -52, w: 52, h: 112 }, draw: drawElecSwitchToggle },
+  "elec.diode": { id: 1050, label: "Diode", category: "electronic", kind: "electronic", owned: true, showInLibrary: true, bounds: { x: -58, y: -16, w: 116, h: 32 }, draw: drawElecDiode },
+  // ---- Mechanical parts bin (batch 4) — tools, containers, lamps, connectors, structural ----
+  "tool.wrench": { id: 1051, label: "Wrench", category: "tool", kind: "tool", owned: true, showInLibrary: true, bounds: { x: -20, y: -58, w: 40, h: 116 }, draw: drawToolWrench },
+  "tool.hammer": { id: 1052, label: "Hammer", category: "tool", kind: "tool", owned: true, showInLibrary: true, bounds: { x: -36, y: -50, w: 82, h: 102 }, draw: drawToolHammer },
+  "hook.j": { id: 1053, label: "J-Hook", category: "hardware", kind: "hardware", owned: true, showInLibrary: true, bounds: { x: -30, y: -60, w: 60, h: 100 }, draw: drawHookJ },
+  "chain.link": { id: 1054, label: "Chain Link", category: "hardware", kind: "hardware", owned: true, showInLibrary: true, bounds: { x: -26, y: -44, w: 52, h: 88 }, draw: drawChainLink },
+  "hinge.barrel": { id: 1055, label: "Barrel Hinge", category: "hardware", kind: "hardware", owned: true, showInLibrary: true, bounds: { x: -50, y: -42, w: 100, h: 84 }, draw: drawHingeBarrel },
+  "latch.hook": { id: 1056, label: "Hook Latch", category: "hardware", kind: "hardware", owned: true, showInLibrary: true, bounds: { x: -54, y: -20, w: 104, h: 40 }, draw: drawLatchHook },
+  "clamp.c": { id: 1057, label: "C-Clamp", category: "hardware", kind: "hardware", owned: true, showInLibrary: true, bounds: { x: -40, y: -48, w: 92, h: 100 }, draw: drawClampC },
+  "tank.canister": { id: 1058, label: "Fuel Canister", category: "tank", kind: "tank", owned: true, showInLibrary: true, bounds: { x: -36, y: -52, w: 72, h: 100 }, draw: drawTankCanister },
+  "tank.drum": { id: 1059, label: "Oil Drum", category: "tank", kind: "tank", owned: true, showInLibrary: true, bounds: { x: -36, y: -56, w: 72, h: 106 }, draw: drawTankDrum },
+  "tank.cylinder": { id: 1060, label: "Gas Cylinder", category: "tank", kind: "tank", owned: true, showInLibrary: true, bounds: { x: -26, y: -70, w: 52, h: 128 }, draw: drawTankCylinder },
+  "bulb.round": { id: 1061, label: "Light Bulb", category: "lamp", kind: "lamp", owned: true, showInLibrary: true, bounds: { x: -36, y: -54, w: 72, h: 120 }, draw: drawBulbRound },
+  "bulb.neon": { id: 1062, label: "Neon Lamp", category: "lamp", kind: "lamp", owned: true, showInLibrary: true, bounds: { x: -30, y: -30, w: 60, h: 60 }, draw: drawBulbNeon },
+  "bulb.filament": { id: 1063, label: "Tube Lamp", category: "lamp", kind: "lamp", owned: true, showInLibrary: true, bounds: { x: -62, y: -16, w: 124, h: 32 }, draw: drawBulbFilament },
+  "plug.ac": { id: 1064, label: "AC Plug", category: "connector", kind: "connector", owned: true, showInLibrary: true, bounds: { x: -32, y: -30, w: 64, h: 90 }, draw: drawPlugAc },
+  "jack.socket": { id: 1065, label: "Jack Socket", category: "connector", kind: "connector", owned: true, showInLibrary: true, bounds: { x: -22, y: -40, w: 44, h: 90 }, draw: drawJackSocket },
+  "terminal.block": { id: 1066, label: "Terminal Block", category: "connector", kind: "connector", owned: true, showInLibrary: true, bounds: { x: -56, y: -26, w: 112, h: 54 }, draw: drawTerminalBlock },
+  "beam.i": { id: 1067, label: "I-Beam", category: "structural", kind: "structural", owned: true, showInLibrary: true, bounds: { x: -42, y: -46, w: 84, h: 92 }, draw: drawBeamI },
+  "channel.u": { id: 1068, label: "U-Channel", category: "structural", kind: "structural", owned: true, showInLibrary: true, bounds: { x: -42, y: -42, w: 84, h: 84 }, draw: drawChannelU },
+  "grate.mesh": { id: 1069, label: "Mesh Grate", category: "structural", kind: "structural", owned: true, showInLibrary: true, bounds: { x: -52, y: -42, w: 104, h: 84 }, draw: drawGrateMesh },
+  // ---- Organic shape primitives (our canvas style, recolourable) — glue for composing shapes ----
+  "prim.disc": { id: 1070, label: "Disc", category: "primitive", kind: "primitive", owned: true, showInLibrary: true, bounds: { x: -50, y: -50, w: 100, h: 100 }, draw: drawPrimDisc },
+  "prim.ring": { id: 1071, label: "Ring", category: "primitive", kind: "primitive", owned: true, showInLibrary: true, bounds: { x: -50, y: -50, w: 100, h: 100 }, draw: drawPrimRing },
+  "prim.dome": { id: 1072, label: "Dome", category: "primitive", kind: "primitive", owned: true, showInLibrary: true, bounds: { x: -54, y: -54, w: 108, h: 98 }, draw: drawPrimDome },
+  "prim.teardrop": { id: 1073, label: "Teardrop", category: "primitive", kind: "primitive", owned: true, showInLibrary: true, bounds: { x: -34, y: -52, w: 68, h: 100 }, draw: drawPrimTeardrop },
+  "prim.blob": { id: 1074, label: "Blob", category: "primitive", kind: "primitive", owned: true, showInLibrary: true, bounds: { x: -52, y: -54, w: 106, h: 108 }, draw: drawPrimBlob },
+  "prim.blade": { id: 1075, label: "Blade", category: "primitive", kind: "primitive", owned: true, showInLibrary: true, bounds: { x: -54, y: -24, w: 120, h: 48 }, draw: drawPrimBlade },
+  "prim.oval": { id: 1076, label: "Oval", category: "primitive", kind: "primitive", owned: true, showInLibrary: true, bounds: { x: -54, y: -34, w: 108, h: 68 }, draw: drawPrimOval },
+  "prim.cone": { id: 1077, label: "Cone", category: "primitive", kind: "primitive", owned: true, showInLibrary: true, bounds: { x: -44, y: -52, w: 88, h: 100 }, draw: drawPrimCone },
+  "prim.crescent": { id: 1078, label: "Crescent", category: "primitive", kind: "primitive", owned: true, showInLibrary: true, bounds: { x: -50, y: -50, w: 100, h: 100 }, draw: drawPrimCrescent },
+  "prim.star": { id: 1079, label: "Star", category: "primitive", kind: "primitive", owned: true, showInLibrary: true, bounds: { x: -50, y: -50, w: 100, h: 100 }, draw: drawPrimStar },
+  "prim.arch": { id: 1080, label: "Arch", category: "primitive", kind: "primitive", owned: true, showInLibrary: true, bounds: { x: -52, y: -24, w: 104, h: 56 }, draw: drawPrimArch },
+  "prim.pill": { id: 1081, label: "Pill", category: "primitive", kind: "primitive", owned: true, showInLibrary: true, bounds: { x: -54, y: -22, w: 108, h: 44 }, draw: drawPrimPill },
+  "prim.heart": { id: 1082, label: "Heart", category: "primitive", kind: "primitive", owned: true, showInLibrary: true, bounds: { x: -48, y: -42, w: 96, h: 88 }, draw: drawPrimHeart },
+  "prim.diamond": { id: 1083, label: "Diamond", category: "primitive", kind: "primitive", owned: true, showInLibrary: true, bounds: { x: -34, y: -50, w: 68, h: 100 }, draw: drawPrimDiamond },
+  "prim.petal": { id: 1084, label: "Petal", category: "primitive", kind: "primitive", owned: true, showInLibrary: true, bounds: { x: -30, y: -52, w: 60, h: 104 }, draw: drawPrimPetal },
+  "wing.slat": {
+    id: 465,
+    label: "Checkered Wing Slat",
+    category: "wing",
+    kind: "wing",
+    owned: true,
+    showInLibrary: true,
+    bounds: { x: -142, y: -32, w: 284, h: 64 },
+    draw: drawWingSlat
+  },
+  "wing.feather": {
+    id: 461,
+    label: "Wing Feather Blade",
+    category: "wing",
+    kind: "wing",
+    owned: true,
+    showInLibrary: true,
+    bounds: { x: -16, y: -98, w: 34, h: 194 },
+    draw: drawWingFeather
+  },
+  "wing.spar": {
+    id: 462,
+    label: "Wing Spar Arm",
+    category: "wing",
+    kind: "wing",
+    owned: true,
+    showInLibrary: true,
+    bounds: { x: -108, y: -26, w: 212, h: 52 },
+    draw: drawWingSpar
+  },
+  "wing.membrane": {
+    id: 463,
+    label: "Wing Membrane",
+    category: "wing",
+    kind: "wing",
+    owned: true,
+    showInLibrary: true,
+    bounds: { x: -91, y: -68, w: 184, h: 150 },
+    draw: drawWingMembrane
+  },
+  "wing.covert": {
+    id: 464,
+    label: "Wing Covert Cluster",
+    category: "wing",
+    kind: "wing",
+    owned: true,
+    showInLibrary: true,
+    bounds: { x: -60, y: -50, w: 150, h: 120 },
+    draw: drawWingCovert
+  },
+  "wing.jet": {
+    id: 466,
+    label: "Jet Wing Panel",
+    category: "wing",
+    kind: "wing",
+    owned: true,
+    showInLibrary: true,
+    bounds: { x: -152, y: -44, w: 304, h: 74 },
+    draw: drawWingJet
+  },
+  "rocket.thruster": {
+    id: 467,
+    label: "Rocket Thruster",
+    category: "wing",
+    kind: "wing",
+    owned: true,
+    showInLibrary: true,
+    bounds: { x: -106, y: -36, w: 184, h: 72 },
+    draw: drawRocketThruster
+  },
+  "wing.fin": {
+    id: 468,
+    label: "Wing Fin / Winglet",
+    category: "wing",
+    kind: "wing",
+    owned: true,
+    showInLibrary: true,
+    bounds: { x: -10, y: -62, w: 42, h: 122 },
+    draw: drawWingFin
+  },
+  "rocket.flame": {
+    id: 469,
+    label: "Rocket Exhaust",
+    category: "wing",
+    kind: "wing",
+    owned: true,
+    showInLibrary: true,
+    bounds: { x: -42, y: -32, w: 164, h: 64 },
+    draw: drawRocketFlame
+  },
+  "pet.shell.round": {
+    id: 260,
+    label: "Pet Round Chassis",
+    category: "pet",
+    kind: "pet",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -82, y: -92, w: 164, h: 188 },
+    draw: drawPetRoundShell
+  },
+  "pet.head.shell": {
+    id: 261,
+    label: "Pet Head Shell",
+    category: "pet",
+    kind: "pet",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -68, y: -80, w: 136, h: 152 },
+    draw: drawPetHeadShell
+  },
+  "pet.ear.cat": {
+    id: 262,
+    label: "Cat Ear Plate",
+    category: "pet",
+    kind: "pet",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -46, y: -80, w: 96, h: 148 },
+    draw: drawPetCatEar
+  },
+  "pet.ear.dog": {
+    id: 263,
+    label: "Dog Ear Plate",
+    category: "pet",
+    kind: "pet",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -50, y: -74, w: 100, h: 160 },
+    draw: drawPetDogEar
+  },
+  "pet.muzzle": {
+    id: 264,
+    label: "Pet Muzzle Plate",
+    category: "pet",
+    kind: "pet",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -60, y: -42, w: 120, h: 84 },
+    draw: drawPetMuzzlePlate
+  },
+  "pet.eye.lens": {
+    id: 265,
+    label: "Pet Eye Lens",
+    category: "pet",
+    kind: "face",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -40, y: -40, w: 80, h: 80 },
+    draw: drawPetEyeLens
+  },
+  "pet.paw": {
+    id: 266,
+    label: "Pet Paw",
+    category: "pet",
+    kind: "pet",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -53, y: -53, w: 106, h: 96 },
+    draw: drawPetPaw
+  },
+  "pet.wing": {
+    id: 267,
+    label: "Pet Wing Plate",
+    category: "pet",
+    kind: "pet",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -46, y: -86, w: 100, h: 176 },
+    draw: drawPetWing
+  },
+  "pet.tail.segment": {
+    id: 268,
+    label: "Pet Tail Segment",
+    category: "pet",
+    kind: "pet",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -70, y: -28, w: 140, h: 56 },
+    draw: drawPetTailSegment
+  },
+  "pet.fin": {
+    id: 269,
+    label: "Pet Fin Plate",
+    category: "pet",
+    kind: "pet",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -64, y: -92, w: 128, h: 160 },
+    draw: drawPetFin
+  },
+  "pet.jaw": {
+    id: 270,
+    label: "Pet Jaw Plate",
+    category: "pet",
+    kind: "pet",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -74, y: -29, w: 148, h: 90 },
+    draw: drawPetJaw
+  },
+  "pet.face.mask": {
+    id: 271,
+    label: "Pet Face Mask",
+    category: "pet",
+    kind: "face",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -64, y: -82, w: 128, h: 162 },
+    draw: drawPetFaceMask
+  },
+  "pet.tongue": {
+    id: 272,
+    label: "Pet Tongue Plate",
+    category: "pet",
+    kind: "face",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -29, y: -39, w: 58, h: 92 },
+    draw: drawPetTongue
+  },
+  "pet.belly.plate": {
+    id: 273,
+    label: "Pet Belly Plate",
+    category: "pet",
+    kind: "pet",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -69, y: -85, w: 138, h: 180 },
+    draw: drawPetBellyPlate
+  },
+  "pet.beak": {
+    id: 274,
+    label: "Layered Pet Beak",
+    category: "pet",
+    kind: "face",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -53, y: -47, w: 106, h: 80 },
+    draw: drawPetBeak
+  },
+  "pet.nose": {
+    id: 275,
+    label: "Pet Nose Plate",
+    category: "pet",
+    kind: "face",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -42, y: -41, w: 84, h: 80 },
+    draw: drawPetNose
+  },
+  "pet.haunch": {
+    id: 276,
+    label: "Pet Haunch Plate",
+    category: "pet",
+    kind: "pet",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -62, y: -87, w: 122, h: 164 },
+    draw: drawPetHaunchPlate
+  },
+  "pet.penguin.head": {
+    id: 277,
+    label: "Penguin Dome Head",
+    category: "pet",
+    kind: "pet",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -74, y: -75, w: 148, h: 150 },
+    draw: drawPetPenguinHead
+  },
+  "pet.penguin.flipper": {
+    id: 278,
+    label: "Penguin Blade Flipper",
+    category: "pet",
+    kind: "pet",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -44, y: -22, w: 88, h: 136 },
+    draw: drawPetPenguinFlipper
+  },
+  "pet.penguin.face": {
+    id: 279,
+    label: "Penguin Face Bib",
+    category: "pet",
+    kind: "face",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -61, y: -69, w: 122, h: 130 },
+    draw: drawPetPenguinFacePlate
+  },
+  "pet.penguin.bib": {
+    id: 280,
+    label: "Penguin Continuous Bib",
+    category: "pet",
+    kind: "pet",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -68, y: -88, w: 136, h: 203 },
+    draw: drawPetPenguinBib
+  },
+  "pet.penguin.nose": {
+    id: 281,
+    label: "Penguin Nose Plate",
+    category: "pet",
+    kind: "face",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -39, y: -21, w: 78, h: 41 },
+    draw: drawPetPenguinNose
+  },
+  "pet.shark.body": {
+    id: 282,
+    label: "Shark Tapered Body",
+    category: "pet",
+    kind: "pet",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -95, y: -48, w: 182, h: 96 },
+    draw: drawPetSharkBody
+  },
+  "pet.shark.dorsal": {
+    id: 283,
+    label: "Shark Dorsal Fin",
+    category: "pet",
+    kind: "pet",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -52, y: -71, w: 106, h: 108 },
+    draw: drawPetSharkDorsal
+  },
+  "pet.shark.pectoral": {
+    id: 284,
+    label: "Shark Pectoral Fin",
+    category: "pet",
+    kind: "pet",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -46, y: -19, w: 102, h: 58 },
+    draw: drawPetSharkPectoral
+  },
+  "pet.shark.tail": {
+    id: 285,
+    label: "Shark Crescent Tail",
+    category: "pet",
+    kind: "pet",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -19, y: -63, w: 78, h: 126 },
+    draw: drawPetSharkTail
+  },
   "gear.small": {
     id: 1,
     label: "Small Gear",
@@ -7583,6 +12531,66 @@ var PARTS = {
     owned: false,
     canDuplicate: true,
     draw: drawGearToothShard
+  },
+  "golden.dome": {
+    id: 180,
+    label: "Domed Shell",
+    category: "premium",
+    kind: "shell",
+    premium: true,
+    owned: false,
+    canDuplicate: true,
+    showInLibrary: false,
+    bounds: { x: -96, y: -74, w: 192, h: 130 },
+    draw: drawGoldenDome
+  },
+  "golden.spike": {
+    id: 181,
+    label: "Forged Spike",
+    category: "premium",
+    kind: "micro",
+    premium: true,
+    owned: false,
+    canDuplicate: true,
+    showInLibrary: false,
+    bounds: { x: -22, y: -62, w: 44, h: 122 },
+    draw: drawGoldenSpike
+  },
+  "golden.heart": {
+    id: 183,
+    label: "Heart Shell",
+    category: "premium",
+    kind: "shell",
+    premium: true,
+    owned: false,
+    canDuplicate: true,
+    showInLibrary: false,
+    bounds: { x: -130, y: -150, w: 260, h: 262 },
+    draw: drawGoldenHeart
+  },
+  "golden.armorPlate": {
+    id: 184,
+    label: "Armour Plate",
+    category: "premium",
+    kind: "panel",
+    premium: true,
+    owned: false,
+    canDuplicate: true,
+    showInLibrary: false,
+    bounds: { x: -80, y: -50, w: 160, h: 100 },
+    draw: drawGoldenArmorPlate
+  },
+  "golden.bat": {
+    id: 185,
+    label: "Bat Shell",
+    category: "premium",
+    kind: "shell",
+    premium: true,
+    owned: false,
+    canDuplicate: true,
+    showInLibrary: false,
+    bounds: { x: -156, y: -84, w: 312, h: 146 },
+    draw: drawGoldenBat
   },
   "mark.graphite": {
     id: 113,
@@ -8260,6 +13268,86 @@ var PARTS = {
     bounds: { x: -260, y: -160, w: 520, h: 400 },
     draw: drawSpecialRareBody
   },
+  "golden.steam.helm.shell": {
+    id: 9201,
+    label: "Golden Steam Helm Shell",
+    category: "golden",
+    kind: "headwear",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -138, y: -116, w: 276, h: 202 },
+    draw: drawGoldenSteamHelmShell
+  },
+  "golden.aviator.goggles": {
+    id: 9206,
+    label: "Golden Aviator Goggles",
+    category: "golden",
+    kind: "face",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -122, y: -56, w: 244, h: 104 },
+    draw: drawGoldenAviatorGoggles
+  },
+  "golden.sunforge.sombrero": {
+    id: 9207,
+    label: "Golden Sunforge Sombrero",
+    category: "golden",
+    kind: "headwear",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -136, y: -86, w: 272, h: 154 },
+    draw: drawGoldenSunforgeSombrero
+  },
+  "golden.pocket.watch": {
+    id: 9208,
+    label: "Golden Pocket Watch",
+    category: "golden",
+    kind: "neck",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -84, y: -116, w: 168, h: 224 },
+    draw: drawGoldenPocketWatch
+  },
+  "golden.mechanical.skull": {
+    id: 9209,
+    label: "Golden Mechanical Skull",
+    category: "golden",
+    kind: "sticker",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -100, y: -122, w: 200, h: 224 },
+    draw: drawGoldenMechanicalSkull
+  },
+  "golden.steam.helm.spike": {
+    id: 9205,
+    label: "Golden Steam Helm Spike",
+    category: "golden",
+    kind: "headwear",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -30, y: -102, w: 60, h: 136 },
+    draw: drawGoldenSteamHelmSpike
+  },
+  "golden.rider.jacket.left": {
+    id: 9202,
+    label: "Golden Rider Jacket Left",
+    category: "golden",
+    kind: "bodyWear",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: -220, y: -120, w: 196, h: 274 },
+    draw: drawGoldenRiderJacketLeft
+  },
+  "golden.rider.jacket.right": {
+    id: 9204,
+    label: "Golden Rider Jacket Right",
+    category: "golden",
+    kind: "bodyWear",
+    owned: true,
+    showInLibrary: false,
+    bounds: { x: 24, y: -120, w: 196, h: 274 },
+    draw: drawGoldenRiderJacketRight
+  },
   "pack.icon": {
     id: 197,
     label: "Backpack Icon",
@@ -8380,10 +13468,13 @@ function drawPart(ctx2, part, state) {
     effectCtx.save();
     effectCtx.translate(pad - bounds.x, pad - bounds.y);
     def.draw(effectCtx, localPart, drawState);
+    const isComposite = String(localPart.key || "").startsWith("ddg.");
     applyMaterialFinish(effectCtx, localPart, drawState);
-    if (shadeStyle !== "cleanLine" && drawState.fastStill !== true) drawOuterPencilEdge(effectCtx, localPart);
-    applyShadeFinish(effectCtx, localPart, shadeStyle, drawState);
-    applySpecialSkinFinish(effectCtx, localPart, drawState);
+    if (!isComposite) {
+      if (shadeStyle !== "cleanLine" && drawState.fastStill !== true) drawOuterPencilEdge(effectCtx, localPart);
+      applyShadeFinish(effectCtx, localPart, shadeStyle, drawState);
+      applySpecialSkinFinish(effectCtx, localPart, drawState);
+    }
     const activeSkin = drawState.specialMaterialSkin || drawState.materialSkin;
     if (isGoldenEditionSkin(activeSkin) && localPart.key === "pack.icon") {
       drawPackIconGasReadoutOverlay(effectCtx, localPart, drawState);
@@ -8435,7 +13526,7 @@ function drawLockedHatch(ctx2, part) {
   ctx2.restore();
 }
 
-// ../web/src/renderer.js
+// web/src/renderer.js
 var BASE_BLUEPRINT_URL = "/concepts/base-mechanical-canvas-blueprint.png";
 var baseBlueprintImage;
 var CANVAS_LOOKS = {
@@ -10334,7 +15425,840 @@ function drawSelection(ctx2, part, look = CANVAS_LOOKS.whiteBlueprint) {
   ctx2.restore();
 }
 
-// anim-entry.js
+// web/src/material-fx.js
+var rnd = (s) => {
+  const x = Math.sin(s * 127.1 + 311.7) * 43758.5453;
+  return x - Math.floor(x);
+};
+var hexRgb = (h) => {
+  h = String(h).replace("#", "");
+  return { r: parseInt(h.slice(0, 2), 16), g: parseInt(h.slice(2, 4), 16), b: parseInt(h.slice(4, 6), 16) };
+};
+var HOLO_RAMP = [[255, 90, 214], [176, 107, 255], [90, 134, 255], [56, 214, 255], [79, 245, 192], [255, 226, 122]];
+var TEAL_RAMP = [[0, 30, 30], [0, 49, 47], [1, 72, 72], [0, 89, 88], [1, 103, 100], [79, 214, 192], [200, 250, 244]];
+function rampSample(ramp, p, wrap) {
+  const n = ramp.length;
+  if (wrap) {
+    p = (p % 1 + 1) % 1;
+    const f2 = p * n, i2 = Math.floor(f2), t2 = f2 - i2, a2 = ramp[i2 % n], b2 = ramp[(i2 + 1) % n];
+    return [a2[0] + (b2[0] - a2[0]) * t2, a2[1] + (b2[1] - a2[1]) * t2, a2[2] + (b2[2] - a2[2]) * t2];
+  }
+  p = Math.max(0, Math.min(0.9999, p));
+  const f = p * (n - 1), i = Math.floor(f), t = f - i, a = ramp[i], b = ramp[Math.min(n - 1, i + 1)];
+  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+}
+function neonFX(ctx2, size, skin) {
+  const neon = hexRgb(skin.accent || skin.edge || "#39f6ff");
+  const bg = hexRgb(skin.background || "#000");
+  const src = ctx2.getImageData(0, 0, size, size).data;
+  const oc = document.createElement("canvas");
+  oc.width = size;
+  oc.height = size;
+  const octx = oc.getContext("2d");
+  const out = octx.createImageData(size, size);
+  const o = out.data;
+  for (let i = 0; i < src.length; i += 4) {
+    const dr = src[i] - bg.r, dg = src[i + 1] - bg.g, db = src[i + 2] - bg.b;
+    if (src[i + 3] > 10 && dr * dr + dg * dg + db * db > 1500) {
+      o[i] = neon.r;
+      o[i + 1] = neon.g;
+      o[i + 2] = neon.b;
+      o[i + 3] = 255;
+    }
+  }
+  octx.putImageData(out, 0, 0);
+  ctx2.save();
+  if (!skin.transparentBg) {
+    ctx2.fillStyle = "rgba(6,8,22,0.44)";
+    ctx2.fillRect(0, 0, size, size);
+  }
+  ctx2.globalCompositeOperation = "lighter";
+  for (const [blur, a] of [[30, 0.42], [15, 0.55], [6, 0.7], [1.5, 0.9]]) {
+    ctx2.filter = `blur(${blur}px)`;
+    ctx2.globalAlpha = a;
+    ctx2.drawImage(oc, 0, 0);
+  }
+  ctx2.filter = "none";
+  ctx2.globalAlpha = 1;
+  for (let i = 0; i < 44; i++) {
+    const x = rnd(i * 7) * size, y = rnd(i * 11) * size;
+    ctx2.fillStyle = `rgba(${neon.r},${neon.g},${neon.b},${0.3 + rnd(i) * 0.5})`;
+    ctx2.beginPath();
+    ctx2.arc(x, y, 0.7 + rnd(i) * 1.7, 0, 7);
+    ctx2.fill();
+  }
+  ctx2.restore();
+}
+function holoFX(ctx2, size, skin = {}) {
+  const bg = hexRgb(skin.background || "#000");
+  const ramp = skin.ramp || HOLO_RAMP;
+  const mono = !!skin.mono;
+  const ground = skin.ground || "#05060a";
+  const src = ctx2.getImageData(0, 0, size, size).data;
+  const oc = document.createElement("canvas");
+  oc.width = size;
+  oc.height = size;
+  const octx = oc.getContext("2d");
+  const out = octx.createImageData(size, size);
+  const o = out.data;
+  for (let i = 0; i < src.length; i += 4) {
+    const dr = src[i] - bg.r, dg = src[i + 1] - bg.g, db = src[i + 2] - bg.b;
+    if (src[i + 3] > 10 && dr * dr + dg * dg + db * db > 1500) {
+      const p = i / 4, x = p % size, y = p / size | 0;
+      const lum = (src[i] * 0.299 + src[i + 1] * 0.587 + src[i + 2] * 0.114) / 255;
+      const phase = mono ? lum : lum * 1.5 + (x * 0.9 + y * 1.4) * 16e-4;
+      let [r, g, b] = rampSample(ramp, phase, !mono);
+      const v = mono ? 1 : 0.1 + Math.pow(lum, 1.5) * 1.02;
+      r = Math.min(255, r * v);
+      g = Math.min(255, g * v);
+      b = Math.min(255, b * v);
+      if (lum > 0.9) {
+        const w = (lum - 0.9) / 0.1;
+        r += (255 - r) * w * 0.85;
+        g += (255 - g) * w * 0.85;
+        b += (255 - b) * w * 0.85;
+      }
+      o[i] = r;
+      o[i + 1] = g;
+      o[i + 2] = b;
+      o[i + 3] = 255;
+    }
+  }
+  octx.putImageData(out, 0, 0);
+  ctx2.save();
+  if (!skin.transparentBg) {
+    ctx2.fillStyle = ground;
+    ctx2.fillRect(0, 0, size, size);
+  }
+  ctx2.drawImage(oc, 0, 0);
+  ctx2.globalCompositeOperation = "lighter";
+  for (const [blur, a] of [[16, 0.22], [6, 0.32], [2, 0.4]]) {
+    ctx2.filter = `blur(${blur}px)`;
+    ctx2.globalAlpha = a;
+    ctx2.drawImage(oc, 0, 0);
+  }
+  ctx2.filter = "none";
+  ctx2.globalAlpha = 1;
+  ctx2.restore();
+}
+function tealChromeFX(ctx2, size, skin = {}) {
+  holoFX(ctx2, size, { ...skin, ramp: TEAL_RAMP, mono: true, ground: "#001414" });
+}
+
+// web/src/webgl-fx.js
+var FX_MODE = { plain: 0, living: 1, molten: 2, gold: 3, plasma: 4, crystal: 5, aurora: 6, mercury: 7, toxic: 8, hologram: 9 };
+var PREMIUM_PART_KEYS = { 4: "living", 5: "molten", 6: "gold", 7: "plasma", 8: "crystal", 9: "aurora", 10: "mercury", 11: "toxic", 12: "hologram" };
+var PREMIUM_KEYS = new Set(Object.values(PREMIUM_PART_KEYS));
+var isPremiumEffect = (key) => PREMIUM_KEYS.has(key);
+var VS = `attribute vec2 p; varying vec2 vUv; void main(){ vUv = vec2(p.x*0.5+0.5, 0.5-p.y*0.5); gl_Position = vec4(p,0.,1.); }`;
+var FS = `precision highp float;
+uniform sampler2D uTex; uniform float uTime; uniform vec2 uRes; uniform int uMode; uniform int uTransparentBg;
+varying vec2 vUv;
+float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
+float noise(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);
+  return mix(mix(hash(i),hash(i+vec2(1,0)),f.x), mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x), f.y); }
+float fbm(vec2 p){ float v=0.,a=.5; for(int i=0;i<5;i++){ v+=a*noise(p); p=p*2.02+3.1; a*=.5; } return v; }
+float lum(vec3 c){ return dot(c, vec3(.299,.587,.114)); }
+vec3 pal(float t, vec3 a, vec3 b, vec3 c, vec3 d){ return a + b*cos(6.28318*(c*t+d)); }
+void main(){
+  vec2 uv = vUv; float t = uTime; int M = uMode;
+  float warp = 0.0;
+  if(M==1) warp = 0.028; else if(M==3) warp = 0.016;
+  vec2 duv = uv;
+  if(warp>0.0){ vec2 w = vec2(fbm(uv*3.2+vec2(0.,t*0.35)), fbm(uv*3.2+vec2(5.2,-t*0.28+1.3))); duv += (w-0.5)*warp; }
+  vec4 col = texture2D(uTex, duv);
+  if(col.a < 0.06){ gl_FragColor = (uTransparentBg==1) ? vec4(0.0) : vec4(0.015,0.02,0.035,1.0); return; }
+  vec3 rgb = col.rgb; float L = lum(rgb);
+  float e = 1.6/uRes.x;
+  float lx = lum(texture2D(uTex,duv+vec2(e,0.)).rgb) - lum(texture2D(uTex,duv-vec2(e,0.)).rgb);
+  float ly = lum(texture2D(uTex,duv+vec2(0.,e)).rgb) - lum(texture2D(uTex,duv-vec2(0.,e)).rgb);
+  vec3 n = normalize(vec3(-lx*5.0, -ly*5.0, 1.0));
+  float ang = (M==1||M==5||M==7) ? 0.6 : t*0.9;
+  vec3 Ld = normalize(vec3(cos(ang), sin(ang)*0.5+0.35, 0.85));
+  float diff = clamp(dot(n,Ld)*0.5+0.5, 0.0, 1.0);
+  float spec = pow(clamp(dot(n, normalize(Ld+vec3(0,0,1))),0.0,1.0), 30.0);
+  float fres = pow(1.0 - clamp(n.z,0.0,1.0), 3.0);
+  vec3 o = rgb;
+  if(M==1){ float ph = n.x*2.2+n.y*2.2+L*3.0+t*0.55; vec3 ir = 0.5+0.5*cos(6.2831853*(ph+vec3(0.,0.33,0.67)));
+    o = mix(rgb*(0.4+0.85*diff)+spec*vec3(1.,.96,.9)*1.3, (rgb*(0.4+0.85*diff))*ir*1.5+ir*0.15, 0.55); o += smoothstep(0.72,1.,L)*0.5*ir; }
+  else if(M==2){ float fl = fbm(duv*4.0+vec2(0.,-t*0.6)); float heat = clamp(L*0.6+fl*0.7,0.,1.);
+    vec3 lava = clamp(pal(heat, vec3(0.5,0.1,0.0), vec3(0.6,0.35,0.1), vec3(1.,1.,1.), vec3(0.,0.15,0.25))*1.4,0.,2.);
+    float crack = smoothstep(0.47,0.5,fl)-smoothstep(0.5,0.53,fl);
+    o = lava*(0.25+0.6*diff) + crack*vec3(1.,0.7,0.2)*2.0 + smoothstep(0.7,1.,heat)*vec3(1.,0.8,0.4)*1.2; }
+  else if(M==3){ float g = clamp(L*1.15,0.,1.);
+    vec3 gold = mix(vec3(0.20,0.12,0.02), vec3(1.0,0.78,0.28), smoothstep(0.0,0.7,g));
+    gold = mix(gold, vec3(1.0,0.95,0.72), smoothstep(0.7,1.0,g));
+    o = gold*(0.35+0.9*diff) + spec*vec3(1.0,0.92,0.6)*2.6 + smoothstep(0.82,1.,L+spec*0.5)*vec3(1.0,0.95,0.72)*1.2; }
+  else if(M==4){ float en = fbm(duv*4.0+vec2(t*0.3,-t*0.4));
+    float veins = smoothstep(0.78,0.92,en)*(0.6+0.4*sin(t*4.0+en*10.0));
+    vec3 pl = mix(vec3(0.14,0.05,0.34), vec3(0.30,0.80,1.0), clamp(L*1.2,0.,1.));
+    o = pl*(0.5+0.7*diff) + veins*vec3(0.5,0.95,1.0)*2.2 + spec*vec3(0.8,0.95,1.0)*1.5 + smoothstep(0.7,1.,L)*vec3(0.4,0.8,1.0)*0.5; }
+  else if(M==5){ float ca = 0.005;
+    vec3 g = vec3(texture2D(uTex,duv+vec2(ca,0.)).r, col.g, texture2D(uTex,duv-vec2(ca,0.)).b);
+    vec3 tint = mix(vec3(0.07,0.12,0.24), vec3(0.80,0.92,1.0), smoothstep(0.05,0.85,L));
+    vec3 glass = mix(tint, g*vec3(0.82,0.94,1.12), 0.5);
+    o = glass*(0.5+0.65*diff) + spec*vec3(0.92,0.97,1.0)*1.6 + fres*vec3(0.45,0.7,1.0)*0.65 + smoothstep(0.8,1.,L)*vec3(0.9,0.97,1.0)*0.8; }
+  else if(M==6){ float au = fbm(duv*3.0+vec2(t*0.15,-t*0.25)); vec3 aur = pal(au+L*0.5+t*0.05, vec3(0.1,0.3,0.3), vec3(0.2,0.4,0.4), vec3(1.,1.,1.), vec3(0.3,0.5,0.8));
+    float stars = step(0.995, hash(floor(duv*400.0)))*(0.5+0.5*sin(t*3.0+duv.x*50.0));
+    o = rgb*0.2 + aur*(0.5+0.7*diff)*1.3 + stars*vec3(1.) + smoothstep(0.7,1.,L)*aur*0.5; }
+  else if(M==7){ float env = clamp(n.y*0.5+0.5 + fbm(duv*2.0)*0.3,0.,1.); vec3 chrome = mix(vec3(0.05,0.06,0.09), vec3(0.9,0.93,1.0), env);
+    o = chrome*(0.4+0.7*diff) + spec*vec3(1.)*2.5 + fres*vec3(0.8,0.85,0.95); o = mix(o, vec3(lum(o)), 0.5); }
+  else if(M==8){ float goo = fbm(duv*4.5+vec2(-t*0.3,t*0.4)); float bub = smoothstep(0.6,0.75,goo); vec3 tox = mix(vec3(0.05,0.2,0.02), vec3(0.5,1.0,0.1), clamp(L+goo*0.4,0.,1.));
+    o = tox*(0.35+0.7*diff) + bub*vec3(0.6,1.,0.3)*1.2 + smoothstep(0.7,1.,goo)*vec3(0.7,1.,0.2)*1.5 + fres*vec3(0.5,1.,0.2)*0.6; }
+  else if(M==9){ float ca = 0.004; vec3 holo = vec3(texture2D(uTex,duv+vec2(ca,0.)).r, col.g, texture2D(uTex,duv-vec2(ca,0.)).b);
+    holo = mix(holo, vec3(0.2,0.9,1.0)*lum(holo)*2.0, 0.7); float scan = 0.7+0.3*sin((duv.y*uRes.y*1.2)-t*8.0); float flick = 0.85+0.15*sin(t*20.0);
+    o = holo*scan*flick*(0.5+0.6*diff) + fres*vec3(0.3,0.9,1.0)*1.5 + smoothstep(0.6,1.,L)*vec3(0.4,1.,1.)*0.6; }
+  gl_FragColor = vec4(o, 1.0);
+}`;
+var G = null;
+function ensure(size) {
+  if (G && G.size === size) return G;
+  let c, gl;
+  try {
+    c = document.createElement("canvas");
+    c.width = c.height = size;
+    gl = c.getContext("webgl", { premultipliedAlpha: false, preserveDrawingBuffer: true }) || c.getContext("experimental-webgl", { premultipliedAlpha: false, preserveDrawingBuffer: true });
+  } catch (e) {
+    return null;
+  }
+  if (!gl) return null;
+  const sh = (type, src) => {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  };
+  const prog = gl.createProgram();
+  gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS));
+  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+  gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+  const pLoc = gl.getAttribLocation(prog, "p");
+  gl.enableVertexAttribArray(pLoc);
+  gl.vertexAttribPointer(pLoc, 2, gl.FLOAT, false, 0, 0);
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  const u = { time: gl.getUniformLocation(prog, "uTime"), res: gl.getUniformLocation(prog, "uRes"), mode: gl.getUniformLocation(prog, "uMode"), transparentBg: gl.getUniformLocation(prog, "uTransparentBg") };
+  gl.uniform2f(u.res, 1024, 1024);
+  G = { canvas: c, gl, tex, u, size };
+  return G;
+}
+function renderWebglEffect(machineCanvas, size, key, time, transparentBg) {
+  const mode2 = FX_MODE[key];
+  if (!mode2) return null;
+  let g;
+  try {
+    g = ensure(size);
+  } catch (e) {
+    return null;
+  }
+  if (!g) return null;
+  const gl = g.gl;
+  try {
+    gl.bindTexture(gl.TEXTURE_2D, g.tex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, machineCanvas);
+    gl.viewport(0, 0, size, size);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.uniform1f(g.u.time, time == null ? performance.now() / 1e3 : time);
+    gl.uniform1i(g.u.mode, mode2);
+    gl.uniform1i(g.u.transparentBg, transparentBg ? 1 : 0);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    return g.canvas;
+  } catch (e) {
+    return null;
+  }
+}
+function applyWebglEffect(ctx2, size, key, time, transparentBg) {
+  const out = renderWebglEffect(ctx2.canvas, size, key, time, transparentBg);
+  if (!out) return false;
+  ctx2.setTransform(1, 0, 0, 1, 0, 0);
+  ctx2.clearRect(0, 0, size, size);
+  ctx2.drawImage(out, 0, 0, size, size);
+  return true;
+}
+
+// web/src/webgl-bg.js
+var BG_MODE = {
+  // Vol. 1 (partIds 13-24)
+  nebula: 8,
+  blackhole: 3,
+  waterfall: 1,
+  leaves: 2,
+  wolf: 4,
+  moon: 5,
+  aurora: 6,
+  rain: 7,
+  butterflies: 9,
+  flowers: 10,
+  confetti: 11,
+  rainbow: 12,
+  // Vol. 2 (partIds 25-36) — shader modes 13-24
+  aquarium: 13,
+  synthwave: 14,
+  matrix: 15,
+  koi: 16,
+  lofirain: 17,
+  jellyfish: 18,
+  warp: 19,
+  fireflies: 20,
+  sakura: 21,
+  lavalamp: 22,
+  snow: 23,
+  neoncity: 24
+};
+var BG_PART_KEYS = {
+  13: "nebula",
+  14: "blackhole",
+  15: "waterfall",
+  16: "leaves",
+  17: "wolf",
+  18: "moon",
+  19: "aurora",
+  20: "rain",
+  21: "butterflies",
+  22: "flowers",
+  23: "confetti",
+  24: "rainbow",
+  25: "aquarium",
+  26: "synthwave",
+  27: "matrix",
+  28: "koi",
+  29: "lofirain",
+  30: "jellyfish",
+  31: "warp",
+  32: "fireflies",
+  33: "sakura",
+  34: "lavalamp",
+  35: "snow",
+  36: "neoncity"
+};
+var BG_KEYS = new Set(Object.values(BG_PART_KEYS));
+var isBackground = (key) => BG_KEYS.has(key);
+var VS2 = `attribute vec2 p; varying vec2 vUv; void main(){ vUv = vec2(p.x*0.5+0.5, 0.5-p.y*0.5); gl_Position = vec4(p,0.,1.); }`;
+var FS2 = `precision highp float;
+uniform float uTime; uniform vec2 uRes; uniform int uMode;
+varying vec2 vUv;
+float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
+float noise(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);
+  return mix(mix(hash(i),hash(i+vec2(1,0)),f.x), mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x), f.y); }
+float fbm(vec2 p){ float v=0.,a=.5; for(int i=0;i<6;i++){ v+=a*noise(p); p=p*2.03+1.7; a*=.5; } return v; }
+mat2 rot(float a){ float c=cos(a),s=sin(a); return mat2(c,-s,s,c); }
+float star(vec2 uv, float dens){ vec2 p=uv*dens; vec2 g=floor(p); vec2 f=fract(p)-0.5; float h=hash(g);
+  float present=step(0.93,h); vec2 c=(vec2(hash(g+0.1),hash(g+0.2))-0.5)*0.7; float d=length(f-c);
+  float tw=0.7+0.3*sin(uTime*2.5+h*40.0); return present*smoothstep(0.16,0.0,d)*tw; }
+vec3 bg(vec2 uv){
+  float t=uTime; float asp=uRes.x/uRes.y; vec2 c=(uv-0.5); c.x*=asp; int M=uMode;
+  vec3 col=vec3(0.02,0.03,0.05);
+  if(M==1){
+    col = mix(vec3(0.02,0.13,0.17), vec3(0.05,0.30,0.36), uv.y);
+    float w = fbm(vec2(uv.x*10.0, uv.y*5.0 - t*2.2));
+    float streak = fbm(vec2(uv.x*44.0, uv.y*3.0 - t*4.5));
+    col += vec3(0.10,0.36,0.46)*w*0.8;
+    col += vec3(0.55,0.82,0.92)*smoothstep(0.6,0.92,streak)*0.7;
+    float foam = fbm(vec2(uv.x*8.0+t, uv.y*9.0 - t*1.6));
+    col += vec3(0.85,0.96,1.0)*smoothstep(0.78,0.15,uv.y)*foam*0.6;
+  } else if(M==2){
+    col = mix(vec3(0.95,0.72,0.42), vec3(0.66,0.46,0.28), uv.y);
+    for(int i=0;i<16;i++){ float fi=float(i);
+      float sp=0.12+hash(vec2(fi,1.0))*0.22;
+      vec2 lp=vec2(fract(hash(vec2(fi,2.0))+t*sp), hash(vec2(fi,3.0))*0.62 + sin(t*1.6+fi)*0.05);
+      vec2 d=(uv-lp); d.x*=asp; d=rot(t*2.2+fi)*d;
+      float leaf=smoothstep(0.018,0.0, abs(d.x)*2.2+abs(d.y));
+      vec3 lc=mix(vec3(0.85,0.32,0.08), vec3(0.92,0.72,0.10), hash(vec2(fi,4.0)));
+      col=mix(col, lc, leaf*0.9);
+    }
+  } else if(M==3){
+    vec2 bp=vec2(0.24,0.22); vec2 q=(uv-bp); q.x*=asp; float r=length(q); float R=0.07;
+    float bend=0.035/(r+0.03); vec2 sp=(uv-bp)*(1.0-bend)+bp; col=vec3(star(sp*vec2(asp,1.0),75.0));
+    float ang=atan(q.y,q.x); float sw=0.65+0.35*sin(ang*5.0 - t*3.0);
+    vec3 hot = mix(vec3(1.0,0.97,0.82), vec3(1.0,0.40,0.06), smoothstep(R,0.22,r));
+    float halo = exp(-pow((r-R*1.2)/0.024,2.0));
+    float dd = length(vec2(q.x, q.y/0.20));
+    float disk = smoothstep(0.24,R*1.05,dd)*smoothstep(R*0.85,R*1.15,dd);
+    col += hot*(halo*1.5 + disk*1.1)*(0.7+0.5*sw)*2.1;
+    col += vec3(1.0,0.92,0.75)*exp(-pow((r-R)/0.006,2.0))*2.2;
+    col *= smoothstep(R*0.9,R,r);
+  } else if(M==4){
+    col=mix(vec3(0.03,0.04,0.09), vec3(0.06,0.08,0.15), uv.y);
+    col += vec3(star(uv*vec2(asp,1.0),50.0))*0.5;
+    col += vec3(0.05,0.07,0.11)*fbm(vec2(uv.x*3.0+t*0.1, uv.y*3.0))*0.6;
+    float tree = 0.72 + (fbm(vec2(uv.x*7.0,0.0))-0.5)*0.16;
+    col = mix(col, vec3(0.0), step(tree, uv.y));
+    for(int i=0;i<4;i++){ float fi=float(i);
+      vec2 ep=vec2(0.18+0.21*fi, tree+0.05+hash(vec2(fi,5.0))*0.1);
+      float blink=step(0.12, fract(t*0.5+hash(vec2(fi,6.0))));
+      for(int e=0;e<2;e++){ vec2 eo=vec2((float(e)-0.5)*0.028,0.0);
+        float d=length((uv-ep-eo)*vec2(asp,1.0));
+        col += vec3(1.0,0.82,0.2)*smoothstep(0.013,0.0,d)*blink*1.6;
+      }
+    }
+  } else if(M==5){
+    col=mix(vec3(0.02,0.03,0.10), vec3(0.0,0.0,0.02), uv.y);
+    col += vec3(star(uv*vec2(asp,1.0),55.0))*0.6;
+    vec2 mp=vec2(0.78,0.22); float md=length((uv-mp)*vec2(asp,1.0));
+    float moon=smoothstep(0.135,0.128,md); float cr=fbm((uv-mp)*32.0);
+    col=mix(col, mix(vec3(0.82,0.84,0.78), vec3(0.58,0.60,0.56), cr)*moon, moon);
+    col += vec3(0.4,0.45,0.62)*smoothstep(0.24,0.135,md)*0.4;
+    float cl=fbm(vec2(uv.x*4.0 - t*0.14, uv.y*6.0));
+    col += vec3(0.10,0.12,0.20)*smoothstep(0.55,0.78,cl)*0.7;
+  } else if(M==6){
+    col=mix(vec3(0.02,0.02,0.07), vec3(0.0,0.01,0.03), uv.y);
+    col += vec3(star(uv*vec2(asp,1.0),55.0))*0.5;
+    for(int i=0;i<3;i++){ float fi=float(i);
+      float base=0.34+fi*0.09 + sin(uv.x*3.0+t*0.6+fi)*0.06 + (fbm(vec2(uv.x*4.0+t*0.2,fi))-0.5)*0.14;
+      float band=smoothstep(0.11,0.0, abs(uv.y-base));
+      vec3 ac=mix(vec3(0.1,0.9,0.45), vec3(0.6,0.2,0.9), 0.5+0.5*sin(uv.x*5.0+t+fi));
+      col += ac*band*0.55;
+    }
+  } else if(M==7){
+    col=mix(vec3(0.07,0.08,0.11), vec3(0.02,0.03,0.05), uv.y);
+    float rx=uv.x*90.0; float rain=0.0;
+    for(int i=0;i<2;i++){ float off=float(i)*0.5;
+      float y=fract(uv.y*3.0 - t*3.2 + hash(vec2(floor(rx),off))*10.0 + off);
+      rain += smoothstep(0.0,0.04,y)*smoothstep(0.22,0.04,y)*step(0.72, hash(vec2(floor(rx),off)));
+    }
+    col += vec3(0.5,0.6,0.8)*rain*0.6;
+    float flash=smoothstep(0.985,1.0, 0.5+0.5*sin(t*0.7)+ (fbm(vec2(t,0.0))-0.5)*0.5);
+    col += vec3(0.6,0.7,0.9)*flash*0.5;
+  } else if(M==9){
+    col = mix(vec3(0.72,0.90,0.98), vec3(0.99,0.94,0.78), uv.y);
+    for(int i=0;i<12;i++){ float fi=float(i);
+      float sp=0.09+hash(vec2(fi,1.0))*0.14;
+      vec2 bpp=vec2(fract(hash(vec2(fi,2.0))+t*sp), hash(vec2(fi,3.0))*0.82 + sin(t*2.0+fi)*0.05);
+      vec2 d=(uv-bpp); d.x*=asp; float flap=0.006+abs(sin(t*9.0+fi*2.0))*0.013;
+      float wl=smoothstep(0.016,0.0, length((d-vec2(-flap,0.0))*vec2(1.0,1.5)));
+      float wr=smoothstep(0.016,0.0, length((d-vec2( flap,0.0))*vec2(1.0,1.5)));
+      vec3 bc=0.55+0.45*cos(6.2831*(hash(vec2(fi,4.0))+vec3(0.0,0.33,0.67)));
+      col=mix(col, bc, max(wl,wr)*0.9);
+      col=mix(col, vec3(0.1,0.08,0.06), smoothstep(0.004,0.0, length(d*vec2(3.0,1.0)))*0.7);
+    }
+  } else if(M==10){
+    col = mix(vec3(0.55,0.80,0.98), vec3(0.88,0.96,1.0), smoothstep(0.0,0.6,uv.y));
+    col = mix(col, vec3(0.35,0.66,0.26), smoothstep(0.56,0.63,uv.y));
+    for(int i=0;i<26;i++){ float fi=float(i);
+      vec2 fp=vec2(hash(vec2(fi,1.0)) + sin(t*1.6+fi)*0.006, 0.62+hash(vec2(fi,2.0))*0.34);
+      vec2 d=(uv-fp); d.x*=asp; float dist=length(d);
+      float petals=0.6+0.4*cos(atan(d.y,d.x)*5.0);
+      float flower=smoothstep(0.028*(0.6+petals*0.5),0.0,dist);
+      vec3 fc=0.55+0.45*cos(6.2831*(hash(vec2(fi,3.0))+vec3(0.0,0.33,0.67)));
+      col=mix(col, fc, flower*0.9);
+      col=mix(col, vec3(1.0,0.9,0.3), smoothstep(0.006,0.0,dist));
+    }
+  } else if(M==11){
+    col = mix(vec3(0.14,0.09,0.24), vec3(0.26,0.16,0.36), uv.y);
+    for(int i=0;i<30;i++){ float fi=float(i);
+      float sp=0.15+hash(vec2(fi,1.0))*0.25;
+      vec2 cp=vec2(hash(vec2(fi,2.0))+sin(t*2.0+fi)*0.04, fract(hash(vec2(fi,3.0))-t*sp));
+      vec2 d=(uv-cp); d.x*=asp; d=rot(t*3.0+fi)*d;
+      float piece=step(abs(d.x),0.008)*step(abs(d.y),0.014);
+      vec3 cc=0.5+0.5*cos(6.2831*(hash(vec2(fi,4.0))+vec3(0.0,0.33,0.67)));
+      col=mix(col, cc, piece);
+    }
+  } else if(M==12){
+    col = mix(vec3(1.0), 0.75+0.25*cos(6.2831*(uv.y*1.2+vec3(0.0,0.2,0.4))), 0.6);
+    vec2 rc=vec2(0.5,1.05); float rr=length((uv-rc)*vec2(asp,1.0));
+    vec3 rainbow=0.5+0.5*cos(6.2831*(rr*3.5+vec3(0.0,0.33,0.67)));
+    float arc=smoothstep(0.60,0.58,rr)*smoothstep(0.42,0.44,rr);
+    col=mix(col, rainbow, arc*0.75);
+    float cl=fbm(vec2(uv.x*4.0-t*0.05, uv.y*5.0));
+    col=mix(col, vec3(1.0), smoothstep(0.58,0.78,cl)*0.6);
+  } else if(M==13){ // PIXEL AQUARIUM
+    float PX=84.0; vec2 pv=(floor(uv*PX)+0.5)/PX;
+    col = mix(vec3(0.06,0.44,0.56), vec3(0.02,0.10,0.30), pv.y);
+    float ca=fbm(vec2(pv.x*7.0, pv.y*7.0 - t*0.6));
+    col += vec3(0.20,0.50,0.55)*smoothstep(0.62,0.92,ca)*(1.0-pv.y)*0.5;
+    col = mix(col, vec3(0.82,0.73,0.46), smoothstep(0.88,0.92,pv.y));
+    for(int i=0;i<10;i++){ float fi=float(i);
+      vec2 bp=vec2(hash(vec2(fi,7.0)), fract(hash(vec2(fi,8.0)) - t*(0.05+hash(vec2(fi,9.0))*0.06)));
+      float d=length((pv-bp)*vec2(asp,1.0));
+      col += vec3(0.75,0.92,1.0)*smoothstep(0.011,0.006,d)*0.5; }
+    for(int i=0;i<6;i++){ float fi=float(i);
+      float dir = mod(fi,2.0)<0.5 ? 1.0 : -1.0;
+      float sp=0.05+hash(vec2(fi,1.0))*0.08;
+      float fx=fract(hash(vec2(fi,2.0)) + t*sp*dir);
+      float fy=0.14 + hash(vec2(fi,3.0))*0.66;
+      vec2 d=(pv-vec2(fx,fy)); d.x*=asp; d.x*=dir;
+      float body=smoothstep(0.045,0.028,length(d*vec2(1.0,2.0)));
+      float tail=step(d.x,-0.028)*step(-0.058,d.x)*step(abs(d.y),(d.x+0.062)*0.9);
+      vec3 fc=0.55+0.45*cos(6.2831*(hash(vec2(fi,4.0))+vec3(0.0,0.33,0.67)));
+      col=mix(col, fc, clamp(body+tail,0.0,1.0));
+      col=mix(col, vec3(0.05), smoothstep(0.008,0.0, length(d-vec2(0.028,-0.006)))); }
+  } else if(M==14){ // SYNTHWAVE SUNSET
+    float hz=0.60;
+    col = mix(vec3(0.22,0.03,0.38), vec3(1.0,0.36,0.46), smoothstep(0.0,hz,uv.y));
+    col += vec3(star(uv*vec2(asp,1.0),60.0))*smoothstep(hz,0.0,uv.y)*0.6;
+    vec2 sc=vec2(0.5,hz-0.03); vec2 sd=(uv-sc); sd.x*=asp;
+    float sun=smoothstep(0.22,0.205,length(sd));
+    vec3 sunCol=mix(vec3(1.0,0.92,0.35), vec3(1.0,0.22,0.52), smoothstep(-0.2,0.2,sd.y));
+    float sg=step(0.0,sd.y)*step(0.5, fract(sd.y*46.0));
+    sun*=(1.0-sg);
+    col=mix(col, sunCol, sun);
+    if(uv.y>hz){
+      float fy=(uv.y-hz)/(1.0-hz);
+      float hy=fract(1.0/(fy+0.05)*0.7 - t*0.9);
+      float hl=smoothstep(0.10,0.0,abs(hy-0.5));
+      float vx=(uv.x-0.5)/(fy*fy+0.04);
+      float vl=smoothstep(0.09,0.0,abs(fract(vx*3.0)-0.5));
+      vec3 grid=vec3(0.95,0.2,0.85)*hl + vec3(0.2,0.95,1.0)*vl;
+      vec3 fl=mix(vec3(0.12,0.02,0.22), vec3(0.02,0.0,0.06), fy);
+      col=fl + grid*(0.35+0.65*(1.0-fy));
+    }
+    col *= 0.92+0.08*sin(uv.y*uRes.y*0.7);
+  } else if(M==15){ // MATRIX RAIN
+    col=vec3(0.0,0.02,0.01);
+    float cols=42.0; float cx=floor(uv.x*cols);
+    float sp=0.4+hash(vec2(cx,1.0))*1.4;
+    float head=fract(hash(vec2(cx,2.0)) + t*sp*0.25);
+    float d=fract(head - uv.y);
+    float g=step(0.45, hash(vec2(cx, floor(uv.y*34.0) - floor(t*9.0*sp))));
+    col += vec3(0.10,1.0,0.28)*exp(-d*5.0)*g*1.2;
+    col += vec3(0.85,1.0,0.9)*smoothstep(0.05,0.0,d)*g;
+  } else if(M==16){ // KOI POND (top-down)
+    col=mix(vec3(0.03,0.15,0.13), vec3(0.02,0.08,0.10), fbm(uv*3.0+t*0.05));
+    col += vec3(0.05,0.20,0.18)*fbm(uv*6.0+vec2(sin(t*0.3),cos(t*0.4)))*0.5;
+    for(int i=0;i<3;i++){ float fi=float(i);
+      vec2 rc=vec2(hash(vec2(fi,5.0)),hash(vec2(fi,6.0)));
+      float rt=fract(t*0.22+fi*0.33);
+      float rr=length((uv-rc)*vec2(asp,1.0));
+      col += vec3(0.4,0.6,0.6)*smoothstep(0.02,0.0,abs(rr-rt*0.42))*(1.0-rt)*0.4; }
+    for(int i=0;i<4;i++){ float fi=float(i);
+      float a=t*(0.10+hash(vec2(fi,1.0))*0.08)+fi*1.6;
+      vec2 kc=vec2(0.5+cos(a)*0.30, 0.5+sin(a*0.8)*0.30);
+      vec2 d=(uv-kc); d.x*=asp; d=rot(a+1.57)*d;
+      float body=smoothstep(0.06,0.028,length(d*vec2(0.6,1.8)));
+      vec3 kcol = hash(vec2(fi,4.0))<0.5 ? vec3(1.0,0.46,0.12) : vec3(1.0,1.0,1.0);
+      col=mix(col,kcol,body*0.92);
+      col=mix(col, vec3(0.92,0.2,0.05), smoothstep(0.02,0.0,length(d-vec2(0.0,0.03)))*0.6); }
+  } else if(M==17){ // RAINY WINDOW (lofi)
+    col=mix(vec3(0.08,0.07,0.14), vec3(0.17,0.11,0.15), uv.y);
+    for(int i=0;i<9;i++){ float fi=float(i);
+      vec2 bp=vec2(hash(vec2(fi,1.0)), hash(vec2(fi,2.0))*0.78);
+      float d=length((uv-bp)*vec2(asp,1.0));
+      vec3 bc=0.55+0.45*cos(6.2831*(hash(vec2(fi,3.0))+vec3(0.0,0.28,0.55)));
+      bc=mix(bc, vec3(1.0,0.72,0.38), 0.4);
+      col += bc*smoothstep(0.15,0.0,d)*0.55; }
+    float rx=uv.x*40.0; float rc=floor(rx);
+    float streak=smoothstep(0.40,0.0,abs(fract(rx)-0.5))*step(0.55,hash(vec2(rc,3.0)));
+    float ry=fract(uv.y*1.6 - t*(0.9+hash(vec2(rc,4.0))*1.3));
+    col += vec3(0.6,0.68,0.85)*streak*smoothstep(0.0,0.25,ry)*smoothstep(1.0,0.30,ry)*0.5;
+    for(int i=0;i<16;i++){ float fi=float(i);
+      float dx=hash(vec2(fi,6.0)); float dy=fract(hash(vec2(fi,7.0)) + t*0.12*(0.5+hash(vec2(fi,8.0))));
+      vec2 d=(uv-vec2(dx,dy)); d.x*=asp;
+      col += vec3(0.72,0.8,0.92)*smoothstep(0.012,0.005,length(d))*0.6;
+      col += vec3(0.5,0.58,0.72)*smoothstep(0.006,0.0,abs(d.x))*smoothstep(0.05,0.0,d.y)*step(0.0,d.y)*0.25; }
+    col *= 1.0 - 0.42*length(uv-0.5);
+  } else if(M==18){ // JELLYFISH
+    col=mix(vec3(0.02,0.05,0.15), vec3(0.0,0.0,0.03), uv.y);
+    col += vec3(0.3,0.6,0.75)*pow(star(uv*vec2(asp,1.0),42.0),2.0)*0.9;
+    for(int i=0;i<3;i++){ float fi=float(i);
+      float jx=0.24+fi*0.26 + sin(t*0.5+fi)*0.05;
+      float jy=fract(hash(vec2(fi,2.0)) - t*0.05);
+      vec2 d=(uv-vec2(jx,jy)); d.x*=asp;
+      float pulse=0.05+0.010*sin(t*3.0+fi*2.0);
+      vec3 jc=mix(vec3(0.3,0.9,1.0), vec3(0.85,0.4,1.0), hash(vec2(fi,3.0)));
+      float bd=length(d*vec2(1.0,1.35));
+      float bell=smoothstep(pulse,pulse-0.014,bd)*smoothstep(0.035,-0.02,d.y);
+      col += jc*bell*0.8;
+      col += jc*smoothstep(pulse*1.9,0.0,bd)*0.12;
+      float tent=0.0;
+      for(int k=0;k<4;k++){ float fk=float(k);
+        float xoff=(fk-1.5)*0.016;
+        float wav=sin(d.y*22.0+t*4.0+fk*1.7)*0.012*smoothstep(0.0,0.08,d.y);
+        tent += smoothstep(0.0035,0.0, abs(d.x-xoff-wav))*smoothstep(0.20,0.0,d.y)*step(0.0,d.y); }
+      col += jc*tent*0.4; }
+  } else if(M==19){ // HYPERSPACE WARP
+    vec2 hc=(uv-0.5); hc.x*=asp; float ang=atan(hc.y,hc.x); float r=length(hc);
+    col=vec3(0.0,0.0,0.02);
+    for(int i=0;i<64;i++){ float fi=float(i);
+      float sa=hash(vec2(fi,1.0))*6.2831;
+      float base=fract(hash(vec2(fi,2.0)) + t*(0.25+hash(vec2(fi,3.0))*0.5));
+      float dang=mod(ang-sa+9.4247, 6.2831)-3.1416;
+      float angW=smoothstep(0.02,0.0, abs(dang)*max(r,0.05));
+      float len=0.12*base+0.02;
+      float rad=smoothstep(0.0,0.015, r-base*0.75)*smoothstep(len,0.0, r-base*0.75);
+      col += vec3(0.75,0.85,1.0)*angW*rad*(0.4+base); }
+    col += vec3(0.6,0.8,1.0)*smoothstep(0.18,0.0,r)*0.6;
+  } else if(M==20){ // FIREFLIES FOREST
+    col=mix(vec3(0.02,0.07,0.05), vec3(0.0,0.02,0.02), uv.y);
+    col += vec3(0.03,0.06,0.05)*fbm(vec2(uv.x*3.0+t*0.05,uv.y*3.0))*0.7;
+    float tree=0.66+(fbm(vec2(uv.x*8.0,1.0))-0.5)*0.22;
+    col=mix(col, vec3(0.0,0.012,0.0), smoothstep(tree,tree+0.02,uv.y));
+    for(int i=0;i<16;i++){ float fi=float(i);
+      vec2 fp=vec2(hash(vec2(fi,1.0))+sin(t*0.6+fi)*0.04, hash(vec2(fi,2.0))*0.75+cos(t*0.5+fi*1.3)*0.03);
+      float d=length((uv-fp)*vec2(asp,1.0));
+      float blink=0.5+0.5*sin(t*3.0+fi*2.0);
+      col += vec3(1.0,0.9,0.3)*smoothstep(0.020,0.0,d)*blink;
+      col += vec3(0.85,0.72,0.2)*smoothstep(0.055,0.0,d)*blink*0.22; }
+  } else if(M==21){ // SAKURA DRIFT
+    col=mix(vec3(0.52,0.42,0.66), vec3(0.99,0.76,0.70), uv.y);
+    col += vec3(0.08)*fbm(uv*3.0+t*0.05);
+    for(int i=0;i<26;i++){ float fi=float(i);
+      float sp=0.05+hash(vec2(fi,1.0))*0.08;
+      vec2 pp=vec2(fract(hash(vec2(fi,2.0)) + t*sp*0.5 + sin(t+fi)*0.02), fract(hash(vec2(fi,3.0)) + t*sp));
+      vec2 d=(uv-pp); d.x*=asp; d=rot(t*2.0+fi)*d;
+      float petal=smoothstep(0.014,0.0, length(d*vec2(1.0,1.7)));
+      vec3 pc=mix(vec3(1.0,0.76,0.86), vec3(1.0,0.6,0.76), hash(vec2(fi,4.0)));
+      col=mix(col,pc,petal*0.9); }
+  } else if(M==22){ // LAVA LAMP
+    col=mix(vec3(0.16,0.02,0.10), vec3(0.36,0.05,0.02), uv.y);
+    float field=0.0;
+    for(int i=0;i<7;i++){ float fi=float(i);
+      vec2 bp=vec2(0.5+sin(t*(0.3+hash(vec2(fi,1.0))*0.3)+fi*2.0)*0.30,
+                   fract(hash(vec2(fi,2.0)) + sin(t*0.2+fi)*0.25 - t*0.04));
+      float d=length((uv-bp)*vec2(asp,1.0));
+      field += 0.02/(d*d+0.004); }
+    float blob=smoothstep(1.0,2.2,field);
+    vec3 lava=mix(vec3(1.0,0.5,0.0), vec3(1.0,0.86,0.25), smoothstep(2.0,4.0,field));
+    col=mix(col, lava, blob);
+    col += lava*smoothstep(0.85,1.2,field)*0.25;
+  } else if(M==23){ // SNOWFALL NIGHT
+    col=mix(vec3(0.04,0.06,0.17), vec3(0.10,0.13,0.25), uv.y);
+    vec2 mp=vec2(0.75,0.22); float md=length((uv-mp)*vec2(asp,1.0));
+    col += vec3(0.6,0.65,0.8)*smoothstep(0.3,0.0,md)*0.4;
+    col = mix(col, vec3(0.9,0.92,1.0), smoothstep(0.09,0.084,md));
+    float pl=0.72 - abs(fract(uv.x*8.0)-0.5)*0.22;
+    col=mix(col, vec3(0.02,0.04,0.09), smoothstep(pl,pl+0.01,uv.y));
+    for(int L=0;L<3;L++){ float fl=float(L);
+      float sc=30.0+fl*22.0;
+      vec2 sp=vec2(uv.x*sc + sin(uv.y*10.0+t)*0.5, uv.y*sc + t*(2.0+fl*1.5));
+      vec2 g=floor(sp); vec2 f=fract(sp)-0.5;
+      float flake=step(0.86,hash(g+fl*10.0))*smoothstep(0.32,0.0,length(f));
+      col += vec3(1.0)*flake*(0.5+0.25*fl); }
+  } else if(M==24){ // NEON CITY RAIN
+    col=mix(vec3(0.05,0.03,0.12), vec3(0.13,0.05,0.17), uv.y);
+    col += vec3(0.9,0.15,0.55)*smoothstep(0.45,0.72,uv.y)*smoothstep(0.96,0.72,uv.y)*0.42;
+    col += vec3(0.1,0.6,0.9)*smoothstep(0.52,0.72,uv.y)*0.15;
+    float bcell=floor(uv.x*8.0);
+    float bh=0.40+hash(vec2(bcell,1.0))*0.34; float roof=0.74-bh;
+    float inB=step(roof,uv.y);
+    col=mix(col, vec3(0.02,0.02,0.05)*(0.7+hash(vec2(bcell,9.0))*0.3), inB);
+    float wxg=floor(uv.x*40.0), wy=floor(uv.y*44.0);
+    float lit=step(0.80,hash(vec2(wxg,wy)))*inB*step(roof+0.01,uv.y);
+    vec3 wc=mix(vec3(1.0,0.8,0.42), vec3(0.4,0.9,1.0), step(0.5,hash(vec2(wxg,wy+3.0))));
+    float cellx=step(0.25,fract(uv.x*40.0))*step(fract(uv.x*40.0),0.75);
+    float celly=step(0.2,fract(uv.y*44.0))*step(fract(uv.y*44.0),0.8);
+    col += wc*lit*cellx*celly*0.9;
+    float rx=uv.x*70.0; float rain=0.0;
+    for(int i=0;i<2;i++){ float off=float(i)*0.5;
+      float y=fract(uv.y*2.2 - t*3.2 + hash(vec2(floor(rx),off))*10.0+off);
+      rain += smoothstep(0.0,0.06,y)*smoothstep(0.3,0.06,y)*step(0.80,hash(vec2(floor(rx),off))); }
+    col += vec3(0.5,0.6,0.8)*rain*0.3;
+  } else {
+    vec2 q=uv*2.0+vec2(t*0.02,-t*0.015); float n=fbm(q*2.0), n2=fbm(q*4.0+n);
+    vec3 neb=mix(vec3(0.10,0.02,0.22), vec3(0.6,0.1,0.5), n);
+    neb=mix(neb, vec3(0.10,0.30,0.7), n2*0.6);
+    col=neb*(0.4+0.8*n2);
+    col += vec3(star(uv*vec2(asp,1.0),80.0));
+    col += vec3(1.0,0.9,0.8)*pow(star(uv*vec2(asp,1.0),30.0),2.0);
+  }
+  return col;
+}
+void main(){
+  vec3 scene = bg(vUv);
+  float sh = smoothstep(0.33,0.0, length((vUv-vec2(0.5,0.93))*vec2(1.0,3.2))); // soft contact shadow under the machine
+  scene *= (1.0 - sh*0.45);
+  gl_FragColor = vec4(scene, 1.0);
+}`;
+var G2 = null;
+function ensure2(size) {
+  if (G2 && G2.size === size) return G2;
+  let c, gl;
+  try {
+    c = document.createElement("canvas");
+    c.width = c.height = size;
+    gl = c.getContext("webgl", { premultipliedAlpha: false, preserveDrawingBuffer: true }) || c.getContext("experimental-webgl", { premultipliedAlpha: false, preserveDrawingBuffer: true });
+  } catch (e) {
+    return null;
+  }
+  if (!gl) return null;
+  const sh = (type, src) => {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  };
+  const prog = gl.createProgram();
+  gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS2));
+  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS2));
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
+  gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+  const pLoc = gl.getAttribLocation(prog, "p");
+  gl.enableVertexAttribArray(pLoc);
+  gl.vertexAttribPointer(pLoc, 2, gl.FLOAT, false, 0, 0);
+  const u = { time: gl.getUniformLocation(prog, "uTime"), res: gl.getUniformLocation(prog, "uRes"), mode: gl.getUniformLocation(prog, "uMode") };
+  gl.uniform2f(u.res, 1024, 1024);
+  G2 = { canvas: c, gl, u, size };
+  return G2;
+}
+function renderBackground(size, key, time) {
+  const mode2 = BG_MODE[key];
+  if (!mode2) return null;
+  let g;
+  try {
+    g = ensure2(size);
+  } catch (e) {
+    return null;
+  }
+  if (!g) return null;
+  const gl = g.gl;
+  try {
+    gl.viewport(0, 0, size, size);
+    gl.uniform1f(g.u.time, time == null ? performance.now() / 1e3 : time);
+    gl.uniform1i(g.u.mode, mode2);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    return g.canvas;
+  } catch (e) {
+    return null;
+  }
+}
+
+// web/src/normies-boat-scene.js
+function drawPixelSprite(ctx2, rows, palette, unit, ox = 0, oy = 0) {
+  const h = rows.length;
+  const w = Math.max(...rows.map((r) => r.length));
+  const u = Math.max(1, Math.round(unit));
+  const x0 = Math.round(ox - w * u / 2);
+  const y0 = Math.round(oy - h * u / 2);
+  ctx2.save();
+  ctx2.imageSmoothingEnabled = false;
+  for (let j = 0; j < h; j += 1) {
+    const row = rows[j];
+    for (let i = 0; i < row.length; i += 1) {
+      const ch = row[i];
+      if (ch === "." || ch === " ") continue;
+      const col = palette[ch];
+      if (!col) continue;
+      ctx2.fillStyle = col;
+      ctx2.fillRect(x0 + i * u, y0 + j * u, u, u);
+    }
+  }
+  ctx2.restore();
+}
+var NORMIES_SAILBOAT = { pal: { F: "#141414", W: "#ffffff", K: "#2b2b2b", b: "#141414" }, rows: [
+  "...........b....",
+  "...........b....",
+  "...........F....",
+  "..........FFF...",
+  ".........FFFF...",
+  "........FFFFF...",
+  ".......FFFFFF...",
+  "......FFFFFFF...",
+  ".....FFFFFFFF...",
+  "....FFFFFFFFF...",
+  "...FFFFFFFFFF...",
+  "..FFFFFFFFFFF...",
+  ".FFFFFFFFFFFF...",
+  "...........F....",
+  ".FFFFFFFFFFFFFF.",
+  ".FWWWWWWWWWWWWF.",
+  "..FKKKKKKKKKKF..",
+  "...FFFFFFFFFF..."
+] };
+var NORMIES_YACHT = { pal: { F: "#141414", W: "#ffffff", K: "#2b2b2b", b: "#141414" }, rows: [
+  ".............b...........",
+  ".............b...........",
+  "...........FFFFFF........",
+  "...........FWWWWF........",
+  ".......FFFFFFFFFFFF......",
+  ".......FWKWKWKWKWWF......",
+  "..FFFFFFFFFFFFFFFFFFF....",
+  "..FWWWWWWWWWWWWWWWWWFF...",
+  "..FWWWWWWWWWWWWWWWWWWWF..",
+  "...FKKKKKKKKKKKKKKKKKKF..",
+  "....FFFFFFFFFFFFFFFFFF..."
+] };
+var NORMIES_BOAT_BG_KEYS = /* @__PURE__ */ new Set(["sailboat", "yacht"]);
+function isNormiesBoatBg(key) {
+  return NORMIES_BOAT_BG_KEYS.has(key);
+}
+function normiesSun(ctx2, cx, cy, u, t) {
+  ctx2.fillStyle = "#141414";
+  const R = 5;
+  for (let gy = -R; gy <= R; gy++) for (let gx = -R; gx <= R; gx++) if (gx * gx + gy * gy <= R * R + 1) ctx2.fillRect(Math.round(cx + gx * u), Math.round(cy + gy * u), u, u);
+  const rays = [[8, 0], [-8, 0], [0, 8], [0, -8], [6, 6], [-6, 6], [6, -6], [-6, -6], [9, 3], [-9, -3], [3, 9], [-3, -9]];
+  for (let i = 0; i < rays.length; i++) {
+    if ((Math.floor(t * 2) + i) % 3 === 0) continue;
+    ctx2.fillRect(Math.round(cx + rays[i][0] * u), Math.round(cy + rays[i][1] * u), u, u);
+  }
+}
+function normiesBird(ctx2, cx, cy, u, flap) {
+  ctx2.fillStyle = "#141414";
+  const wy = flap > 0.5 ? -1 : 0;
+  for (const [dx, dy] of [[-2, wy], [-1, 0], [0, 1], [1, 0], [2, wy]]) ctx2.fillRect(Math.round(cx + dx * u), Math.round(cy + dy * u), u, u);
+}
+function drawNormiesBoatScene(ctx2, W, H, which, t) {
+  const boat = which === "yacht" ? NORMIES_YACHT : NORMIES_SAILBOAT;
+  const horizon = H * 0.56;
+  const u = Math.max(2, Math.round(H / 190));
+  ctx2.fillStyle = "#eef4f6";
+  ctx2.fillRect(0, 0, W, H);
+  const step = u * 2;
+  const seaTop = (x) => horizon + Math.round(Math.sin(x * 0.01 + t * 0.5) * 4 + Math.sin(x * 0.026 + t * 0.9) * 2) * u;
+  ctx2.fillStyle = "#cfe0e6";
+  for (let x = 0; x < W; x += step) {
+    const yt = seaTop(x);
+    ctx2.fillRect(x, yt, step, H - yt);
+  }
+  for (let y = horizon; y < H; y += u * 2) {
+    const depth = (y - horizon) / (H - horizon);
+    ctx2.fillStyle = depth > 0.5 ? "#9fb8c0" : "#b9ccd2";
+    const off = Math.floor(t * (12 + depth * 24) % (u * 6));
+    for (let x = -off; x < W; x += u * 6) {
+      const wob = (Math.sin(x * 0.014 + y * 0.03 + t * 0.9) * 2.2 + Math.sin(x * 0.031 - t * 0.6) * 1.3) * u * (0.4 + depth * 0.8);
+      const yy = Math.round(y + wob);
+      if (yy <= seaTop(x)) continue;
+      const len = Math.floor(x / (u * 6) + y) % 2 ? u * 3 : u * 2;
+      ctx2.fillRect(x, yy, len, u);
+    }
+  }
+  const su = Math.max(2, Math.round(H / 150));
+  normiesSun(ctx2, W * 0.83, H * 0.13, su, t);
+  const bu = Math.max(2, Math.round(H / 180));
+  for (let i = 0; i < 3; i++) {
+    const bx2 = (t * (8 + i * 4) + i * 400) % (W + 100) - 50;
+    const by2 = H * (0.09 + i * 0.045) + Math.sin(t * 0.6 + i) * 4;
+    normiesBird(ctx2, bx2, by2, bu, Math.sin(t * 6 + i * 2) * 0.5 + 0.5);
+  }
+  const bx = W / 2 + Math.sin(t * 0.13) * W * 0.34 + Math.sin(t * 0.071 + 1.3) * W * 0.13;
+  const by = horizon + (H - horizon) * 0.14 + Math.sin(t * 0.9) * 3;
+  const bunit = Math.max(2, Math.round(H / 115));
+  const dir = Math.cos(t * 0.13) >= 0 ? 1 : -1;
+  ctx2.fillStyle = "rgba(255,255,255,0.7)";
+  for (let i = 0; i < 5; i++) {
+    const wx = bx - dir * (16 + i * 7) * bunit;
+    ctx2.fillRect(wx, by + 8 * bunit + Math.sin(t * 3 + i) * 2, 4 * bunit, 3);
+  }
+  ctx2.save();
+  ctx2.translate(bx, by);
+  ctx2.rotate(Math.sin(t * 0.7) * 0.03 * dir);
+  ctx2.imageSmoothingEnabled = false;
+  drawPixelSprite(ctx2, boat.rows, boat.pal, bunit, 0, 0);
+  ctx2.restore();
+}
+
+// renderer/anim-entry.js
+var EFFECT_FN = { neon: neonFX, holo: holoFX, teal: tealChromeFX };
+var fxMachineCanvas = null;
+var fxMachineCtx = null;
+var fxCanvas = null;
+var fxCtx = null;
 var BASE_LAYOUT = window.__LAM_BASE_LAYOUT__;
 var canvas = document.getElementById("render");
 var stage = document.querySelector(".stage");
@@ -10373,11 +16297,20 @@ if (partsUrl) {
   partsImg.src = partsUrl;
 }
 var overlayAlpha = 0;
+var PARTS_SPRITE_FPS = 5;
 function drawPartsOverlay(c, info) {
   if (!partsImg || !partsImg.complete || !partsImg.naturalWidth || overlayAlpha < 0.01) return;
   c.save();
   c.globalAlpha = Math.min(1, overlayAlpha);
-  c.drawImage(partsImg, 0, 0, info.width, info.height);
+  const fw = partsImg.naturalWidth;
+  const frames = Math.max(1, Math.round(partsImg.naturalHeight / fw));
+  if (frames > 1) {
+    const t = Number(info && info.time) || performance.now() / 1e3;
+    const frame = (Math.floor(t * PARTS_SPRITE_FPS) % frames + frames) % frames;
+    c.drawImage(partsImg, 0, frame * fw, fw, fw, 0, 0, info.width, info.height);
+  } else {
+    c.drawImage(partsImg, 0, 0, info.width, info.height);
+  }
   c.restore();
 }
 var bgUrl = window.__LAM_BG_URL__ || "";
@@ -10389,9 +16322,35 @@ if (bgUrl) {
   bgImg.src = bgUrl;
 }
 var bgReady = () => Boolean(bgImg && bgImg.complete && bgImg.naturalWidth);
+var bgScene = window.__LAM_BG_SCENE__ || "";
+var hasSceneBg = Boolean(bgScene && isNormiesBoatBg(bgScene));
+var behindUrl = window.__LAM_BEHIND_URL__ || "";
+var behindImg = null;
+if (behindUrl) {
+  behindImg = new Image();
+  behindImg.crossOrigin = "anonymous";
+  behindImg.decoding = "async";
+  behindImg.src = behindUrl;
+}
+var behindReady = () => Boolean(behindImg && behindImg.complete && behindImg.naturalWidth);
+var behindAlpha = 0;
 function drawBgUnderlay(c, info) {
-  if (!bgReady()) return;
-  c.drawImage(bgImg, 0, 0, info.width, info.height);
+  const bgKey = chainState.background;
+  if (bgKey && isBackground(bgKey)) {
+    const scene = renderBackground(info.width, bgKey, motionClock);
+    if (scene) c.drawImage(scene, 0, 0, info.width, info.height);
+    else if (bgReady()) c.drawImage(bgImg, 0, 0, info.width, info.height);
+  } else if (hasSceneBg) {
+    drawNormiesBoatScene(c, info.width, info.height, bgScene, motionClock);
+  } else if (bgReady()) {
+    c.drawImage(bgImg, 0, 0, info.width, info.height);
+  }
+  if (behindReady() && behindAlpha > 0.01) {
+    c.save();
+    c.globalAlpha = Math.min(1, behindAlpha);
+    c.drawImage(behindImg, 0, 0, info.width, info.height);
+    c.restore();
+  }
 }
 var BACKEND_BASE_URL = String(params.get("backend") || "https://motorheads-backend.zacbosugame.workers.dev").replace(/\/+$/, "");
 var backendEnabled = params.get("backend") !== "0" && params.get("liveBackend") !== "0" && !captureMode;
@@ -10427,6 +16386,10 @@ var chainState = {
   highestVerifiedSaleWei: params.get("highestSaleWei") || params.get("saleWei") || "",
   scarScreenColor: params.get("scarScreenColor") || params.get("scarColor") || "",
   globalPhase: params.get("phase") || "Archive Awakening",
+  effect: params.get("effect") || "",
+  // applied whole-machine effect (?effect=holo to test); backend telemetry sets the real value
+  background: params.get("bg") || "",
+  // animated crate background behind the machine (?bg=nebula to test); backend sets the real value
   source: "fallback"
 };
 function numberOrFallback(value, fallback) {
@@ -10485,6 +16448,8 @@ function applyBackendChainState(payload) {
   chainState.highestVerifiedSaleWei = chain.lastSalePriceWei || chainState.highestVerifiedSaleWei || "";
   chainState.saleTier = saleCount > 0 ? chain.lastSalePriceWei || "verified" : "";
   chainState.evolutionTier = chain.evolutionTier || "";
+  chainState.effect = chain.effect || "";
+  chainState.background = chain.background || "";
   if (holderAgeDays != null) {
     const seconds = Math.max(0, Math.floor(holderAgeDays * 86400));
     chainState.archiveAgeSeconds = seconds;
@@ -10806,7 +16771,71 @@ function render(now = performance.now()) {
   const performanceMode = selected ? "drag" : !fullMotion && previewMotion ? "marketplace" : "normal";
   const overlayTarget = partsImg && mode === "assembled" && !selected && !transition ? 1 : 0;
   overlayAlpha += (overlayTarget - overlayAlpha) * 0.14;
-  drawMachine(ctx, renderLayout, chainState, { previewMotion, editMode: false, selected, mouseLook, performanceMode, motionTime: motionClock, transparentBackground: bgReady(), drawUnderlay: bgImg ? drawBgUnderlay : void 0, drawOverlay: partsImg ? drawPartsOverlay : void 0 });
+  const behindTarget = behindImg && mode === "assembled" && !selected && !transition ? 1 : 0;
+  behindAlpha += (behindTarget - behindAlpha) * 0.14;
+  const hasAnimBg = Boolean(chainState.background && isBackground(chainState.background));
+  const hasBackdrop = hasAnimBg || hasSceneBg || bgReady() || behindReady();
+  const normalDraw = () => drawMachine(ctx, renderLayout, chainState, { previewMotion, editMode: false, selected, mouseLook, performanceMode, motionTime: motionClock, transparentBackground: hasBackdrop, drawUnderlay: bgImg || behindImg || hasAnimBg || hasSceneBg ? drawBgUnderlay : void 0, drawOverlay: partsImg ? drawPartsOverlay : void 0 });
+  const activeEffect = chainState.effect && (EFFECT_FN[chainState.effect] || isPremiumEffect(chainState.effect)) ? chainState.effect : null;
+  if (activeEffect) {
+    try {
+      const S = canvas.width || 1024, H = 512;
+      if (!fxMachineCanvas) {
+        fxMachineCanvas = document.createElement("canvas");
+        fxMachineCanvas.width = fxMachineCanvas.height = S;
+        fxMachineCtx = fxMachineCanvas.getContext("2d");
+        fxCanvas = document.createElement("canvas");
+        fxCanvas.width = fxCanvas.height = H;
+        fxCtx = fxCanvas.getContext("2d");
+      }
+      const premium = isPremiumEffect(activeEffect);
+      fxMachineCtx.setTransform(1, 0, 0, 1, 0, 0);
+      fxMachineCtx.clearRect(0, 0, S, S);
+      drawMachine(fxMachineCtx, renderLayout, chainState, { previewMotion, editMode: false, selected, mouseLook, performanceMode, motionTime: motionClock, transparentBackground: premium || hasBackdrop, drawOverlay: partsImg ? drawPartsOverlay : void 0 });
+      fxCtx.setTransform(1, 0, 0, 1, 0, 0);
+      fxCtx.clearRect(0, 0, H, H);
+      fxCtx.drawImage(fxMachineCanvas, 0, 0, S, S, 0, 0, H, H);
+      const fxBg = renderLayout.canvas && renderLayout.canvas.backgroundColor || "#0a0e15";
+      const applied = premium ? applyWebglEffect(fxCtx, H, activeEffect, motionClock, hasBackdrop) : (EFFECT_FN[activeEffect](fxCtx, H, { accent: "#39f6ff", background: fxBg, transparentBg: hasBackdrop }), true);
+      if (!applied) {
+        normalDraw();
+      } else {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        if (hasBackdrop) {
+          if (hasAnimBg) {
+            const scene = renderBackground(S, chainState.background, motionClock);
+            if (scene) ctx.drawImage(scene, 0, 0, S, S);
+            else {
+              ctx.fillStyle = "#05060a";
+              ctx.fillRect(0, 0, S, S);
+            }
+          } else if (hasSceneBg) {
+            drawNormiesBoatScene(ctx, S, S, bgScene, motionClock);
+          } else if (bgReady()) {
+            ctx.drawImage(bgImg, 0, 0, S, S);
+          } else {
+            ctx.fillStyle = "#05060a";
+            ctx.fillRect(0, 0, S, S);
+          }
+          if (behindReady() && behindAlpha > 0.01) {
+            ctx.save();
+            ctx.globalAlpha = Math.min(1, behindAlpha);
+            ctx.drawImage(behindImg, 0, 0, S, S);
+            ctx.restore();
+          }
+          ctx.drawImage(fxCanvas, 0, 0, S, S);
+        } else {
+          ctx.fillStyle = "#05060a";
+          ctx.fillRect(0, 0, S, S);
+          ctx.drawImage(fxCanvas, 0, 0, S, S);
+        }
+      }
+    } catch (fxErr) {
+      normalDraw();
+    }
+  } else {
+    normalDraw();
+  }
   drawCursorRings();
   drawSnapHints();
   document.body.dataset.ready = "true";
@@ -10931,6 +16960,7 @@ if (forcedStart === "assembled") {
   previewMotion = false;
 }
 overlayAlpha = mode === "assembled" ? 1 : 0;
+behindAlpha = mode === "assembled" ? 1 : 0;
 setActiveButton();
 void pollBackendChainState(true);
 render();

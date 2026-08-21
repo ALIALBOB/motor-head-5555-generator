@@ -148,7 +148,7 @@ function animPage(id, base, layout, partsUrl, bgUrl, behindUrl, bgScene) {
   </div>
 </main>
 <script>window.__LAM_BASE_LAYOUT__ = ${layoutLiteral};${partsUrl ? `window.__LAM_PARTS_URL__ = ${JSON.stringify(partsUrl)};` : ""}${bgUrl ? `window.__LAM_BG_URL__ = ${JSON.stringify(bgUrl)};` : ""}${behindUrl ? `window.__LAM_BEHIND_URL__ = ${JSON.stringify(behindUrl)};` : ""}${bgScene ? `window.__LAM_BG_SCENE__ = ${JSON.stringify(bgScene)};` : ""}</script>
-<script type="module" src="${base}/anim/app.js?v=11"></script>
+<script type="module" src="${base}/anim/app.js?v=13"></script>
 </body>
 </html>`;
 }
@@ -218,6 +218,15 @@ export default {
       return new Response(obj.body, { headers: { "content-type": "image/png", "access-control-allow-origin": "*", "cache-control": "public, max-age=60" } });
     }
 
+    // The holder's FULL editor build (JSON: every placed item + effect + background). Written by /save-image
+    // with x-kind:build; the SITE fetches it on open to RESTORE the saved build for editing (so holders adjust
+    // instead of rebuilding from scratch). Not used by the animation — it's the source-of-truth editor state.
+    if ((m = url.pathname.match(/^\/builds\/(\d+)\.json$/))) {
+      const obj = await env.RENDERS.get(`${m[1]}.build.json`);
+      if (!obj) return json({ ok: false, error: "not found" }, 404);
+      return new Response(obj.body, { headers: { "content-type": "application/json", "access-control-allow-origin": "*", "cache-control": "public, max-age=15" } });
+    }
+
     // Ownership-gated render upload (holders, NO shared secret in the browser): the holder signs ONE
     // message; we recover the signer and require it OWNS the token AND the on-chain revision matches,
     // then store the PNG. x-kind selects which artifact: "image" -> the flattened card /img/:id.png;
@@ -249,13 +258,13 @@ export default {
       catch { return json({ ok: false, error: "ownerOf read failed" }, 502); }
       if (String(signer).toLowerCase() !== String(owner).toLowerCase()) return json({ ok: false, error: "not token owner" }, 403);
       const kindHeader = request.headers.get("x-kind");
-      const kind = kindHeader === "parts" ? "parts" : kindHeader === "background" ? "background" : kindHeader === "behind" ? "behind" : "image";
-      const key = kind === "parts" ? `${id}.parts.png` : kind === "background" ? `${id}.bg.png` : kind === "behind" ? `${id}.behind.png` : `${id}.png`;
-      const putOpts = { httpMetadata: { contentType: "image/png" } };
-      // Stamp the background, parts AND behind overlays with the revision they were rendered for, so the
-      // animation can tell a CURRENT layer from a stale one left behind after a later save changed the layout
-      // but didn't re-upload that layer. Without this, a stale overlay kept getting composited.
-      if (kind === "background" || kind === "parts" || kind === "behind") putOpts.customMetadata = { revision: String(onchainRev) };
+      const kind = kindHeader === "parts" ? "parts" : kindHeader === "background" ? "background" : kindHeader === "behind" ? "behind" : kindHeader === "build" ? "build" : "image";
+      const key = kind === "parts" ? `${id}.parts.png` : kind === "background" ? `${id}.bg.png` : kind === "behind" ? `${id}.behind.png` : kind === "build" ? `${id}.build.json` : `${id}.png`;
+      const putOpts = { httpMetadata: { contentType: kind === "build" ? "application/json" : "image/png" } };
+      // Stamp the background, parts, behind AND build with the revision they were rendered for, so the animation
+      // can tell a CURRENT layer from a stale one (and the site can detect a stale build). Without this, a stale
+      // overlay kept getting composited.
+      if (kind === "background" || kind === "parts" || kind === "behind" || kind === "build") putOpts.customMetadata = { revision: String(onchainRev) };
       // A client-side-only animated scene (Normies boat) has no on-chain bg part — the site tags its bg upload
       // with the scene key so the animation can draw it LIVE (drifting) instead of pasting the static snapshot.
       if (kind === "background") { const scene = request.headers.get("x-bg-scene"); if (scene) putOpts.customMetadata.scene = String(scene).slice(0, 24); }

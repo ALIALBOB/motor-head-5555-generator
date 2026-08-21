@@ -48,11 +48,22 @@ const partsUrl = window.__LAM_PARTS_URL__ || "";
 let partsImg = null;
 if (partsUrl) { partsImg = new Image(); partsImg.crossOrigin = "anonymous"; partsImg.decoding = "async"; partsImg.src = partsUrl; }
 let overlayAlpha = 0;
+const PARTS_SPRITE_FPS = 5; // frame-cycle rate for an animated (sprite-sheet) parts overlay (8 frames = 1 cycle)
 function drawPartsOverlay(c, info) {
   if (!partsImg || !partsImg.complete || !partsImg.naturalWidth || overlayAlpha < 0.01) return;
   c.save();
   c.globalAlpha = Math.min(1, overlayAlpha);
-  c.drawImage(partsImg, 0, 0, info.width, info.height);
+  const fw = partsImg.naturalWidth;
+  // A TALL parts image is a vertical SPRITE SHEET (N stacked 1:1 frames) baked when the save has an animated
+  // item (e.g. the DDG propeller cap) — cycle the frames so it spins. A square image = one static frame (legacy).
+  const frames = Math.max(1, Math.round(partsImg.naturalHeight / fw));
+  if (frames > 1) {
+    const t = Number(info && info.time) || (performance.now() / 1000);
+    const frame = ((Math.floor(t * PARTS_SPRITE_FPS) % frames) + frames) % frames;
+    c.drawImage(partsImg, 0, frame * fw, fw, fw, 0, 0, info.width, info.height);
+  } else {
+    c.drawImage(partsImg, 0, 0, info.width, info.height);
+  }
   c.restore();
 }
 
