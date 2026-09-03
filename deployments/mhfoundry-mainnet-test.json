@@ -1,0 +1,19 @@
+{
+  "addr": {
+    "MHToken": "0xC81b8CAE0477080f3be106b9D4dC53158Bf6Cc80",
+    "WeightRegistry": "0x1237337b75D238B426a308c4b1d43fD997aad88e",
+    "RewardPot": "0x825c5F468076D02F7402B13042da9420A2175604",
+    "UpgradeManager": "0x9A99a4F9F3BeB28d67B80552dC469a2c14343382"
+  },
+  "step": {
+    "grantUpgrade": "0x89f5ed77ebffc31d6efccbe5c5bc55c3552420773163802069687a3c185208b1",
+    "grantSettler": "0x8b60b68e2bda33f85ab658d7ef04a6ad1e25c6e41172f2211fc6bf061a3ac690",
+    "grantCustomize": "0xba4efb419f158d5a83b78e86897d65913f1585090495ad51528e0f3568513051",
+    "approve": "0x4742ca0eaba65c8c5b120ff89f35e03c31ffa4e780c1d97ec60bac5e28882eb4",
+    "activate": "0xf21b8977017273fd0ecbcf25aeb085ef3ef44bf0fdd7cc2c6877fe23ae54d33c",
+    "upgrade": "0x5abcb751f8c02add1250b3b7648614ea2ae48a36b6507394d6010d18c731a981",
+    "bonus": "0x9d35e8efcdd36bb08b38d63e52cb5e7d17911ec4a3e7ddb8ce86577db016c4f5",
+    "fund": "0xd6f920f290591c89582ad76dbef760342cc22c9106099f260744d2ed99c8aef4",
+    "claim": "0x58c224f4e8df80ae3c5c6718da8e5b9e5c8c0d608f558a61cc9d6cac7c0cb1cc"
+  }
+}
