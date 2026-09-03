@@ -3,7 +3,8 @@
     "MHToken": "0xC81b8CAE0477080f3be106b9D4dC53158Bf6Cc80",
     "WeightRegistry": "0x1237337b75D238B426a308c4b1d43fD997aad88e",
     "RewardPot": "0x825c5F468076D02F7402B13042da9420A2175604",
-    "UpgradeManager": "0x9A99a4F9F3BeB28d67B80552dC469a2c14343382"
+    "UpgradeManager": "0x9A99a4F9F3BeB28d67B80552dC469a2c14343382",
+    "ForgeBridge": "0x4fce692b2D9489448977063814cCa3c5Fb058299"
   },
   "step": {
     "grantUpgrade": "0x89f5ed77ebffc31d6efccbe5c5bc55c3552420773163802069687a3c185208b1",
@@ -14,6 +15,19 @@
     "upgrade": "0x5abcb751f8c02add1250b3b7648614ea2ae48a36b6507394d6010d18c731a981",
     "bonus": "0x9d35e8efcdd36bb08b38d63e52cb5e7d17911ec4a3e7ddb8ce86577db016c4f5",
     "fund": "0xd6f920f290591c89582ad76dbef760342cc22c9106099f260744d2ed99c8aef4",
-    "claim": "0x58c224f4e8df80ae3c5c6718da8e5b9e5c8c0d608f558a61cc9d6cac7c0cb1cc"
+    "claim": "0x58c224f4e8df80ae3c5c6718da8e5b9e5c8c0d608f558a61cc9d6cac7c0cb1cc",
+    "fb_upgrade": "0x0fe8d58add91a17f60fcac4a8255e75ae5c4533ff1a42c84ac0759dfdc7b6a8f",
+    "fb_customize": "0x08fafa8939688724bd0445f9518fd4baf009ebd62a71b5eebb3e62e848b08f74",
+    "fb_settler": "0x3cbc38072dba0cba2f7c164d604efb54bfb99c2b5ce530172917010976b94abd"
+  },
+  "forgeBridge": {
+    "address": "0x4fce692b2D9489448977063814cCa3c5Fb058299",
+    "signer": "0x25b9bdaA528a238Bdbedff8B782261375598D0Da",
+    "domain": {
+      "name": "MHForgeBridge",
+      "version": "1",
+      "chainId": 4663,
+      "verifyingContract": "0x4fce692b2D9489448977063814cCa3c5Fb058299"
+    }
   }
 }
