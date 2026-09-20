@@ -4,7 +4,8 @@
     "WeightRegistry": "0x1237337b75D238B426a308c4b1d43fD997aad88e",
     "RewardPot": "0x825c5F468076D02F7402B13042da9420A2175604",
     "UpgradeManager": "0x9A99a4F9F3BeB28d67B80552dC469a2c14343382",
-    "ForgeBridge": "0x4fce692b2D9489448977063814cCa3c5Fb058299"
+    "ForgeBridge": "0x4fce692b2D9489448977063814cCa3c5Fb058299",
+    "ArchiveVault": "0xDE28cee1D47Ad026d101426eAEB399F46137C81E"
   },
   "step": {
     "grantUpgrade": "0x89f5ed77ebffc31d6efccbe5c5bc55c3552420773163802069687a3c185208b1",
@@ -28,6 +29,18 @@
       "version": "1",
       "chainId": 4663,
       "verifyingContract": "0x4fce692b2D9489448977063814cCa3c5Fb058299"
+    }
+  },
+  "archiveVault": {
+    "address": "0xDE28cee1D47Ad026d101426eAEB399F46137C81E",
+    "chain": "ethereum",
+    "signer": "0x25b9bdaA528a238Bdbedff8B782261375598D0Da",
+    "archive": "0x5eb82c9b5ced4c98982633976941d2cc23f4f9b9",
+    "domain": {
+      "name": "MHArchiveVault",
+      "version": "1",
+      "chainId": 1,
+      "verifyingContract": "0xDE28cee1D47Ad026d101426eAEB399F46137C81E"
     }
   }
 }

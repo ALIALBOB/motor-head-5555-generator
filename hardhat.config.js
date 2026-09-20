@@ -34,6 +34,39 @@ module.exports = {
     mainnet: {
       url: process.env.MAINNET_RPC_URL || "https://ethereum-rpc.publicnode.com",
       accounts: PRIVATE_KEY ? [PRIVATE_KEY] : []
+    },
+    // ── MotorHeads Foundry (3D) — Robinhood Chain (Arbitrum Orbit L2, ETH gas) ──
+    robinhoodTestnet: {
+      url: process.env.ROBINHOOD_TESTNET_RPC_URL || "https://rpc.testnet.chain.robinhood.com/rpc",
+      chainId: 46630,
+      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : []
+    },
+    robinhoodMainnet: {
+      url: process.env.ROBINHOOD_RPC_URL || "https://rpc.mainnet.chain.robinhood.com",
+      chainId: 4663,
+      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : []
     }
-  }
+  },
+  // Contract verification on Robinhood Chain — Blockscout (Etherscan-compatible API). The apiKey value is
+  // ignored by Blockscout but hardhat-verify requires a non-empty string per network.
+  //   npx hardhat verify --network robinhoodMainnet <address> <constructor args...>
+  etherscan: {
+    apiKey: {
+      robinhoodMainnet: process.env.BLOCKSCOUT_API_KEY || "blockscout",
+      robinhoodTestnet: process.env.BLOCKSCOUT_API_KEY || "blockscout"
+    },
+    customChains: [
+      {
+        network: "robinhoodMainnet",
+        chainId: 4663,
+        urls: { apiURL: "https://robinhoodchain.blockscout.com/api", browserURL: "https://robinhoodchain.blockscout.com" }
+      },
+      {
+        network: "robinhoodTestnet",
+        chainId: 46630,
+        urls: { apiURL: "https://explorer.testnet.chain.robinhood.com/api", browserURL: "https://explorer.testnet.chain.robinhood.com" }
+      }
+    ]
+  },
+  sourcify: { enabled: false }
 };

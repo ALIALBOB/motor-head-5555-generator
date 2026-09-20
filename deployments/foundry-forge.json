@@ -1,0 +1,23 @@
+{
+  "_note": "FoundryForge \u2014 tiers and bought parts ON CHAIN. Parts mint into each robot's ERC-6551 garage; a Chainlink-quoted ~$1 site fee rides on every call; every wei is forwarded to the treasury.",
+  "network": "ethereum-mainnet",
+  "chainId": 1,
+  "address": "0xe11c5045db867ae0968063b6db1c3b81a7e5543e",
+  "collection": "0x0a5008550fc1402bb567a3ba38d9433e6199ceb1",
+  "parts": "0x3f6ADfe2fA714c28B2c6ec4762D089069675f2a2",
+  "crates": "0x50Dc22553988de047a00328963faEe8EC5E19b12",
+  "treasury": "0x95A6fB3087b3469Ed777120052E0ac3f262c81C1",
+  "owner": "0x95A6fB3087b3469Ed777120052E0ac3f262c81C1",
+  "accountImplementation": "0x41C8f39463A868d3A88af00cd0fe7102F30E44eC",
+  "accountImplementationNote": "tokenbound AccountV3Upgradable \u2014 the build the garages' AccountProxy (0x55266d75D1a14E4572138116aF39863Ed6596E7F) points at. execute(address,uint256,bytes,uint8) = 0x51945447.",
+  "compiler": "solc 0.8.24, optimizer 200 runs, viaIR",
+  "constructor": "constructor(address collection, address parts, address crates, address treasury, address owner)",
+  "deployedAt": "2026-09-19",
+  "siteFeeUsd": 1,
+  "localRehearsal": {
+    "_note": "the earlier entry in this file was a HARDHAT LOCAL deploy, not a real one \u2014 kept so the address is never mistaken for mainnet",
+    "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    "deployedBy": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "at": "2026-09-19T19:51:39.446Z"
+  }
+}
